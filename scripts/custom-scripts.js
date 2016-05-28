@@ -51,55 +51,6 @@ function inputTextFix(){
 	
 }
 
-//function that handles the universal preloader positioning and alignment
-function universalPreloader(){
-		
-	var pre = $("#universal-preloader>div");
-	
-	//centering function
-	jQuery.fn.center = function () {
-		this.css("position","absolute");
-		this.css("top", (($(window).height() - this.outerHeight()) / 2) + "px");
-		this.css("left", (($(window).width() - this.outerWidth()) / 2) + "px");
-		return this;
-	}
-	
-	//center to the screen
-	pre.center();
-	
-	//run each time user resizes window
-	$(window).resize(function() {
-	
-		pre.center();
-							  
-	});
-	
-}
-
-//function that disposes the universal preloader when everything is loaded; called on window.load event
-function universalPreloaderRemove(){
-		
-	var parentD = $("#universal-preloader");
-	// var pre = $("#universal-preloader>div");
-	
-	// var logo = $("#universal-preloader .universal-preloader-logo");
-	// var loader = $("#universal-preloader .universal-preloader-preloader");
-	
-	//when the logo and ajax-loader fades out, fade out the curtain; when that completes, remove the universal preloader from the DOM
-	// pre.delay(0).animate({opacity:'0'},{duration:400, complete:function(){
-	
-		parentD.animate({opacity:'0'},{duration:400, complete:function(){
-		
-			parentD.remove();
-		
-		}});
-																																		 
-	// }});
-	
-	
-}
-
-
 //function that handles the talking dog bubble animations
 function dogTalk(){
 		
