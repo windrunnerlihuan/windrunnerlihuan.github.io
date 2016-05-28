@@ -79,7 +79,7 @@ function universalPreloader(){
 //function that disposes the universal preloader when everything is loaded; called on window.load event
 function universalPreloaderRemove(){
 		
-	var parentD = $("#universal-preloader");
+	// var parentD = $("#universal-preloader");
 	// var pre = $("#universal-preloader>div");
 	
 	// var logo = $("#universal-preloader .universal-preloader-logo");
@@ -88,11 +88,11 @@ function universalPreloaderRemove(){
 	//when the logo and ajax-loader fades out, fade out the curtain; when that completes, remove the universal preloader from the DOM
 	// pre.delay(0).animate({opacity:'0'},{duration:400, complete:function(){
 	
-		parentD.animate({opacity:'0'},{duration:400, complete:function(){
+		// parentD.animate({opacity:'0'},{duration:400, complete:function(){
 		
-			parentD.remove();
+			// parentD.remove();
 		
-		}});
+		// }});
 																																		 
 	// }});
 	
