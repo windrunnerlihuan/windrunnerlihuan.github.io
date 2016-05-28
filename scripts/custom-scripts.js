@@ -80,13 +80,13 @@ function universalPreloader(){
 function universalPreloaderRemove(){
 		
 	var parentD = $("#universal-preloader");
-	var pre = $("#universal-preloader>div");
+	// var pre = $("#universal-preloader>div");
 	
-	var logo = $("#universal-preloader .universal-preloader-logo");
-	var loader = $("#universal-preloader .universal-preloader-preloader");
+	// var logo = $("#universal-preloader .universal-preloader-logo");
+	// var loader = $("#universal-preloader .universal-preloader-preloader");
 	
 	//when the logo and ajax-loader fades out, fade out the curtain; when that completes, remove the universal preloader from the DOM
-	pre.delay(0).animate({opacity:'0'},{duration:400, complete:function(){
+	// pre.delay(0).animate({opacity:'0'},{duration:400, complete:function(){
 	
 		parentD.animate({opacity:'0'},{duration:400, complete:function(){
 		
@@ -94,7 +94,7 @@ function universalPreloaderRemove(){
 		
 		}});
 																																		 
-	}});
+	// }});
 	
 	
 }
