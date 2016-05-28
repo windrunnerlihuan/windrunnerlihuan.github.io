@@ -5,11 +5,11 @@
 
 @font-face {
     font-family: 'SingleSleeveRegular';
-    src: url('../../font/404/sing-webfont.eot');
-    src: url('../../font/404/sing-webfont.eot?#iefix') format('embedded-opentype'),
-         url('../../font/404/sing-webfont.woff') format('woff'),
-         url('../../font/404/sing-webfont.ttf') format('truetype'),
-         url('../../font/404/sing-webfont.svg#SingleSleeveRegular') format('svg');
+    src: url('../font/sing-webfont.eot');
+    src: url('../font/sing-webfont.eot?#iefix') format('embedded-opentype'),
+         url('../font/sing-webfont.woff') format('woff'),
+         url('../font/sing-webfont.ttf') format('truetype'),
+         url('../font/sing-webfont.svg#SingleSleeveRegular') format('svg');
     font-weight: normal;
     font-style: normal;
 
@@ -20,7 +20,7 @@
 html, body{
 	
 	height:100%;
-	background:#186aa9 url(../../images/404/sky-background.png) top repeat-x;	
+	background:#186aa9 url(../images/sky-background.png) top repeat-x;	
 	overflow:hidden;
 	padding:0;
 	margin:0;
@@ -51,7 +51,7 @@ img, a img{
 	width:100%;
 	height:100%;
 	opacity:0.96;
-	background:#000 url(../../images/404/background.png) repeat;
+	background:#000 url(../images/background.png) repeat;
 	z-index:999999999;
 	
 }
@@ -83,7 +83,7 @@ img, a img{
 	margin:0px auto;
 	position:relative;
 	height:100%;
-	background:url(../../images/404/sky-shine.jpg) top left no-repeat;
+	background:url(../images/sky-shine.jpg) top left no-repeat;
 	
 }
 
@@ -111,7 +111,7 @@ div.graphic{
 	position:absolute;
 	top:80px;
 	left:0px;
-	background:url(../../images/404/404.png) top left no-repeat;
+	background:url(../images/404.png) top left no-repeat;
 	width:494px;
 	height:331px;
 	
@@ -123,7 +123,7 @@ div.planet{
 	bottom:-1100px;
 	margin:0px auto;
 	width:980px;
-	background:url(../../images/404/planet.png) center no-repeat;
+	background:url(../images/planet.png) center no-repeat;
 	height:1920px;
 	z-index:0;
 	
@@ -145,7 +145,7 @@ div.dog{
 	width:80px;
 	height:80px;
 	z-index:999;
-	background:url(../../images/404/dog.png) 0px 0px no-repeat;
+	background:url(../images/dog.png) 0px 0px no-repeat;
 	
 }
 
@@ -168,7 +168,7 @@ div.search{
 
 div.search input[type=submit]:hover{
 	
-	background:#ffffff url(../../images/404/search.png) center center no-repeat;	
+	background:#ffffff url(../images/search.png) center center no-repeat;	
 	cursor:pointer;
 	
 }
@@ -176,7 +176,7 @@ div.search input[type=submit]:hover{
 div.search input[type=submit]{
 	
 	box-shadow:1px 1px 0 #ffffff inset, 5px 5px 0px #3680b1;
-	background:#eeeeee url(../../images/404/search.png) center center no-repeat;
+	background:#eeeeee url(../images/search.png) center center no-repeat;
 	border-radius:50px;
 	position:absolute;
 	top:0px;
@@ -231,7 +231,7 @@ div.dog-bubble{
 	font-style:italic;
 	height:179px;
 	width:246px;
-	background:url(../../images/404/bubble.png) top center no-repeat;
+	background:url(../images/bubble.png) top center no-repeat;
 	padding:20px 0px;
 	position:absolute;
 	bottom:0px;
