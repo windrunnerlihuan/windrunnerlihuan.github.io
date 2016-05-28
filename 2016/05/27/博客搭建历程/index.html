@@ -18,7 +18,7 @@
 <meta property="og:image" content="http://windrunnerlihuan.com/images/博客搭建历程/yulist.png">
 <meta property="og:image" content="http://windrunnerlihuan.com/images/博客搭建历程/yudecode.png">
 <meta property="og:image" content="http://windrunnerlihuan.com/images/博客搭建历程/pifu.png">
-<meta property="og:updated_time" content="2016-05-28T07:09:42.863Z">
+<meta property="og:updated_time" content="2016-05-28T09:54:53.662Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="博客搭建历程——————Github & Hexo">
 <meta name="twitter:description" content="前言&amp;#160; &amp;#160; &amp;#160; &amp;#160;其实从去年开始我就想搭建一个自己的个人网站了，主要用于记录自己的技术积累和重点知识。但由于自己太懒，能力也太渣，所以就一直没有行动。直到今年，突然发现随着知识积累的增加，有好多重要的内容脑袋都记不下了，有的网页就直接存个标签，但是标签越存越多，但却很少再次去浏览，最后知识还是会淡忘，所以今天痛下决心，还是自己搭个博客吧，以挽回知识的流失，同">
@@ -66,7 +66,7 @@
         
           <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
         
-        <a id="nav-search-btn" class="nav-icon" title="Søk"></a>
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
       </nav>
       <div id="search-form-wrap">
         <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" results="0" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://windrunnerlihuan.com"></form>
@@ -108,7 +108,7 @@
 <hr>
 <h2 id="2-hexo安装"><a href="#2-hexo安装" class="headerlink" title="2. hexo安装"></a>2. hexo安装</h2><p>&#160; &#160; &#160; &#160;Hexo 是一个简单地、轻量地、基于Node的一个静态博客框架。通过Hexo我们可以快速创建自己的博客，仅需要几条命令就可以完成。</p>
 <p>Hexo的官方网站：<a href="http://hexo.io/" target="_blank" rel="external">http://hexo.io/</a> ，也是基于Github构建的网站。</p>
-<p>&#160; &#160; &#160; &#160;不过要使用hexo必须装node.js，这个easy，直接在官网<a href="https://nodejs.org/en/" target="_blank" rel="external">https://nodejs.org/en/</a> 上下一个，首页就是下载页面，选一个你自己电脑平台对应的，比如我的是windows x64。如果不想看英文呢，还有个中文网站<a href="http://nodejs.cn/，几乎是把英文网站翻译了一遍，套路都一样。下载下来之后文件名叫**node-v4.4.4-x64.msi**，双击，一路next，傻瓜式安装。" target="_blank" rel="external">http://nodejs.cn/，几乎是把英文网站翻译了一遍，套路都一样。下载下来之后文件名叫**node-v4.4.4-x64.msi**，双击，一路next，傻瓜式安装。</a></p>
+<p>&#160; &#160; &#160; &#160;不过要使用hexo必须装node.js，这个easy，直接在官网<a href="https://nodejs.org/en/" target="_blank" rel="external">https://nodejs.org/en/</a> 上下一个，首页就是下载页面，选一个你自己电脑平台对应的，比如我的是windows x64。如果不想看英文呢，还有个中文网站<a href="http://nodejs.cn/" target="_blank" rel="external">http://nodejs.cn/</a> ，几乎是把英文网站翻译了一遍，套路都一样。下载下来之后文件名叫<strong>node-v4.4.4-x64.msi</strong>，双击，一路next，傻瓜式安装。</p>
 <p>接着安装hexo：<br>1）打开控制台（按下win + r，输入cmd，回车）或者直接在git bash界面。<br>输入 npm install -g hexo，然后开始安装hexo。<br>成功后再输入 npm install hexo-deployer-git –save，安装发布工具。</p>
 <p>2）接着进入我们从github上克隆下来的windrunnerlihuan.github.io文件，再次git bash here。<br>输入 hexo init，初始化hexo。<br>完成后我们测试一下：<br>输入hexo server<br>bash控制台会打印出 “[info] Hexo is running at <a href="http://localhost:4000/" target="_blank" rel="external">http://localhost:4000/</a>. Press Ctrl+C to stop.”<br>这时端口4000被打开了，我们能过浏览器打开地址，<a href="http://localhost:4000/" target="_blank" rel="external">http://localhost:4000/</a> 。</p>
 <p><img src="/images/博客搭建历程/home.png" alt="hexo首页默认图片"></p>
@@ -177,8 +177,8 @@
 <p>最后最重要的是：<br>1）在github项目中，新建一个文件CNAME，文件中写出你要绑定的域名windrunnerlihuan.com。通过浏览器，访问<a href="http://windrunnerlihuan.com，就打开了我们建好的博客站点。" target="_blank" rel="external">http://windrunnerlihuan.com，就打开了我们建好的博客站点。</a><br>2）由于每次执行deploy的时候，github代码仓库所有的文件都会被覆盖，所以我们最好在source目录下创建这个CNAME文件，这样每次部署就不用动手创建了。</p>
 <hr>
 <h2 id="6-个性化功能配置"><a href="#6-个性化功能配置" class="headerlink" title="6. 个性化功能配置"></a>6. 个性化功能配置</h2><p>1） 替换皮肤<br>博客系统流行的原因，是因为他的个人性，而皮肤正式个性化的一种体现。<br>利用hexo替换皮肤，还是比较简单的，3步完成。</p>
-<p><strong>No.1</strong>  找到一个皮肤或者自己开发一个皮肤<br>打开hexo的皮肤列表页面，你可以找到很多的皮肤，网页地址： <a href="https://github.com/tommy351/hexo/wiki/Themes。" target="_blank" rel="external">https://github.com/tommy351/hexo/wiki/Themes。</a> </p>
-<p><strong>No.2</strong>放到themes目录下<br>比如，我觉得pacman(<a href="https://github.com/A-limon/pacman)这个皮肤还不错，我就可以下载皮肤到themes目录下面。" target="_blank" rel="external">https://github.com/A-limon/pacman)这个皮肤还不错，我就可以下载皮肤到themes目录下面。</a><br>通过git命令下载皮肤<br>git clone <a href="https://github.com/A-limon/pacman.git" target="_blank" rel="external">https://github.com/A-limon/pacman.git</a> themes/pacman</p>
+<p><strong>No.1</strong>  找到一个皮肤或者自己开发一个皮肤<br>打开hexo的皮肤列表页面，你可以找到很多的皮肤，网页地址： <a href="https://github.com/tommy351/hexo/wiki/Themes" target="_blank" rel="external">https://github.com/tommy351/hexo/wiki/Themes</a> 。 </p>
+<p><strong>No.2</strong>放到themes目录下<br>比如，我觉得pacman( <a href="https://github.com/A-limon/pacman" target="_blank" rel="external">https://github.com/A-limon/pacman</a> )这个皮肤还不错，我就可以下载皮肤到themes目录下面。<br>通过git命令下载皮肤<br>git clone <a href="https://github.com/A-limon/pacman.git" target="_blank" rel="external">https://github.com/A-limon/pacman.git</a> themes/pacman</p>
 <p><strong>No.3</strong>在_config.yml指定皮肤<br>编辑文件_config.yml，找到theme一行，改成 theme: pacman<br>本地启动hexo服务器，打开浏览器 <a href="http://localhost:4000" target="_blank" rel="external">http://localhost:4000</a></p>
 <p><img src="/images/博客搭建历程/pifu.png" alt="替换了皮肤的博客"></p>
 <p>新皮肤的效果还不错吧，然后静态化处理，再发布到github，就完成了站点的改版。</p>
@@ -217,7 +217,7 @@
   
     
   <div class="widget-wrap">
-    <h3 class="widget-title">Kategorier</h3>
+    <h3 class="widget-title">Categories</h3>
     <div class="widget">
       <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/日志/">日志</a></li></ul>
     </div>
@@ -246,7 +246,7 @@
   
     
   <div class="widget-wrap">
-    <h3 class="widget-title">Arkiv</h3>
+    <h3 class="widget-title">Archives</h3>
     <div class="widget">
       <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/05/">May 2016</a></li></ul>
     </div>
@@ -256,7 +256,7 @@
   
     
   <div class="widget-wrap">
-    <h3 class="widget-title">Siste innlegg</h3>
+    <h3 class="widget-title">Recent Posts</h3>
     <div class="widget">
       <ul>
         
