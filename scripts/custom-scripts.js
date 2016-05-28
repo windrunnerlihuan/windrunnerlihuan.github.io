@@ -88,7 +88,7 @@ function universalPreloaderRemove(){
 	//when the logo and ajax-loader fades out, fade out the curtain; when that completes, remove the universal preloader from the DOM
 	pre.delay(10).animate({opacity:'0'},{duration:0, complete:function(){
 	
-		parentD.animate({opacity:'0'},{duration:400, complete:function(){
+		parentD.animate({opacity:'0'},{duration:100, complete:function(){
 		
 			parentD.remove();
 		
