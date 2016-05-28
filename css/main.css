@@ -43,7 +43,7 @@ img, a img{
 
 /* === Preloader === */
 
-#universal-preloader{
+/* #universal-preloader{
 	
 	position:fixed;
 	top:0px;
@@ -54,8 +54,8 @@ img, a img{
 	background:#000 url(../images/background.png) repeat;
 	z-index:999999999;
 	
-}
-
+} */
+/* 
 #universal-preloader>.preloader{
 	
 	width:24px;
@@ -73,7 +73,7 @@ img, a img{
 	top:0px; 
 	left:0px;	
 	
-}
+} */
 
 /* === Main Section === */
 
@@ -116,7 +116,7 @@ div.graphic{
 	height:331px;
 	
 }
-
+/*
 div.planet{
 
 	position:absolute;
@@ -128,7 +128,7 @@ div.planet{
 	z-index:0;
 	
 }
-
+*/
 div.dog-wrapper{
 	
 	position:absolute;
