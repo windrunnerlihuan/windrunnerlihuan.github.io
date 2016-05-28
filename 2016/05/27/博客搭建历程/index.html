@@ -18,7 +18,7 @@
 <meta property="og:image" content="http://windrunnerlihuan.com/images/博客搭建历程/yulist.png">
 <meta property="og:image" content="http://windrunnerlihuan.com/images/博客搭建历程/yudecode.png">
 <meta property="og:image" content="http://windrunnerlihuan.com/images/博客搭建历程/pifu.png">
-<meta property="og:updated_time" content="2016-05-27T20:21:24.076Z">
+<meta property="og:updated_time" content="2016-05-28T07:09:42.863Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="博客搭建历程——————Github & Hexo">
 <meta name="twitter:description" content="前言&amp;#160; &amp;#160; &amp;#160; &amp;#160;其实从去年开始我就想搭建一个自己的个人网站了，主要用于记录自己的技术积累和重点知识。但由于自己太懒，能力也太渣，所以就一直没有行动。直到今年，突然发现随着知识积累的增加，有好多重要的内容脑袋都记不下了，有的网页就直接存个标签，但是标签越存越多，但却很少再次去浏览，最后知识还是会淡忘，所以今天痛下决心，还是自己搭个博客吧，以挽回知识的流失，同">
@@ -64,9 +64,9 @@
       </nav>
       <nav id="sub-nav">
         
-          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="Flux RSS"></a>
         
-        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+        <a id="nav-search-btn" class="nav-icon" title="Rechercher"></a>
       </nav>
       <div id="search-form-wrap">
         <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" results="0" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://windrunnerlihuan.com"></form>
@@ -164,7 +164,7 @@
 <p>用命令行启动本地server：hexo server<br>通过浏览器打开， <a href="http://localhost:4000/" target="_blank" rel="external">http://localhost:4000/</a> ，就出现了我们新写的文章。</p>
 <p><img src="/images/博客搭建历程/newstart.png" alt="新的开始文章预览图"></p>
 <hr>
-<h2 id="4-发布到ithub"><a href="#4-发布到ithub" class="headerlink" title="4. 发布到ithub"></a>4. 发布到ithub</h2><p>1)  静态化处理<br>&#160; &#160; &#160; &#160;写完了文章，我们就可以发布了。要说明的一点是hexo的静态博客框架，那什么是静态博客呢？静态博客，是只包含html, javascript, css文件的网站，没有动态的脚本。虽然我们是用Node进行的开发，但博客的发布后就与Node无关了。在发布之前，我们要通过一条命令，把所有的文章都做静态化处理，就是生成对应的html, javascript, css，使得所有的文章都是由静态文件组成的。</p>
+<h2 id="4-发布到Github"><a href="#4-发布到Github" class="headerlink" title="4. 发布到Github"></a>4. 发布到Github</h2><p>1)  静态化处理<br>&#160; &#160; &#160; &#160;写完了文章，我们就可以发布了。要说明的一点是hexo的静态博客框架，那什么是静态博客呢？静态博客，是只包含html, javascript, css文件的网站，没有动态的脚本。虽然我们是用Node进行的开发，但博客的发布后就与Node无关了。在发布之前，我们要通过一条命令，把所有的文章都做静态化处理，就是生成对应的html, javascript, css，使得所有的文章都是由静态文件组成的。</p>
 <p>输入静态化命令 ：hexo generate<br>在本地目录下，会生成一个public的目录，里面包括了所有静态化的文件。</p>
 <p>2) 发布到github<br>接下来，我们把这个博客发布到github。<br>现在检查我们上次填好的_config.yml文件，找到deploy的部分，设置github的项目地址。<br><figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">deploy:</span><br><span class="line">  type: git</span><br><span class="line">  repo: https://github.com/windrunnerlihuan/windrunnerlihuan.github.io.git</span><br></pre></td></tr></table></figure></p>
 <p>然后执行部署命令：hexo deploy<br>中间过程会让你再次输入github账号和密码，输入就行了<br>成功后验证，浏览器里输入上次的地址：<a href="http://windrunnerlihuan.github.io" target="_blank" rel="external">http://windrunnerlihuan.github.io</a></p>
@@ -189,7 +189,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://windrunnerlihuan.com/2016/05/27/博客搭建历程/" data-id="cioq640n80000kcume077lkjj" class="article-share-link">Share</a>
+      <a data-url="http://windrunnerlihuan.com/2016/05/27/博客搭建历程/" data-id="cioq640n80000kcume077lkjj" class="article-share-link">Partager</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/博客搭建/">博客搭建</a></li></ul>
@@ -202,7 +202,7 @@
   
   
     <a href="/2016/05/27/新的开始/" id="article-nav-older" class="article-nav-link-wrap">
-      <strong class="article-nav-caption">Older</strong>
+      <strong class="article-nav-caption">Ancien</strong>
       <div class="article-nav-title">新的开始</div>
     </a>
   
@@ -217,7 +217,7 @@
   
     
   <div class="widget-wrap">
-    <h3 class="widget-title">Categories</h3>
+    <h3 class="widget-title">Catégories</h3>
     <div class="widget">
       <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/日志/">日志</a></li></ul>
     </div>
@@ -227,7 +227,7 @@
   
     
   <div class="widget-wrap">
-    <h3 class="widget-title">Tags</h3>
+    <h3 class="widget-title">Mot-clés</h3>
     <div class="widget">
       <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/博客搭建/">博客搭建</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/开始/">开始</a></li></ul>
     </div>
@@ -237,7 +237,7 @@
   
     
   <div class="widget-wrap">
-    <h3 class="widget-title">Tag Cloud</h3>
+    <h3 class="widget-title">Nuage de mot-clés</h3>
     <div class="widget tagcloud">
       <a href="/tags/博客搭建/" style="font-size: 10px;">博客搭建</a> <a href="/tags/开始/" style="font-size: 10px;">开始</a>
     </div>
@@ -256,7 +256,7 @@
   
     
   <div class="widget-wrap">
-    <h3 class="widget-title">Recent Posts</h3>
+    <h3 class="widget-title">Articles récents</h3>
     <div class="widget">
       <ul>
         
@@ -281,7 +281,7 @@
   <div class="outer">
     <div id="footer-info" class="inner">
       &copy; 2016 Huan Li<br>
-      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+      Propulsé by <a href="http://hexo.io/" target="_blank">Hexo</a>
     </div>
   </div>
 </footer>
