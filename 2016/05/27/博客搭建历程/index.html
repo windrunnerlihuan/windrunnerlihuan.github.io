@@ -295,7 +295,6 @@
     
     <div class="article-entry" itemprop="articleBody">
       
-          
         <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>&#160; &#160; &#160; &#160;其实从去年开始我就想搭建一个自己的个人网站了，主要用于记录自己的技术积累和重点知识。但由于自己太懒，能力也太渣，所以就一直没有行动。直到今年，突然发现随着知识积累的增加，有好多重要的内容脑袋都记不下了，有的网页就直接存个标签，但是标签越存越多，但却很少再次去浏览，最后知识还是会淡忘，所以今天痛下决心，还是自己搭个博客吧，以挽回知识的流失，同时也可以向外部分享自己的一些见解。<br>&#160; &#160; &#160; &#160;博客搭建过程也是一波三折，遇到各种坑爹问题，还好我没那么轻易放弃，最终在无数次失败之后终于成功了。</p>
 <hr>
 <h1 id="正文"><a href="#正文" class="headerlink" title="正文"></a>正文</h1><h2 id="1-github配置"><a href="#1-github配置" class="headerlink" title="1. github配置"></a>1. github配置</h2><p>1）首先需要有一个github账号，没有的话就得申请一个。<br>然后新建一个代码仓库，注意，仓库名一定要是：<strong>你的github账号名字.github.io</strong>，比如我的是windrunnerlihuan.github.io。<br>2）clone到本地，比如我的就是如下命令：<br>git clone <a href="https://github.com/windrunnerlihuan/windrunnerlihuan.github.io.git" target="_blank" rel="external">https://github.com/windrunnerlihuan/windrunnerlihuan.github.io.git</a><br>cd 进文件夹，我们先建个index.html用于测试：<br>cd windrunnerlihuan.github.io<br>vi index.html<br>然后编辑：<br><figure class="highlight vbscript-html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&lt;!DOCTYPE html&gt;</span><br><span class="line">&lt;html&gt;</span><br><span class="line">&lt;body&gt;</span><br><span class="line">&lt;h1&gt;github pages测试&lt;/h1&gt;</span><br><span class="line">&lt;/body&gt;</span><br><span class="line">&lt;/html&gt;</span><br></pre></td></tr></table></figure></p>
@@ -382,6 +381,7 @@
 <h1 id="结语"><a href="#结语" class="headerlink" title="结语"></a>结语</h1><p>&#160; &#160; &#160; &#160;因为这是我第一次搭建个人博客，水平实在比较差，流程写的很粗燥，很多细节都没有涉及，望大家体谅，以后我会努力完善的，将后续文章做的更好。</p>
 
       
+      
     </div>
     
   </div>
@@ -418,7 +418,7 @@
   
 </article>
 
-    <div id="toc" class="toc-article">
+<div id="toc" class="toc-article">
     <strong class="toc-title">Contents</strong>
     <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#前言"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#正文"><span class="toc-number">2.</span> <span class="toc-text">正文</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-github配置"><span class="toc-number">2.1.</span> <span class="toc-text">1. github配置</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-hexo安装"><span class="toc-number">2.2.</span> <span class="toc-text">2. hexo安装</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-hexo配置"><span class="toc-number">2.3.</span> <span class="toc-text">3. hexo配置</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#4-发布到Github"><span class="toc-number">2.4.</span> <span class="toc-text">4. 发布到Github</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#5-独立购买域名与绑定"><span class="toc-number">2.5.</span> <span class="toc-text">5. 独立购买域名与绑定</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#6-个性化功能配置"><span class="toc-number">2.6.</span> <span class="toc-text">6. 个性化功能配置</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#结语"><span class="toc-number">3.</span> <span class="toc-text">结语</span></a></li></ol>
 </div>
@@ -463,7 +463,6 @@
 
 
 
-    
 <div class="share">
     
         <div class="bdsharebuttonbox">
@@ -490,53 +489,22 @@
 
 
 
-    
-      <div class="duoshuo" id="comments">
-    <!-- 多说评论框 start -->
-    <div class="ds-thread" data-thread-key="2016/05/27/博客搭建历程/" data-title="博客搭建历程——————Github &amp; Hexo" data-url="http://windrunnerlihuan.com/2016/05/27/博客搭建历程/"></div>
-    <!-- 多说评论框 end -->
-    <!-- 多说公共JS代码 start (一个网页只需插入一次) -->
-    <script type="text/javascript">
-    var duoshuoQuery = {short_name:"null"};
-    (function() {
-        var ds = document.createElement('script');
-        ds.type = 'text/javascript';ds.async = true;
-        ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
-        ds.charset = 'UTF-8';
-        (document.getElementsByTagName('head')[0] 
-         || document.getElementsByTagName('body')[0]).appendChild(ds);
-    })();
-    </script>
-    <!-- 多说公共JS代码 end -->
-</div>
-
-    
 
 
 
 
-    <div class="scroll" id="post-nav-button">
-        
-            <a href="/" title="Back to Homepage"><i class="fa fa-home"></i></a>
-        
 
-        <a title="Mini Archives"><i class="fa fa-bars"></i><i class="fa fa-times"></i></a>
 
-        
-            <a href="/2016/05/27/新的开始/" title="Next: 新的开始">
-                <i class="fa fa-angle-right"></i>
-            </a>
-        
+    <style type="text/css">
+    #scroll {
+      display: none;
+    }
+    </style>
+    <div class="scroll">
+    <a href="#" title="返回顶部"><i class="fa fa-arrow-up"></i></a>
+    <a href="#ds-thread" title="查看评论"><i class="fa fa-comments-o"></i></a>
+    <a href="#footer" title="转到底部"><i class="fa fa-arrow-down"></i></a>
     </div>
-
-    <ul class="post-list"><li class="post-list-item"><a class="post-list-link" href="/2016/05/27/博客搭建历程/">博客搭建历程——————Github & Hexo</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/05/27/新的开始/">新的开始</a></li></ul>
-
-
-
-
-    <script>
-        
-    </script>
 </div>
       <footer id="footer">
     <div class="outer">
