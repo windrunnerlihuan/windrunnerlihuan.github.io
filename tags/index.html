@@ -330,10 +330,8 @@
 
 <script src="/js/tagcanvas.js" type="text/javascript"></script>
 
-
-
 <div class="tags" id="myTags">
- <canvas width="350" height="350" id="my3DTags">
+ <canvas width="500" height="500" id="my3DTags">
     <p>Anything in here will be replaced on browsers that support the canvas element</p>
 </canvas>
 </div>
@@ -401,8 +399,9 @@
       window.onload = function() {
         try {
           TagCanvas.Start('my3DTags','tags',{
-            textFont: 'Georgia,Optima',
+            textFont: null,
             textColour: null,
+            textHeight: 25,
             outlineColour: '#aa99dd',
             weight: true,
             reverse: true,
