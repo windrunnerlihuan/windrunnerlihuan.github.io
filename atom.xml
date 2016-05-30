@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://windrunnerlihuan.com/"/>
-  <updated>2016-05-29T14:16:10.039Z</updated>
+  <updated>2016-05-30T09:36:55.863Z</updated>
   <id>http://windrunnerlihuan.com/</id>
   
   <author>
@@ -16,11 +16,11 @@
   <generator uri="http://hexo.io/">Hexo</generator>
   
   <entry>
-    <title>博客搭建历程——————Github &amp; Hexo</title>
+    <title>博客搭建历程</title>
     <link href="http://windrunnerlihuan.com/2016/05/27/%E5%8D%9A%E5%AE%A2%E6%90%AD%E5%BB%BA%E5%8E%86%E7%A8%8B/"/>
     <id>http://windrunnerlihuan.com/2016/05/27/博客搭建历程/</id>
     <published>2016-05-27T15:18:11.000Z</published>
-    <updated>2016-05-29T14:16:10.039Z</updated>
+    <updated>2016-05-30T09:36:55.863Z</updated>
     
     <content type="html">&lt;p&gt;我的博客搭建历程，使用github pages + hexo，域名解析，配置插件&lt;br&gt;&lt;a id=&quot;more&quot;&gt;&lt;/a&gt;&lt;/p&gt;
 &lt;h1 id=&quot;前言&quot;&gt;&lt;a href=&quot;#前言&quot; class=&quot;headerlink&quot; title=&quot;前言&quot;&gt;&lt;/a&gt;前言&lt;/h1&gt;&lt;p&gt;&amp;#160; &amp;#160; &amp;#160; &amp;#160;其实从去年开始我就想搭建一个自己的个人网站了，主要用于记录自己的技术积累和重点知识。但由于自己太懒，能力也太渣，所以就一直没有行动。直到今年，突然发现随着知识积累的增加，有好多重要的内容脑袋都记不下了，有的网页就直接存个标签，但是标签越存越多，但却很少再次去浏览，最后知识还是会淡忘，所以今天痛下决心，还是自己搭个博客吧，以挽回知识的流失，同时也可以向外部分享自己的一些见解。&lt;br&gt;&amp;#160; &amp;#160; &amp;#160; &amp;#160;博客搭建过程也是一波三折，遇到各种坑爹问题，还好我没那么轻易放弃，最终在无数次失败之后终于成功了。&lt;/p&gt;
