@@ -18,18 +18,18 @@
 <meta property="og:url" content="http://windrunnerlihuan.com/2016/05/27/博客搭建历程/index.html">
 <meta property="og:site_name" content="this way, little boy">
 <meta property="og:description" content="我的博客搭建历程，使用github pages + hexo，域名解析，配置插件">
-<meta property="og:image" content="http://windrunnerlihuan.com/images/博客搭建历程/home.png">
-<meta property="og:image" content="http://windrunnerlihuan.com/images/博客搭建历程/file.png">
-<meta property="og:image" content="http://windrunnerlihuan.com/images/博客搭建历程/newstart.png">
-<meta property="og:image" content="http://windrunnerlihuan.com/images/博客搭建历程/newstart.png">
-<meta property="og:image" content="http://windrunnerlihuan.com/images/博客搭建历程/yulist.png">
-<meta property="og:image" content="http://windrunnerlihuan.com/images/博客搭建历程/yudecode.png">
-<meta property="og:image" content="http://windrunnerlihuan.com/images/博客搭建历程/pifu.png">
-<meta property="og:updated_time" content="2016-05-29T09:23:54.337Z">
+<meta property="og:image" content="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/%E5%8D%9A%E5%AE%A2%E6%90%AD%E5%BB%BA%E5%8E%86%E7%A8%8B/home.png">
+<meta property="og:image" content="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/%E5%8D%9A%E5%AE%A2%E6%90%AD%E5%BB%BA%E5%8E%86%E7%A8%8B/file.png">
+<meta property="og:image" content="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/%E5%8D%9A%E5%AE%A2%E6%90%AD%E5%BB%BA%E5%8E%86%E7%A8%8B/newstart.png">
+<meta property="og:image" content="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/%E5%8D%9A%E5%AE%A2%E6%90%AD%E5%BB%BA%E5%8E%86%E7%A8%8B/newstart.png">
+<meta property="og:image" content="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/%E5%8D%9A%E5%AE%A2%E6%90%AD%E5%BB%BA%E5%8E%86%E7%A8%8B/yulist.png">
+<meta property="og:image" content="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/%E5%8D%9A%E5%AE%A2%E6%90%AD%E5%BB%BA%E5%8E%86%E7%A8%8B/yudecode.png">
+<meta property="og:image" content="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/%E5%8D%9A%E5%AE%A2%E6%90%AD%E5%BB%BA%E5%8E%86%E7%A8%8B/pifu.png">
+<meta property="og:updated_time" content="2016-05-29T14:16:10.039Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="博客搭建历程——————Github & Hexo">
 <meta name="twitter:description" content="我的博客搭建历程，使用github pages + hexo，域名解析，配置插件">
-<meta name="twitter:image" content="http://windrunnerlihuan.com/images/博客搭建历程/home.png">
+<meta name="twitter:image" content="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/%E5%8D%9A%E5%AE%A2%E6%90%AD%E5%BB%BA%E5%8E%86%E7%A8%8B/home.png">
   
     <link rel="alternative" href="/atom.xml" title="this way, little boy" type="application/atom+xml">
   
@@ -83,6 +83,23 @@
 
   
   
+
+<!-- 百度自动推送 -->
+<script>
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+<!-- 百度自动推送 END -->
 </head>
 <body>
   <div id="container">
@@ -315,11 +332,11 @@
 <p>&#160; &#160; &#160; &#160;不过要使用hexo必须装node.js，这个easy，直接在官网<a href="https://nodejs.org/en/" target="_blank" rel="external">https://nodejs.org/en/</a> 上下一个，首页就是下载页面，选一个你自己电脑平台对应的，比如我的是windows x64。如果不想看英文呢，还有个中文网站<a href="http://nodejs.cn/" target="_blank" rel="external">http://nodejs.cn/</a> ，几乎是把英文网站翻译了一遍，套路都一样。下载下来之后文件名叫<strong>node-v4.4.4-x64.msi</strong>，双击，一路next，傻瓜式安装。</p>
 <p>接着安装hexo：<br>1）打开控制台（按下win + r，输入cmd，回车）或者直接在git bash界面。<br>输入 npm install -g hexo，然后开始安装hexo。<br>成功后再输入 npm install hexo-deployer-git –save，安装发布工具。</p>
 <p>2）接着进入我们从github上克隆下来的windrunnerlihuan.github.io文件，再次git bash here。<br>输入 hexo init，初始化hexo。<br>完成后我们测试一下：<br>输入hexo server<br>bash控制台会打印出 “[info] Hexo is running at <a href="http://localhost:4000/" target="_blank" rel="external">http://localhost:4000/</a>. Press Ctrl+C to stop.”<br>这时端口4000被打开了，我们能过浏览器打开地址，<a href="http://localhost:4000/" target="_blank" rel="external">http://localhost:4000/</a> 。</p>
-<p><img src="/images/博客搭建历程/home.png" alt="hexo首页默认图片"></p>
+<p><img src="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/%E5%8D%9A%E5%AE%A2%E6%90%AD%E5%BB%BA%E5%8E%86%E7%A8%8B/home.png" alt="hexo首页默认图片"></p>
 <p>出现了默认的网页界面，是不是很容易呢！！</p>
 <hr>
 <h2 id="3-hexo配置"><a href="#3-hexo配置" class="headerlink" title="3. hexo配置"></a>3. hexo配置</h2><p>我们先看一下文件结构</p>
-<p><img src="/images/博客搭建历程/file.png" alt="hexo文件结构图图片"></p>
+<p><img src="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/%E5%8D%9A%E5%AE%A2%E6%90%AD%E5%BB%BA%E5%8E%86%E7%A8%8B/file.png" alt="hexo文件结构图图片"></p>
 <ul>
 <li>scaffolds 脚手架，也就是一个工具模板</li>
 <li>scripts 写文件的js，扩展hexo的功能</li>
@@ -363,28 +380,28 @@
 <p>接下来，我们开始新博客了，创建第一篇博客文章。Hexo建议通过命令行操作，当然你也可以直接在_posts目录下创建文件。</p>
 <p>通过命令创建新文章，在bash 里输入 hexo new “新的开始”<br>在source/_posts目录下就会生成文件：”新的开始.md”。</p>
 <p>然后我们编辑 <strong>新的开始.md</strong>：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line">---</span><br><span class="line">title: 新的开始</span><br><span class="line">date: 2016-05-27 18:44:12</span><br><span class="line">tags:</span><br><span class="line">- 开始</span><br><span class="line">categories: 日志</span><br><span class="line">---</span><br><span class="line"></span><br><span class="line">这是**新的开始**，我用hexo创建了第一篇文章。</span><br><span class="line"></span><br><span class="line">## 引用</span><br><span class="line"># Swig语法</span><br><span class="line">&#123;% blockquote Seth Godin http://sethgodin.typepad.com/seths_blog/2009/07/welcome-to-island-marketing.html Welcome to Island Marketing %&#125;</span><br><span class="line">Every interaction is both precious and an opportunity to delight.</span><br><span class="line">&#123;% endblockquote %&#125;</span><br><span class="line"># Markdown语法</span><br><span class="line">&gt; Every interaction is both precious and an opportunity to delight.</span><br><span class="line"></span><br><span class="line">## 链接</span><br><span class="line"># Swig语法</span><br><span class="line">&#123;% link gank日志 http://gank.io/ true 粉丝日志 %&#125;</span><br><span class="line"># Markdown语法</span><br><span class="line">[gank日志](http://gank.io/)</span><br><span class="line"></span><br><span class="line">## 图片</span><br><span class="line"># Swig语法</span><br><span class="line">&#123;% img /images/新的开始/meizi.jpg 400 600 这是一张图片 %&#125;</span><br><span class="line"># Markdown语法</span><br><span class="line">![这是一张图片](/images/新的开始/meizi.jpg)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">## 公式</span><br><span class="line">$$J\_\alpha(x)=\sum _&#123;m=0&#125;^\infty \frac&#123;(-1)^ m&#125;&#123;m! \, \Gamma (m + \alpha + 1)&#125;&#123;\left(&#123;\frac&#123;x&#125;&#123;2&#125;&#125;\right)&#125;^&#123;2 m + \alpha &#125;$$</span><br><span class="line">感觉非常好。</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line">---</span><br><span class="line">title: 新的开始</span><br><span class="line">date: 2016-05-27 18:44:12</span><br><span class="line">tags:</span><br><span class="line">- 开始</span><br><span class="line">categories: 日志</span><br><span class="line">---</span><br><span class="line"></span><br><span class="line">这是**新的开始**，我用hexo创建了第一篇文章。</span><br><span class="line"></span><br><span class="line">## 引用</span><br><span class="line"># Swig语法</span><br><span class="line">&#123;% blockquote Seth Godin http://sethgodin.typepad.com/seths_blog/2009/07/welcome-to-island-marketing.html Welcome to Island Marketing %&#125;</span><br><span class="line">Every interaction is both precious and an opportunity to delight.</span><br><span class="line">&#123;% endblockquote %&#125;</span><br><span class="line"># Markdown语法</span><br><span class="line">&gt; Every interaction is both precious and an opportunity to delight.</span><br><span class="line"></span><br><span class="line">## 链接</span><br><span class="line"># Swig语法</span><br><span class="line">&#123;% link gank日志 http://gank.io/ true 粉丝日志 %&#125;</span><br><span class="line"># Markdown语法</span><br><span class="line">[gank日志](http://gank.io/)</span><br><span class="line"></span><br><span class="line">## 图片</span><br><span class="line"># Swig语法</span><br><span class="line">&#123;% img /images/新的开始/meizi.jpg 400 600 这是一张图片 %&#125;</span><br><span class="line"># Markdown语法</span><br><span class="line">![这是一张图片](http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/%E6%96%B0%E7%9A%84%E5%BC%80%E5%A7%8B/meizi.jpg)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">## 公式</span><br><span class="line">$$J\_\alpha(x)=\sum _&#123;m=0&#125;^\infty \frac&#123;(-1)^ m&#125;&#123;m! \, \Gamma (m + \alpha + 1)&#125;&#123;\left(&#123;\frac&#123;x&#125;&#123;2&#125;&#125;\right)&#125;^&#123;2 m + \alpha &#125;$$</span><br><span class="line">感觉非常好。</span><br></pre></td></tr></table></figure>
 <p>文章使用markedonw语法写的，还有很多普通或者高级的语法，这个可以问度娘或者谷歌，找找别人的帖子学学。</p>
 <p>用命令行启动本地server：hexo server<br>通过浏览器打开， <a href="http://localhost:4000/" target="_blank" rel="external">http://localhost:4000/</a> ，就出现了我们新写的文章。</p>
-<p><img src="/images/博客搭建历程/newstart.png" alt="新的开始文章预览图"></p>
+<p><img src="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/%E5%8D%9A%E5%AE%A2%E6%90%AD%E5%BB%BA%E5%8E%86%E7%A8%8B/newstart.png" alt="新的开始文章预览图"></p>
 <hr>
 <h2 id="4-发布到Github"><a href="#4-发布到Github" class="headerlink" title="4. 发布到Github"></a>4. 发布到Github</h2><p>1)  静态化处理<br>&#160; &#160; &#160; &#160;写完了文章，我们就可以发布了。要说明的一点是hexo的静态博客框架，那什么是静态博客呢？静态博客，是只包含html, javascript, css文件的网站，没有动态的脚本。虽然我们是用Node进行的开发，但博客的发布后就与Node无关了。在发布之前，我们要通过一条命令，把所有的文章都做静态化处理，就是生成对应的html, javascript, css，使得所有的文章都是由静态文件组成的。</p>
 <p>输入静态化命令 ：hexo generate<br>在本地目录下，会生成一个public的目录，里面包括了所有静态化的文件。</p>
 <p>2) 发布到github<br>接下来，我们把这个博客发布到github。<br>现在检查我们上次填好的_config.yml文件，找到deploy的部分，设置github的项目地址。<br><figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">deploy:</span><br><span class="line">  type: git</span><br><span class="line">  repo: https://github.com/windrunnerlihuan/windrunnerlihuan.github.io.git</span><br></pre></td></tr></table></figure></p>
 <p>然后执行部署命令：hexo deploy<br>中间过程会让你再次输入github账号和密码，输入就行了<br>成功后验证，浏览器里输入上次的地址：<a href="http://windrunnerlihuan.github.io" target="_blank" rel="external">http://windrunnerlihuan.github.io</a></p>
-<p><img src="/images/博客搭建历程/newstart.png" alt="新的开始文章预览图"><br>说明我们成功了</p>
+<p><img src="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/%E5%8D%9A%E5%AE%A2%E6%90%AD%E5%BB%BA%E5%8E%86%E7%A8%8B/newstart.png" alt="新的开始文章预览图"><br>说明我们成功了</p>
 <hr>
 <h2 id="5-独立购买域名与绑定"><a href="#5-独立购买域名与绑定" class="headerlink" title="5. 独立购买域名与绑定"></a>5. 独立购买域名与绑定</h2><p>&#160; &#160; &#160; &#160;有时候我们想做个人博客，想让自己的博客拥有自己的域名，那就得去买个域名了。这里我们可以通过万网申请购买：<a href="https://wanwang.aliyun.com/" target="_blank" rel="external">https://wanwang.aliyun.com/</a>  。流程很简单，基本上一路next。<br>我也斥资45块买了个.com结尾的域名 <strong>windrunnerlihuan.com</strong> 。</p>
-<p><img src="/images/博客搭建历程/yulist.png" alt="域名列表图片"></p>
+<p><img src="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/%E5%8D%9A%E5%AE%A2%E6%90%AD%E5%BB%BA%E5%8E%86%E7%A8%8B/yulist.png" alt="域名列表图片"></p>
 <p>然后就是解析域名了，不过解析之前你得知道你的gihub pages个人主页的ip：<br>首先ping 一下个人主页地址 ，控制台里输入 ping www.windrunnerlihuan.github.io，然后会返回一个ip，然后用这个ip设置我们刚才买的域名解析，也是轻车熟路</p>
-<p><img src="/images/博客搭建历程/yudecode.png" alt="域名解析图片"></p>
+<p><img src="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/%E5%8D%9A%E5%AE%A2%E6%90%AD%E5%BB%BA%E5%8E%86%E7%A8%8B/yudecode.png" alt="域名解析图片"></p>
 <p>最后最重要的是：<br>1）在github项目中，新建一个文件CNAME，文件中写出你要绑定的域名windrunnerlihuan.com。通过浏览器，访问<a href="http://windrunnerlihuan.com，就打开了我们建好的博客站点。" target="_blank" rel="external">http://windrunnerlihuan.com，就打开了我们建好的博客站点。</a><br>2）由于每次执行deploy的时候，github代码仓库所有的文件都会被覆盖，所以我们最好在source目录下创建这个CNAME文件，这样每次部署就不用动手创建了。</p>
 <hr>
 <h2 id="6-个性化功能配置"><a href="#6-个性化功能配置" class="headerlink" title="6. 个性化功能配置"></a>6. 个性化功能配置</h2><p>1） 替换皮肤<br>博客系统流行的原因，是因为他的个人性，而皮肤正式个性化的一种体现。<br>利用hexo替换皮肤，还是比较简单的，3步完成。</p>
 <p><strong>No.1</strong>  找到一个皮肤或者自己开发一个皮肤<br>打开hexo的皮肤列表页面，你可以找到很多的皮肤，网页地址： <a href="https://github.com/tommy351/hexo/wiki/Themes" target="_blank" rel="external">https://github.com/tommy351/hexo/wiki/Themes</a> 。 </p>
 <p><strong>No.2</strong>放到themes目录下<br>比如，我觉得pacman( <a href="https://github.com/A-limon/pacman" target="_blank" rel="external">https://github.com/A-limon/pacman</a> )这个皮肤还不错，我就可以下载皮肤到themes目录下面。<br>通过git命令下载皮肤<br>git clone <a href="https://github.com/A-limon/pacman.git" target="_blank" rel="external">https://github.com/A-limon/pacman.git</a> themes/pacman</p>
 <p><strong>No.3</strong>在_config.yml指定皮肤<br>编辑文件_config.yml，找到theme一行，改成 theme: pacman<br>本地启动hexo服务器，打开浏览器 <a href="http://localhost:4000" target="_blank" rel="external">http://localhost:4000</a></p>
-<p><img src="/images/博客搭建历程/pifu.png" alt="替换了皮肤的博客"></p>
+<p><img src="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/%E5%8D%9A%E5%AE%A2%E6%90%AD%E5%BB%BA%E5%8E%86%E7%A8%8B/pifu.png" alt="替换了皮肤的博客"></p>
 <p>新皮肤的效果还不错吧，然后静态化处理，再发布到github，就完成了站点的改版。</p>
 <p>这里只介绍换皮肤，当然还有其他很多功能，不过对于我来说暂时没多大卵用，如果其他人有需求可以再google或者baidu搜，也都不难，很easy。</p>
 <hr>
@@ -400,7 +417,7 @@
         <p><span>本文标题:</span><a href="/2016/05/27/博客搭建历程/">博客搭建历程——————Github &amp; Hexo</a></p>
         <p><span>文章作者:</span><a href="/" title="回到主页">windrunnerlihuan</a></p>
         <p><span>发布时间:</span>2016-05-27, 23:18:11</p>
-        <p><span>最后更新:</span>2016-05-29, 17:23:54</p>
+        <p><span>最后更新:</span>2016-05-29, 22:16:10</p>
         <p>
             <span>原始链接:</span><a class="post-url" href="/2016/05/27/博客搭建历程/" title="博客搭建历程——————Github &amp; Hexo">http://windrunnerlihuan.com/2016/05/27/博客搭建历程/</a>
             <span class="copy-path" data-clipboard-text="原文: http://windrunnerlihuan.com/2016/05/27/博客搭建历程/　　作者: windrunnerlihuan" title="点击复制文章链接"><i class="fa fa-clipboard"></i></span>
@@ -583,6 +600,8 @@
 </footer>
     </div>
     
+    <script src="/js/GithubRepoWidget.js"></script>
+
 <script data-main="/js/main.js" src="//cdn.bootcss.com/require.js/2.2.0/require.min.js"></script>
 
 
