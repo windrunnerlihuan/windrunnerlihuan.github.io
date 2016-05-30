@@ -75,23 +75,6 @@
 
   
   
-
-<!-- 百度自动推送 -->
-<script>
-(function(){
-    var bp = document.createElement('script');
-    var curProtocol = window.location.protocol.split(':')[0];
-    if (curProtocol === 'https') {
-        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
-    }
-    else {
-        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
-    }
-    var s = document.getElementsByTagName("script")[0];
-    s.parentNode.insertBefore(bp, s);
-})();
-</script>
-<!-- 百度自动推送 END -->
 </head>
 <body>
   <div id="container">
@@ -340,6 +323,27 @@
   <li><a href="/tags/博客搭建/" style="font-size: 16px; color: #f00">博客搭建</a></li> <li><a href="/tags/开始/" style="font-size: 16px; color: #f00">开始</a></li>
  </ul>
 </div>
+    <script type="text/javascript">
+      window.onload = function() {
+        try {
+          TagCanvas.Start('my3DTags','tags',{
+            textFont: null,
+            textColour: null,
+            textHeight: 25,
+            outlineColour: '#aa99dd',
+            weight: true,
+            reverse: true,
+            depth: 0.8,
+            maxSpeed: 0.09,
+            bgRadius: 1,
+            freezeDecel: true
+          });
+        } catch(e) {
+          // something went wrong, hide the canvas container
+          document.getElementById('myTags').style.display = 'none';
+        }
+      };
+    </script>
 <style type="text/css">
     .category-list li, .tags li{
         display: inline;
@@ -395,27 +399,7 @@
     }
 </style>
 
-    <script type="text/javascript">
-      window.onload = function() {
-        try {
-          TagCanvas.Start('my3DTags','tags',{
-            textFont: null,
-            textColour: null,
-            textHeight: 25,
-            outlineColour: '#aa99dd',
-            weight: true,
-            reverse: true,
-            depth: 0.8,
-            maxSpeed: 0.09,
-            bgRadius: 1,
-            freezeDecel: true
-          });
-        } catch(e) {
-          // something went wrong, hide the canvas container
-          document.getElementById('myTags').style.display = 'none';
-        }
-      };
-    </script>
+
 
 
           
