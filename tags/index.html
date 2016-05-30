@@ -10,17 +10,17 @@
   <meta charset="utf-8">
   <meta name="baidu-site-verification" content="zzKGwrFJYw" />
   
-  <title>分类 &amp; 标签 | this way, little boy</title>
+  <title>标签云 | this way, little boy</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
   <meta name="description">
 <meta property="og:type" content="website">
-<meta property="og:title" content="分类 & 标签">
+<meta property="og:title" content="标签云">
 <meta property="og:url" content="http://windrunnerlihuan.com/tags/index.html">
 <meta property="og:site_name" content="this way, little boy">
 <meta property="og:description">
-<meta property="og:updated_time" content="2016-05-28T21:35:51.871Z">
+<meta property="og:updated_time" content="2016-05-30T18:48:20.857Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="分类 & 标签">
+<meta name="twitter:title" content="标签云">
 <meta name="twitter:description">
   
     <link rel="alternative" href="/atom.xml" title="this way, little boy" type="application/atom+xml">
@@ -181,7 +181,7 @@
                     <nav class="header-nav">
                         <ul class="social">
                             
-                                <a class="fa Email" target="_blank" href="/windrunnerlihuan@gmail.com" title="Email"></a>
+                                <a class="fa Email" target="_blank" href="/937874128@qq.com" title="Email"></a>
                             
                                 <a class="fa GitHub" target="_blank" href="https://github.com/windrunnerlihuan" title="GitHub"></a>
                             
@@ -203,9 +203,9 @@
                 <section class="switch-part switch-part3">
                     <div id="js-friends">
                     
-                      <a target="_blank" class="main-nav-link switch-friends-link" href="http://gank.io/">干·妹子</a>
+                      <a target="_blank" class="main-nav-link switch-friends-link" href="http://gank.io/">干货集中营</a>
                     
-                      <a target="_blank" class="main-nav-link switch-friends-link" href="http://www.jcodecraeer.com/">泡网</a>
+                      <a target="_blank" class="main-nav-link switch-friends-link" href="http://www.jcodecraeer.com/">泡在网上的日子</a>
                     
                       <a target="_blank" class="main-nav-link switch-friends-link" href="http://trinea.cn/">Trinea</a>
                     
@@ -259,7 +259,7 @@
             <nav class="header-nav">
                         <ul class="social">
                             
-                                <a class="fa Email" target="_blank" href="/windrunnerlihuan@gmail.com" title="Email"></a>
+                                <a class="fa Email" target="_blank" href="/937874128@qq.com" title="Email"></a>
                             
                                 <a class="fa GitHub" target="_blank" href="https://github.com/windrunnerlihuan" title="GitHub"></a>
                             
@@ -275,7 +275,7 @@
   
     <div class="article-meta">
       <a href="/tags/index.html" class="article-date">
-      <time datetime="2016-05-28T21:35:52.021Z" itemprop="datePublished">2016-05-29</time>
+      <time datetime="2016-05-30T18:48:20.904Z" itemprop="datePublished">2016-05-31</time>
 </a>
     </div>
   
@@ -288,7 +288,7 @@
         
   
     <h1 class="article-title" itemprop="name">
-      分类 &amp; 标签
+      标签云
     </h1>
   
 
@@ -328,32 +328,58 @@
 <br>
 <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/日志/">日志</a><span class="category-list-count">2</span></li></ul>
 
+<script src="/js/tagcanvas.js" type="text/javascript"></script>
+
 <p class="count"></p>
 
-<div class="tags">
-    <a href="/tags/博客搭建/" style="font-size: 16px; color: #808080">博客搭建</a> <a href="/tags/开始/" style="font-size: 16px; color: #808080">开始</a>
+<div class="tags" id="myTags">
+ <canvas width="350" height="350" id="my3DTags">
+    <p>Anything in here will be replaced on browsers that support the canvas element</p>
+</canvas>
 </div>
-<style>
-    .category-list li{
-        display: inline-block;
-        margin: 0 1em .5em 0;
-        padding: 4px;
+<div class="tags" id="tags">
+ <ul>
+  <li><a href="/tags/博客搭建/" style="font-size: 16px; color: #00f">博客搭建</a></li> <li><a href="/tags/开始/" style="font-size: 16px; color: #00f">开始</a></li>
+ </ul>
+</div>
+<style type="text/css">
+    .category-list li, .tags li{
+        display: inline;
+        font-size: 1.2em;
+        margin-right: 1em;
+        line-height: 60px;
         border: 1px solid lightgray;
-        font-size: 1.2rem;
+        padding: 6px;
     }
-    .category-list a { color: gray; }
-    .category-list-item:hover a {
+    .category-list a {
+        color: gray;
+    }
+    .category-list:hover a {
         color: gray;
         text-decoration: none;
+        font-weight: bold;
     }
     .category-list-count {
         margin-left: 2px;
-        font-size: .9rem;
+        font-size: .9em;
     }
-    .article-entry ul li:before{ display: none; }
-    .article-inner { text-align: center; }
+    .article-entry ul li:before{
+        display: none;
+    }
+    .article-inner  {
+        text-align: center;
+    }
+    .article-meta {
+        display: none;
+    }
+    .article-header {
+        padding-right: 35px;
+    }
+    #container .article .article-title {
+        padding-right: 0;
+    }
     .tags {
-        max-width: 42em;
+        max-width: 40em;
         margin: 2em auto;
         margin-top: 0em;
     }
@@ -361,24 +387,45 @@
         margin-right: 1em;
         line-height: 65px;
         border-bottom: 1px solid gray;
-        white-space: nowrap;
-        transition: border-bottom .5s;
     }
     .tags a:hover {
-        border-bottom: 3px dotted gray;
+        font-weight: bold;
         text-decoration: none;
     }
-    #count > span {
-        margin: auto .2em;
-        font-weight: bold;
+    .category-list-child {
+        display: none;
     }
 </style>
 
+    <script type="text/javascript">
+      window.onload = function() {
+        try {
+          TagCanvas.Start('my3DTags','tags',{
+            textFont: 'Georgia,Optima',
+            textColour: null,
+            outlineColour: '#aa99dd',
+            weight: true,
+            reverse: true,
+            depth: 0.8,
+            maxSpeed: 0.09,
+            bgRadius: 1,
+            freezeDecel: true,
+            zoomMax: 4.0,
+            zoomMin: 1.0
+
+          });
+        } catch(e) {
+          // something went wrong, hide the canvas container
+          document.getElementById('myTags').style.display = 'none';
+        }
+      };
+    </script>
+
 <!-- Count tags and categories -->
-<p id="count">
+<!--<p id="count">
          <span><script>document.write($(".category-list-item").length)</script></span>Categories,
          <span><script>document.write($(".tags > a").length)</script></span>Tags
-</p>
+</p>-->
 <script>
     $('#count').appendTo('.count');
 </script>
@@ -412,7 +459,7 @@
         </div>
         <script>
             window._bd_share_config={
-                "common":{"bdSnsKey":{},"bdText":"分类 & 标签　| this way, little boy　","bdMini":"2","bdMiniList":false,"bdPic":"","bdStyle":"0","bdSize":"24"},"share":{}};with(document)0[(getElementsByTagName('head')[0]||body).appendChild(createElement('script')).src='http://bdimg.share.baidu.com/static/api/js/share.js?v=89860593.js?cdnversion='+~(-new Date()/36e5)];
+                "common":{"bdSnsKey":{},"bdText":"标签云　| this way, little boy　","bdMini":"2","bdMiniList":false,"bdPic":"","bdStyle":"0","bdSize":"24"},"share":{}};with(document)0[(getElementsByTagName('head')[0]||body).appendChild(createElement('script')).src='http://bdimg.share.baidu.com/static/api/js/share.js?v=89860593.js?cdnversion='+~(-new Date()/36e5)];
         </script>
     
 
