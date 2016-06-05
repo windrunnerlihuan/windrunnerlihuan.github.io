@@ -9,7 +9,7 @@
       <content type="html"><![CDATA[<p>&#160; &#160; &#160; &#160;以下内容来自<code>@高可用架构</code>，这次当一回技术的搬运工，为大家分享七牛创始人之一————徐立的<code>移动直播技术秒开优化经验</code>。<br><a id="more"></a></p>
 <hr>
 <blockquote>
-<p><div align="center"><img src="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/%E7%A7%BB%E5%8A%A8%E7%9B%B4%E6%92%AD%E6%8A%80%E6%9C%AF%E7%A7%92%E5%BC%80%E4%BC%98%E5%8C%96%E7%BB%8F%E9%AA%8C/head.jpg" title="徐立"></div><br>&#160; &#160; &#160; &#160;徐立，七牛创始合伙人兼产品副总裁，负责七牛直播云的整体研发，是国内 Go / Docker / Container 技术早期布道者，&gt;Go / Containers / Distributed Systems 技术的忠实爱好者和实践者。曾合著国内第一本 Go 语言图书《Go 语言编程》，翻&gt;译《Go 语言程序设计》。</p>
+<p><div align="center"><img src="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/%E7%A7%BB%E5%8A%A8%E7%9B%B4%E6%92%AD%E6%8A%80%E6%9C%AF%E7%A7%92%E5%BC%80%E4%BC%98%E5%8C%96%E7%BB%8F%E9%AA%8C/head.jpg" title="徐立"></div><br>&#160; &#160; &#160; &#160;徐立，七牛创始合伙人兼产品副总裁，负责七牛直播云的整体研发，是国内 Go / Docker / Container 技术早期布道者，&gt;Go / Containers / Distributed Systems 技术的忠实爱好者和实践者。曾合著国内第一本 Go 语言图书《Go 语言编程》，翻译《Go 语言程序设计》。</p>
 </blockquote>
 <p>&#160; &#160; &#160; &#160;现今移动直播技术上的挑战要远远难于传统设备或电脑直播，其完整的处理环节包括但不限于：音视频采集、美颜/滤镜/特效处理、编码、封包、推流、转码、分发、解码/渲染/播放等。</p>
 <p>直播常见的问题包括：</p>
