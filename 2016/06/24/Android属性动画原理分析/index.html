@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html >
+<head>
+  
+    <!--[if lt IE 9]>
+        <style>body {display: none; background: none !important} </style>
+        <meta http-equiv="Refresh" Content="0; url=//outdatedbrowser.com/" />
+    <![endif]-->
+
+  <meta charset="utf-8">
+  <meta name="baidu-site-verification" content="zzKGwrFJYw" />
+  
+  <title>Android属性动画流程分析 | April is your lie</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="&amp;#160; &amp;#160; &amp;#160; &amp;#160;摘要：Google在Android3.0之后给我们带来了属性动画，是真正意义上的改变属性。对比以前的Tween动画，只能作用于View，而且Tween动画改变的只是View的绘制效果，View真正的属性并没有改变。比如，一个按钮做平移的动画，虽然按钮的确做了平移，但按钮可点击的区域并没随着平移而改变，还是在原来的位置。而属性动画则可以改变真">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android属性动画流程分析">
+<meta property="og:url" content="http://windrunnerlihuan.com/2016/06/24/Android属性动画原理分析/index.html">
+<meta property="og:site_name" content="April is your lie">
+<meta property="og:description" content="&amp;#160; &amp;#160; &amp;#160; &amp;#160;摘要：Google在Android3.0之后给我们带来了属性动画，是真正意义上的改变属性。对比以前的Tween动画，只能作用于View，而且Tween动画改变的只是View的绘制效果，View真正的属性并没有改变。比如，一个按钮做平移的动画，虽然按钮的确做了平移，但按钮可点击的区域并没随着平移而改变，还是在原来的位置。而属性动画则可以改变真">
+<meta property="og:image" content="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E5%B1%9E%E6%80%A7%E5%8A%A8%E7%94%BB%E6%B5%81%E7%A8%8B%E5%88%86%E6%9E%90/meizi.jpg">
+<meta property="og:updated_time" content="2016-06-24T01:36:23.051Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Android属性动画流程分析">
+<meta name="twitter:description" content="&amp;#160; &amp;#160; &amp;#160; &amp;#160;摘要：Google在Android3.0之后给我们带来了属性动画，是真正意义上的改变属性。对比以前的Tween动画，只能作用于View，而且Tween动画改变的只是View的绘制效果，View真正的属性并没有改变。比如，一个按钮做平移的动画，虽然按钮的确做了平移，但按钮可点击的区域并没随着平移而改变，还是在原来的位置。而属性动画则可以改变真">
+<meta name="twitter:image" content="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E5%B1%9E%E6%80%A7%E5%8A%A8%E7%94%BB%E6%B5%81%E7%A8%8B%E5%88%86%E6%9E%90/meizi.jpg">
+  
+    <link rel="alternative" href="/atom.xml" title="April is your lie" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/img/favicon.png">
+  
+  
+      <link href="//cdn.bootcss.com/animate.css/3.5.1/animate.min.css" rel="stylesheet">
+  
+  
+      <script src="//cdn.bootcss.com/pace/1.0.2/pace.min.js"></script>
+      <link href="//cdn.bootcss.com/pace/1.0.2/themes/blue/pace-theme-minimal.css" rel="stylesheet">
+  
+  <link rel="stylesheet" href="/css/style.css">
+  
+  <link href="//cdn.bootcss.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet">
+  <link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
+  
+  
+      <link href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.min.css" rel="stylesheet">
+  
+  <script src="//cdn.bootcss.com/jquery/2.2.4/jquery.min.js"></script>
+  <script src="//cdn.bootcss.com/clipboard.js/1.5.10/clipboard.min.js"></script>
+  <script>
+      var yiliaConfig = {
+          fancybox: true,
+          animate: true,
+          isHome: false,
+          isPost: true,
+          isArchive: false,
+          isTag: false,
+          isCategory: false,
+          open_in_new: false,
+          fancybox_js: "//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.min.js",
+          scrollreveal: "//cdn.bootcss.com/scrollReveal.js/3.1.4/scrollreveal.min.js",
+          search: true
+      }
+  </script>
+
+  
+      <script>
+          yiliaConfig.jquery_ui = [true, "//cdn.bootcss.com/jqueryui/1.10.4/jquery-ui.min.js", "//cdn.bootcss.com/jqueryui/1.10.4/css/jquery-ui.min.css"];
+      </script>
+  
+
+  
+      <script>
+          yiliaConfig.rootUrl = "/";
+      </script>
+  
+
+  
+  
+  <!-- 自动推送工具代码 start -->
+  <script>
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+<!-- 自动推送工具代码 end -->
+</head>
+<body>
+  <div id="container">
+    <div class="left-col">
+    <div class="overlay"></div>
+<div class="intrude-less">
+    <header id="header" class="inner">
+        <a href="/" class="profilepic">
+            <img src="/img/avatar.jpg" class="animated zoomIn">
+        </a>
+        <hgroup>
+          <h1 class="header-author"><a href="/">windrunnerlihuan</a></h1>
+        </hgroup>
+
+        
+        <p class="header-subtitle">四月是你的谎言</p>
+        
+
+        
+            <form id="search-form">
+            <input type="text" id="local-search-input" name="q" results="0" placeholder="search..." class="search form-control" autocomplete="off" autocorrect="off" searchonload="undefined" />
+            <i class="fa fa-times" onclick="resetSearch()"></i>
+            </form>
+            <div id="local-search-result"></div>
+            <p class='no-result'>No results found <i class='fa fa-spinner fa-pulse'></i></p>
+        
+
+
+        
+            <div id="switch-btn" class="switch-btn">
+                <div class="icon">
+                    <div class="icon-ctn">
+                        <div class="icon-wrap icon-house" data-idx="0">
+                            <div class="birdhouse"></div>
+                            <div class="birdhouse_holes"></div>
+                        </div>
+                        <div class="icon-wrap icon-ribbon hide" data-idx="1">
+                            <div class="ribbon"></div>
+                        </div>
+                        
+                        <div class="icon-wrap icon-link hide" data-idx="2">
+                            <div class="loopback_l"></div>
+                            <div class="loopback_r"></div>
+                        </div>
+                        
+                        
+                        <div class="icon-wrap icon-me hide" data-idx="3">
+                            <div class="user"></div>
+                            <div class="shoulder"></div>
+                        </div>
+                        
+                    </div>
+                    
+                </div>
+                <div class="tips-box hide">
+                    <div class="tips-arrow"></div>
+                    <ul class="tips-inner">
+                        <li>Menu</li>
+                        <li>Tags</li>
+                        
+                        <li>Friends</li>
+                        
+                        
+                        <li>About Me</li>
+                        
+                    </ul>
+                </div>
+            </div>
+        
+
+        <div id="switch-area" class="switch-area">
+            <div class="switch-wrap">
+                <section class="switch-part switch-part1">
+                    <nav class="header-menu">
+                        <ul>
+                        
+                            <li><a href="/">主页</a></li>
+                        
+                            <li><a href="/archives/">时间轴</a></li>
+                        
+                            <li><a href="/tags/">标签云</a></li>
+                        
+                            <li><a href="/about/">关于我</a></li>
+                        
+                        </ul>
+                    </nav>
+                    <nav class="header-nav">
+                        <ul class="social">
+                            
+                                <a class="fa Email" target="_blank" href="/937874128@qq.com" title="Email"></a>
+                            
+                                <a class="fa GitHub" target="_blank" href="https://github.com/windrunnerlihuan" title="GitHub"></a>
+                            
+                                <a class="fa RSS" target="_blank" href="/atom.xml" title="RSS"></a>
+                            
+                        </ul>
+                    </nav>
+                </section>
+                
+                
+                <section class="switch-part switch-part2">
+                    <div class="widget tagcloud" id="js-tagcloud">
+                        <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/Binder/">Binder</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/IPC/">IPC</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/博客搭建/">博客搭建</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/属性动画/">属性动画</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/开始/">开始</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/移动直播/">移动直播</a></li></ul>
+                    </div>
+                </section>
+                
+                
+                
+                <section class="switch-part switch-part3">
+                    <div id="js-friends">
+                    
+                      <a target="_blank" class="main-nav-link switch-friends-link" href="http://gank.io/">干货集中营</a>
+                    
+                      <a target="_blank" class="main-nav-link switch-friends-link" href="http://www.jcodecraeer.com/">泡在网上的日子</a>
+                    
+                      <a target="_blank" class="main-nav-link switch-friends-link" href="http://trinea.cn/">Trinea</a>
+                    
+                    </div>
+                </section>
+                
+
+                
+                
+                <section class="switch-part switch-part4">
+                
+                    <div id="js-aboutme">windrunnerlihuan，开发小菜一枚，坐标位于上海。</div>
+                </section>
+                
+            </div>
+        </div>
+    </header>                
+</div>
+    </div>
+    <div class="mid-col">
+      <nav id="mobile-nav">
+      <div class="overlay">
+          <div class="slider-trigger"></div>
+          <h1 class="header-author js-mobile-header hide"><a href="/" title="回到主页">windrunnerlihuan</a></h1>
+      </div>
+    <div class="intrude-less">
+        <header id="header" class="inner">
+            <a href="/" class="profilepic">
+                <img src="/img/avatar.jpg" class="animated zoomIn">
+            </a>
+            <hgroup>
+              <h1 class="header-author"><a href="/" title="回到主页">windrunnerlihuan</a></h1>
+            </hgroup>
+            
+            <p class="header-subtitle">四月是你的谎言</p>
+            
+            <nav class="header-menu">
+                <ul>
+                
+                    <li><a href="/">主页</a></li>
+                
+                    <li><a href="/archives/">时间轴</a></li>
+                
+                    <li><a href="/tags/">标签云</a></li>
+                
+                    <li><a href="/about/">关于我</a></li>
+                
+                <div class="clearfix"></div>
+                </ul>
+            </nav>
+            <nav class="header-nav">
+                        <ul class="social">
+                            
+                                <a class="fa Email" target="_blank" href="/937874128@qq.com" title="Email"></a>
+                            
+                                <a class="fa GitHub" target="_blank" href="https://github.com/windrunnerlihuan" title="GitHub"></a>
+                            
+                                <a class="fa RSS" target="_blank" href="/atom.xml" title="RSS"></a>
+                            
+                        </ul>
+            </nav>
+        </header>                
+    </div>
+    <link class="menu-list" tags="Tags" friends="Friends" about="About Me"/>
+</nav>
+      <div class="body-wrap"><article id="post-Android属性动画原理分析" class="article article-type-post" itemscope itemprop="blogPost">
+  
+    <div class="article-meta">
+      <a href="/2016/06/24/Android属性动画原理分析/" class="article-date">
+      <time datetime="2016-06-23T16:00:02.000Z" itemprop="datePublished">2016-06-24</time>
+</a>
+    </div>
+  
+  <div class="article-inner">
+    
+      <input type="hidden" class="isFancy" />
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      Android属性动画流程分析
+    </h1>
+  
+
+      </header>
+      
+      <div class="article-info article-info-post">
+        
+    <div class="article-category tagcloud">
+    <a class="article-category-link" href="/categories/Android技术点/">Android技术点</a>
+    </div>
+
+
+        
+    <div class="article-tag tagcloud">
+        <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/属性动画/">属性动画</a></li></ul>
+    </div>
+
+        <div class="clearfix"></div>
+      </div>
+      
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+          
+        <hr>
+<blockquote>
+<p>&#160; &#160; &#160; &#160;<strong>摘要</strong>：Google在Android3.0之后给我们带来了属性动画，是真正意义上的改变属性。对比以前的Tween动画，只能作用于View，而且Tween动画改变的只是View的绘制效果，View真正的属性并没有改变。比如，一个按钮做平移的动画，虽然按钮的确做了平移，但按钮可点击的区域并没随着平移而改变，还是在原来的位置。而属性动画则可以改变真正的属性，从而实现按钮平移时点击区域也跟着平移。通俗点说，属性动画其实就是在一定时间内，按照一定规律来改变对象的属性，从而使对象展现出动画效果。</p>
+</blockquote>
+<a id="more"></a>
+<h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>&#160; &#160; &#160; &#160; Google在Android3.0之后给我们带来了属性动画，是真正意义上的改变属性。对比以前的Tween动画，只能作用于View，而且Tween动画改变的只是View的绘制效果，View真正的属性并没有改变。比如，一个按钮做平移的动画，虽然按钮的确做了平移，但按钮可点击的区域并没随着平移而改变，还是在原来的位置。而属性动画则可以改变真正的属性，从而实现按钮平移时点击区域也跟着平移。通俗点说，属性动画其实就是在一定时间内，按照一定规律来改变对象的属性，从而使对象展现出动画效果。</p>
+<h2 id="基本用法"><a href="#基本用法" class="headerlink" title="基本用法"></a>基本用法</h2><p>&#160; &#160; &#160; &#160;我们要了解属性动画的原理，首先要知道他的用法。先整一个比较大众的吧：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">ObjectAnimator  </span><br><span class="line">  .ofInt(target,propName,values[])  </span><br><span class="line">  .setInterpolator(LinearInterpolator)  </span><br><span class="line">  .setEvaluator(IntEvaluator)  </span><br><span class="line">  .setDuration(<span class="number">1000</span>)  </span><br><span class="line">  .start();</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;这个应该都会吧，设置目标view，作用的属性，动画时长；设置插值器、估值器，这两个玩意设置最多的应该是插值器，估值器设置的应该比较少。这两个东西我们下面会逐一跟踪其踪迹；（当然还有对动画过程的回调监听，比如addListener，然后监听onAnimationStart、onAnimationEnd等等回调。不过我们这里没设，下面篇幅为讲到此处功能）；最后start,动画开始。</p>
+<h2 id="猜想与假设"><a href="#猜想与假设" class="headerlink" title="猜想与假设"></a>猜想与假设</h2><p>&#160; &#160; &#160; &#160; 一般的对象中的某个属性，如果要改变其值，要么是这个属性对外<strong>public</strong>，拿到对象后可以直接修改；要么这个对象的类有自己的<strong>get/set</strong>方法。但这都是理想的情况，如果不满足以上条件，如果想改变对象属性的值，就只能通过<strong>反射</strong>了。我们先这样假设，然后往下逐一验证。</p>
+<p>&#160; &#160; &#160; &#160; 再者属性动画，我们断章取义一下，既然有动画这个词在内，就会有在规定时间内按固定规则对象属性的改变，就像函数一样，y=f(x)。属性动画也一样，y好比属性值property，x好比时间time，f关系就是插值器/估值器（Interpolator/TypeEvaluator）的作用。（先这么假设吧，是否合理我们往下深挖就知道了）</p>
+<h1 id="流程分析"><a href="#流程分析" class="headerlink" title="流程分析"></a>流程分析</h1><p>&#160; &#160; &#160; &#160; 我们按着上述猜测，然后进入验证阶段，直接整源码吧。源码文件不难找，并且都在两个固定目录，frameworks\base\core\java\android\animation\ 和 frameworks\base\core\java\android\view\animation\ 下。</p>
+<blockquote>
+<p>&#160; &#160; &#160; &#160; 阅读源码不一定要把 <a href="http://source.android.com/source/index.html" target="_blank" rel="external">源码</a> 整个下载下来，比如有的在SDK里本来就有的文件，用 AS 或者 Eclipse 都可以直接看。不过我推荐有时间还是把重要的源码都下载下来，用<strong>Source Insight</strong> 或者 <strong>Sublime Text</strong> 来查看。<br>&#160; &#160; &#160; &#160;其次，阅读源码一方面能让我们更清晰的理解Android SDK提供的API的流程原理，有助于开发人员更好的使用这些功能，遇到坑会有更好的解决方案。另一方面，也能够掌握其中的思想，因为一切业务都是思想的实体化，掌握了思想，才能在以后遇到问题或者需求的时候，能很快从脑中勾勒出解决思路，而不至于一脸懵逼无从下手。</p>
+</blockquote>
+<p>&#160; &#160; &#160; &#160; 根据上述例子，一步一步分析。</p>
+<h2 id="主流程源码"><a href="#主流程源码" class="headerlink" title="主流程源码"></a>主流程源码</h2><h3 id="ofInt"><a href="#ofInt" class="headerlink" title="ofInt"></a>ofInt</h3><p>&#160; &#160; &#160; &#160;先从ofInt入手，例如这么用：.ofInt(view, “translationX”, 100)。挑一个简单明了的重载方法，其实其他的也是相同的道理。<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> ObjectAnimator <span class="title">ofInt</span><span class="params">(Object target, String propertyName, <span class="keyword">int</span>... values)</span> </span>&#123;</span><br><span class="line">    ObjectAnimator anim = <span class="keyword">new</span> ObjectAnimator(target, propertyName);</span><br><span class="line">    anim.setIntValues(values);</span><br><span class="line">    <span class="keyword">return</span> anim;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;new了一个ObjectAnimator，构造方法传入target和propName，这么不难。<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line">   <span class="function"><span class="keyword">private</span> <span class="title">ObjectAnimator</span><span class="params">(Object target, String propertyName)</span> </span>&#123;</span><br><span class="line">       setTarget(target);</span><br><span class="line">       setPropertyName(propertyName);</span><br><span class="line">   &#125;</span><br><span class="line"><span class="comment">//有两个方法，以此往下</span></span><br><span class="line"><span class="comment">//设置目标对象target赋给属性动画全局变量mTarget </span></span><br><span class="line">   <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">setTarget</span><span class="params">(@Nullable Object target)</span> </span>&#123;</span><br><span class="line">       <span class="keyword">final</span> Object oldTarget = getTarget();</span><br><span class="line">       <span class="keyword">if</span> (oldTarget != target) &#123;</span><br><span class="line">           mTarget = target == <span class="keyword">null</span> ? <span class="keyword">null</span> : <span class="keyword">new</span> WeakReference&lt;Object&gt;(target);</span><br><span class="line">           <span class="comment">// New target should cause re-initialization prior to starting</span></span><br><span class="line">           mInitialized = <span class="keyword">false</span>;</span><br><span class="line">       &#125;</span><br><span class="line">   &#125;</span><br><span class="line">   <span class="comment">//同上，将propertyName赋给mPropertyName </span></span><br><span class="line">   <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">setPropertyName</span><span class="params">(@NonNull String propertyName)</span> </span>&#123;</span><br><span class="line">       <span class="comment">// mValues could be null if this is being constructed piecemeal. Just record the</span></span><br><span class="line">       <span class="comment">// propertyName to be used later when setValues() is called if so.</span></span><br><span class="line">       <span class="comment">// 此时mValues为空，可以忽略判断逻辑</span></span><br><span class="line">       <span class="keyword">if</span> (mValues != <span class="keyword">null</span>) &#123;</span><br><span class="line">           PropertyValuesHolder valuesHolder = mValues[<span class="number">0</span>];</span><br><span class="line">           String oldName = valuesHolder.getPropertyName();</span><br><span class="line">           valuesHolder.setPropertyName(propertyName);</span><br><span class="line">           mValuesMap.remove(oldName);</span><br><span class="line">           mValuesMap.put(propertyName, valuesHolder);</span><br><span class="line">       &#125;</span><br><span class="line">       <span class="comment">//赋值给全局变量</span></span><br><span class="line">       mPropertyName = propertyName;</span><br><span class="line">       <span class="comment">// New property/values/target should cause re-initialization prior to starting</span></span><br><span class="line">       mInitialized = <span class="keyword">false</span>;</span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;记录完target和propName，调用setIntValues。<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">setIntValues</span><span class="params">(<span class="keyword">int</span>... values)</span> </span>&#123;</span><br><span class="line"> <span class="comment">// 此时mValues为空</span></span><br><span class="line">    <span class="keyword">if</span> (mValues == <span class="keyword">null</span> || mValues.length == <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="comment">// No values yet - this animator is being constructed piecemeal. Init the values with</span></span><br><span class="line">        <span class="comment">// whatever the current propertyName is</span></span><br><span class="line">        <span class="keyword">if</span> (mProperty != <span class="keyword">null</span>) &#123; <span class="comment">// mProperty 也为空</span></span><br><span class="line">            setValues(PropertyValuesHolder.ofInt(mProperty, values));</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123; <span class="comment">//因此会走到这里</span></span><br><span class="line">            setValues(PropertyValuesHolder.ofInt(mPropertyName, values));</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">super</span>.setIntValues(values);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;最后会走到setValues(PropertyValuesHolder.ofInt(mPropertyName, values)); 这里把我们传入的propName和values作为参数，又调用了PropertyValuesHolder的ofInt方法，我们先看里面这个，外面的那个setValues待会儿再看。<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> PropertyValuesHolder <span class="title">ofInt</span><span class="params">(String propertyName, <span class="keyword">int</span>... values)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> IntPropertyValuesHolder(propertyName, values);</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">//IntPropertyValuesHolder是PropertyValuesHolder的子类，也是个内部类</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">IntPropertyValuesHolder</span><span class="params">(String propertyName, <span class="keyword">int</span>... values)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">super</span>(propertyName);<span class="comment">//这里会调用父类的构造</span></span><br><span class="line"> setIntValues(values);</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">//父类一个参数构造方法如下，将propertyName赋给全局变量mPropertyName </span></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="title">PropertyValuesHolder</span><span class="params">(String propertyName)</span> </span>&#123;</span><br><span class="line">    mPropertyName = propertyName;</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">setIntValues</span><span class="params">(<span class="keyword">int</span>... values)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">super</span>.setIntValues(values);<span class="comment">//同样会调用父类的setIntValues方法</span></span><br><span class="line">    mIntKeyframes = (Keyframes.IntKeyframes) mKeyframes;<span class="comment">// 将父类方法得到的mKeyframes 再付给mIntKeyframes </span></span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">//父类setIntValues方法，为mValueType 赋值，同时为利用参数values调用KeyframeSet.ofInt(values)为mKeyframes赋值 </span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">setIntValues</span><span class="params">(<span class="keyword">int</span>... values)</span> </span>&#123;</span><br><span class="line">    mValueType = <span class="keyword">int</span>.class;</span><br><span class="line">    mKeyframes = KeyframeSet.ofInt(values);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160; 我们可以看到，PropertyValuesHolder的ofInt方法让器内部存储了我们的propName，然后存储了我们的mValueType，即 int.class ，并且保存了一个新的变量 <strong>mIntKeyframes</strong>。<br> &#160; &#160; &#160; &#160; 这个<strong>mIntKeyframes</strong>由 KeyframeSet.ofInt(values) 得到，顾名思义，这玩意儿应该是关键帧之类的意思吧。我们联想一下关键帧，视频不就是一帧一帧的画面组成么，其中有参考帧和关键帧，且参考帧解码也依赖于关键帧，因此关键帧是视频图像流畅完整的保证（扯远了，我们先这么理解吧，然后再验证我们的猜测）。<br>  &#160; &#160; &#160; &#160; <strong>mIntKeyframes</strong>类型为Keyframes，是个接口，实现类型为KeyframeSet。看着名字应该是关键帧集合吧，每个关键帧应该保存动画time/value(时间/值)对。那么继续验证，找到KeyframeSet.ofInt(values)方法：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> KeyframeSet <span class="title">ofInt</span><span class="params">(<span class="keyword">int</span>... values)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">int</span> numKeyframes = values.length;</span><br><span class="line">    IntKeyframe keyframes[] = <span class="keyword">new</span> IntKeyframe[Math.max(numKeyframes,<span class="number">2</span>)];<span class="comment">//最少应该有2帧</span></span><br><span class="line">    <span class="keyword">if</span> (numKeyframes == <span class="number">1</span>) &#123;<span class="comment">//如果只传了一个参数，比如我们前面给"translationX"属性的values传入移动300            </span></span><br><span class="line">     keyframes[<span class="number">0</span>] = (IntKeyframe) Keyframe.ofInt(<span class="number">0f</span>);<span class="comment">// 起始帧，属性保持原样</span></span><br><span class="line">        keyframes[<span class="number">1</span>] = (IntKeyframe) Keyframe.ofInt(<span class="number">1f</span>, values[<span class="number">0</span>]);<span class="comment">//结束帧，直接到达结果</span></span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;<span class="comment">//可以设置某个属性的多个值，比如动态改变view的alpha值，例如1.0，0.8，0.4......</span></span><br><span class="line">        keyframes[<span class="number">0</span>] = (IntKeyframe) Keyframe.ofInt(<span class="number">0f</span>, values[<span class="number">0</span>]);<span class="comment">//起始帧</span></span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">1</span>; i &lt; numKeyframes; ++i) &#123;<span class="comment">//后续n帧</span></span><br><span class="line">         <span class="comment">//注意里面有个么一个片段:(float) i / (numKeyframes - 1)，这是按values个数等比例划分的</span></span><br><span class="line">            keyframes[i] =</span><br><span class="line">                    (IntKeyframe) Keyframe.ofInt((<span class="keyword">float</span>) i / (numKeyframes - <span class="number">1</span>), values[i]);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> IntKeyframeSet(keyframes);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160; 这里应该看到KeyframeSet.ofInt(values)方法，根据values的长度构造keyframes数组，然后分别通过Keyframe的ofInt方法，去构造keyframe对象。老规矩，继续看Keyframe.ofInt如何构造Keyframe：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">int</span> mValue;</span><br><span class="line">   <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> Keyframe <span class="title">ofInt</span><span class="params">(<span class="keyword">float</span> fraction)</span> </span>&#123;</span><br><span class="line">       <span class="keyword">return</span> <span class="keyword">new</span> IntKeyframe(fraction);</span><br><span class="line">   &#125;</span><br><span class="line">   <span class="comment">//也就简单存了一下fraction，此时value默认值为0</span></span><br><span class="line">   IntKeyframe(<span class="keyword">float</span> fraction) &#123;</span><br><span class="line">       mFraction = fraction;</span><br><span class="line">       mValueType = <span class="keyword">int</span>.class;</span><br><span class="line">   &#125;</span><br><span class="line">   <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> Keyframe <span class="title">ofInt</span><span class="params">(<span class="keyword">float</span> fraction, <span class="keyword">int</span> value)</span> </span>&#123;</span><br><span class="line">       <span class="keyword">return</span> <span class="keyword">new</span> IntKeyframe(fraction, value);</span><br><span class="line">   &#125;</span><br><span class="line">   <span class="comment">//也就简单存了一下fraction，value等</span></span><br><span class="line">   IntKeyframe(<span class="keyword">float</span> fraction, <span class="keyword">int</span> value) &#123;</span><br><span class="line">       mFraction = fraction;</span><br><span class="line">       mValue = value;</span><br><span class="line">       mValueType = <span class="keyword">int</span>.class;</span><br><span class="line">       mHasValue = <span class="keyword">true</span>;</span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;也就简单存了一下fraction和value，每个fraction对应相应的value。前面注释我特意写了个注意，这个fraction是按照帧的个数n存的，起始为0，结束为1，也就是个个数为n的等差数列an={0，1/(n-1), 2/(n-1), 3/(n-1)，……, (n-2)/(n-1), 1}。<br>&#160; &#160; &#160; &#160;然后我们看它的 return new IntKeyframeSet(keyframes);<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//IntKeyframeSet构造方法，调其父类KeyframeSet构造方法</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">IntKeyframeSet</span><span class="params">(IntKeyframe... keyframes)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">super</span>(keyframes);</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">//KeyframeSet构造方法</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">KeyframeSet</span><span class="params">(Keyframe... keyframes)</span> </span>&#123;</span><br><span class="line">    mNumKeyframes = keyframes.length;</span><br><span class="line">    mKeyframes = <span class="keyword">new</span> ArrayList&lt;Keyframe&gt;();</span><br><span class="line">    mKeyframes.addAll(Arrays.asList(keyframes));</span><br><span class="line">    mFirstKeyframe = mKeyframes.get(<span class="number">0</span>);</span><br><span class="line">    mLastKeyframe = mKeyframes.get(mNumKeyframes - <span class="number">1</span>);</span><br><span class="line">    mInterpolator = mLastKeyframe.getInterpolator();<span class="comment">//这个插值器是null，感觉没什么卵用</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;存了有多少关键帧，开始帧，结束帧，以及插值器。</p>
+<p>&#160; &#160; &#160; &#160;到这里PropertyValuesHolder.ofInt(mPropertyName, values)走完了，这个过程我们为PropertyValuesHolder对象赋了propName，valueType，keyframeSet，而keyframeSet中又存了Keyframe集合，keyframe中存储了（fraction , valuetype , value , hasValue）。</p>
+<p>&#160; &#160; &#160; &#160;上面说过setValues(int… values) 会走setValues(PropertyValuesHolder.ofInt(mPropertyName, values));这一步，这是其父类ValueAnimator的方法，我们进入其父类看看：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">setValues</span><span class="params">(PropertyValuesHolder... values)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">int</span> numValues = values.length;</span><br><span class="line">    mValues = values;<span class="comment">//将刚才得到的PropertyValuesHolder存入</span></span><br><span class="line">    mValuesMap = <span class="keyword">new</span> HashMap&lt;String, PropertyValuesHolder&gt;(numValues);</span><br><span class="line">    <span class="comment">//再包装一层map</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; numValues; ++i) &#123;</span><br><span class="line">        PropertyValuesHolder valuesHolder = values[i];</span><br><span class="line">        mValuesMap.put(valuesHolder.getPropertyName(), valuesHolder);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// New property/values/target should cause re-initialization prior to starting</span></span><br><span class="line">    mInitialized = <span class="keyword">false</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;首先记录了mValues，注意这里的values是PropertyValuesHolder类型的，然后通过一个mValueMap记录：key为属性的名称，值为PropertyValuesHolder 。</p>
+<p>&#160; &#160; &#160; &#160;到此ofInt流程算是走完了，小结一下：<strong>ofInt记录了target,propName,values（是将我们传入的int型values，辗转转化成了PropertyValuesHolder）,以及一个mValueMap，这个map的key是propName，value是PropertyValuesHolder，在PropertyValuesHolder内部又存储了proprName, valueType , keyframeSet等等</strong>。</p>
+<h3 id="setInterpolator"><a href="#setInterpolator" class="headerlink" title="setInterpolator"></a>setInterpolator</h3><p>&#160; &#160; &#160; &#160;设置插值器。<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">setInterpolator</span><span class="params">(TimeInterpolator value)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (value != <span class="keyword">null</span>) &#123;</span><br><span class="line">        mInterpolator = value;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        mInterpolator = <span class="keyword">new</span> LinearInterpolator();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;也是父类ValueAnimator的方法，可以看到如果没有设置插值器，默认就是线性插值器LinearInterpolator。</p>
+<h3 id="setEvaluator"><a href="#setEvaluator" class="headerlink" title="setEvaluator"></a>setEvaluator</h3><p>&#160; &#160; &#160; &#160;设置估值器，这东西用的不多。<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">setEvaluator</span><span class="params">(TypeEvaluator value)</span> </span>&#123;</span><br><span class="line">      <span class="keyword">if</span> (value != <span class="keyword">null</span> &amp;&amp; mValues != <span class="keyword">null</span> &amp;&amp; mValues.length &gt; <span class="number">0</span>) &#123;</span><br><span class="line">          mValues[<span class="number">0</span>].setEvaluator(value);</span><br><span class="line">      &#125;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;mValues就是我们刚才ofInt里得到的PropertyValuesHolder对象，然后调用PropertyValuesHolder.setEvalutor：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">setEvaluator</span><span class="params">(TypeEvaluator evaluator)</span> </span>&#123;</span><br><span class="line">    mEvaluator = evaluator;<span class="comment">// 记录evaluator</span></span><br><span class="line">    mKeyframes.setEvaluator(evaluator);<span class="comment">// KeyframeSet再次记录evaluator</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;KeyframeSet再次记录evaluator：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">setEvaluator</span><span class="params">(TypeEvaluator evaluator)</span> </span>&#123;</span><br><span class="line">     mEvaluator = evaluator;</span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;setEvaluator这一步就完了，也就是把估值器evaluator分别交给PropertyValuesHolder和KeyframeSet。</p>
+<h3 id="setDuration"><a href="#setDuration" class="headerlink" title="setDuration"></a>setDuration</h3><p>&#160; &#160; &#160; &#160; 设置动画时长。<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//ObjectAnimator 的方法</span></span><br><span class="line">  <span class="function"><span class="keyword">public</span> ObjectAnimator <span class="title">setDuration</span><span class="params">(<span class="keyword">long</span> duration)</span> </span>&#123;</span><br><span class="line">       <span class="keyword">super</span>.setDuration(duration); <span class="comment">//父类实现</span></span><br><span class="line">       <span class="keyword">return</span> <span class="keyword">this</span>;</span><br><span class="line">   &#125;</span><br><span class="line">   <span class="comment">//VauleAnimator的方法</span></span><br><span class="line">   <span class="function"><span class="keyword">public</span> ValueAnimator <span class="title">setDuration</span><span class="params">(<span class="keyword">long</span> duration)</span> </span>&#123;</span><br><span class="line">       <span class="keyword">if</span> (duration &lt; <span class="number">0</span>) &#123;</span><br><span class="line">           <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(<span class="string">"Animators cannot have negative duration: "</span> +</span><br><span class="line">                   duration);</span><br><span class="line">       &#125;</span><br><span class="line">       mUnscaledDuration = duration;</span><br><span class="line">       updateScaledDuration();</span><br><span class="line">       <span class="keyword">return</span> <span class="keyword">this</span>;</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">float</span> sDurationScale = <span class="number">1.0f</span>;</span><br><span class="line"><span class="keyword">private</span> <span class="keyword">long</span> mDuration = (<span class="keyword">long</span>)(<span class="number">300</span> * sDurationScale);</span><br><span class="line">   <span class="keyword">private</span> <span class="keyword">long</span> mUnscaledDuration = <span class="number">300</span>;</span><br><span class="line">   </span><br><span class="line">   <span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">updateScaledDuration</span><span class="params">()</span> </span>&#123;</span><br><span class="line">       mDuration = (<span class="keyword">long</span>)(mUnscaledDuration * sDurationScale);</span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160; 就是简单在mDuration中记录了一下动画的持续时间，这个sDurationScale默认为1，貌似是用于调整，观察动画的，比如你可以调整为10，动画就会慢10倍的播放。</p>
+<h3 id="start"><a href="#start" class="headerlink" title="start"></a>start</h3><p>&#160; &#160; &#160; &#160; 以上的都比较简单，那么我们猜测start方法一定是巨复杂的。休息一下~<br><img src="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E5%B1%9E%E6%80%A7%E5%8A%A8%E7%94%BB%E6%B5%81%E7%A8%8B%E5%88%86%E6%9E%90/meizi.jpg" alt="妹子图"><br>&#160; &#160; &#160; &#160;OK，我们继续，走start()方法。<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">start</span><span class="params">()</span> </span>&#123;</span><br><span class="line">	<span class="comment">//...</span></span><br><span class="line">	<span class="comment">//省略干扰代码</span></span><br><span class="line">	<span class="comment">//...</span></span><br><span class="line">    <span class="keyword">super</span>.start(); <span class="comment">//最终会调用父类的方法</span></span><br><span class="line">&#125;</span><br><span class="line">   <span class="comment">//ValueAnimator的start方法</span></span><br><span class="line">   <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">start</span><span class="params">()</span> </span>&#123;</span><br><span class="line">       start(<span class="keyword">false</span>);</span><br><span class="line">   &#125;</span><br><span class="line">   </span><br><span class="line">   <span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">start</span><span class="params">(<span class="keyword">boolean</span> playBackwards)</span> </span>&#123;</span><br><span class="line">       <span class="keyword">if</span> (Looper.myLooper() == <span class="keyword">null</span>) &#123;</span><br><span class="line">           <span class="keyword">throw</span> <span class="keyword">new</span> AndroidRuntimeException(<span class="string">"Animators may only be run on Looper threads"</span>);</span><br><span class="line">       &#125;</span><br><span class="line">       mPlayingBackwards = playBackwards; <span class="comment">//动画是否reverse</span></span><br><span class="line">       mCurrentIteration = <span class="number">0</span>;<span class="comment">//记录当前的动画的执行次数（与setRepeatCount有关）</span></span><br><span class="line">       mPlayingState = STOPPED;<span class="comment">//动画的状态为STOPPED</span></span><br><span class="line">       mStarted = <span class="keyword">true</span>;<span class="comment">//标志位</span></span><br><span class="line">       mStartedDelay = <span class="keyword">false</span>;</span><br><span class="line">       mPaused = <span class="keyword">false</span>;<span class="comment">//标志位</span></span><br><span class="line">       updateScaledDuration(); <span class="comment">// in case the scale factor has changed since creation time</span></span><br><span class="line">       AnimationHandler animationHandler = getOrCreateAnimationHandler();<span class="comment">//生成一个AnimationHandler对象，getOrCreateAnimationHandler就是在当前线程变量ThreadLocal中取出来，没有的话，则创建一个，然后set进去。</span></span><br><span class="line">       animationHandler.mPendingAnimations.add(<span class="keyword">this</span>);<span class="comment">//AnimationHandler中包含一些List集合用于存储各种状态的ValueAnimator，将当前ValueAnimator对象，加入  animationHandler.mPendingAnimations 集合</span></span><br><span class="line">       <span class="keyword">if</span> (mStartDelay == <span class="number">0</span>) &#123; <span class="comment">//mStartDelay 默认为0，进入</span></span><br><span class="line">           <span class="comment">// This sets the initial value of the animation, prior to actually starting it running</span></span><br><span class="line">           setCurrentPlayTime(<span class="number">0</span>); <span class="comment">//这个接下来会说明</span></span><br><span class="line">           mPlayingState = STOPPED;<span class="comment">//动画的状态为STOPPED</span></span><br><span class="line">           mRunning = <span class="keyword">true</span>;<span class="comment">//标志位</span></span><br><span class="line">           notifyStartListeners();<span class="comment">//回调监听动画的接口AnimatorListener的onAnimationStart方法，如果你设置了回调监听，此时就会进行回调。</span></span><br><span class="line">       &#125;</span><br><span class="line">       animationHandler.start();<span class="comment">//最后调用，这个会细说</span></span><br><span class="line">   &#125;</span><br><span class="line">   <span class="keyword">protected</span> <span class="keyword">static</span> ThreadLocal&lt;AnimationHandler&gt; sAnimationHandler =</span><br><span class="line">           <span class="keyword">new</span> ThreadLocal&lt;AnimationHandler&gt;();</span><br><span class="line"></span><br><span class="line">   <span class="function"><span class="keyword">private</span> <span class="keyword">static</span> AnimationHandler <span class="title">getOrCreateAnimationHandler</span><span class="params">()</span> </span>&#123;</span><br><span class="line">       AnimationHandler handler = sAnimationHandler.get();</span><br><span class="line">       <span class="keyword">if</span> (handler == <span class="keyword">null</span>) &#123;</span><br><span class="line">           handler = <span class="keyword">new</span> AnimationHandler();</span><br><span class="line">           sAnimationHandler.set(handler);</span><br><span class="line">       &#125;</span><br><span class="line">       <span class="keyword">return</span> handler;</span><br><span class="line">   &#125;</span><br><span class="line">   <span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">notifyStartListeners</span><span class="params">()</span> </span>&#123;</span><br><span class="line">       <span class="keyword">if</span> (mListeners != <span class="keyword">null</span> &amp;&amp; !mStartListenersCalled) &#123;</span><br><span class="line">           ArrayList&lt;AnimatorListener&gt; tmpListeners =</span><br><span class="line">                   (ArrayList&lt;AnimatorListener&gt;) mListeners.clone();</span><br><span class="line">           <span class="keyword">int</span> numListeners = tmpListeners.size();</span><br><span class="line">           <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; numListeners; ++i) &#123;</span><br><span class="line">               tmpListeners.get(i).onAnimationStart(<span class="keyword">this</span>);</span><br><span class="line">           &#125;</span><br><span class="line">       &#125;</span><br><span class="line">       mStartListenersCalled = <span class="keyword">true</span>;</span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;start方法做了一些状态和变量初始化，其他的都很好理解，有两处方法要细说：setCurrentPlayTime(0)和animationHandler.start()，我们先看setCurrentPlayTime(0)。<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">setCurrentPlayTime</span><span class="params">(<span class="keyword">long</span> playTime)</span> </span>&#123;</span><br><span class="line">    initAnimation();<span class="comment">//初始化动画，接下来看</span></span><br><span class="line">    <span class="keyword">long</span> currentTime = AnimationUtils.currentAnimationTimeMillis();<span class="comment">//得到当前时间</span></span><br><span class="line">    <span class="keyword">if</span> (mPlayingState != RUNNING) &#123; <span class="comment">//之前将mPlayingState设为了STOPPED</span></span><br><span class="line">        mSeekTime = playTime;<span class="comment">//为0</span></span><br><span class="line">        mPlayingState = SEEKED; <span class="comment">//将mPlayingState 改为SEEKED</span></span><br><span class="line">    &#125;</span><br><span class="line">    mStartTime = currentTime - playTime;<span class="comment">//起始时间为当前时间</span></span><br><span class="line">    doAnimationFrame(currentTime);<span class="comment">//接下来也会看</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160; 先看initAnimation()：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">initAnimation</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (!mInitialized) &#123;</span><br><span class="line">        <span class="keyword">int</span> numValues = mValues.length;</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; numValues; ++i) &#123;</span><br><span class="line">            mValues[i].init(); <span class="comment">//mValues也就是之前ofInt方法得到的IntPropertyValueHolder对象</span></span><br><span class="line">        &#125;</span><br><span class="line">        mInitialized = <span class="keyword">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160; 接着找IntPropertyValueHolder的init方法，在其父类发现如下：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">init</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (mEvaluator == <span class="keyword">null</span>) &#123;</span><br><span class="line">        <span class="comment">// We already handle int and float automatically, but not their Object</span></span><br><span class="line">        <span class="comment">// equivalents</span></span><br><span class="line">        mEvaluator = (mValueType == Integer.class) ? sIntEvaluator :</span><br><span class="line">                (mValueType == Float.class) ? sFloatEvaluator :</span><br><span class="line">                <span class="keyword">null</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (mEvaluator != <span class="keyword">null</span>) &#123;</span><br><span class="line">        <span class="comment">// KeyframeSet knows how to evaluate the common types - only give it a custom</span></span><br><span class="line">        <span class="comment">// evaluator if one has been set on this class</span></span><br><span class="line">        mKeyframes.setEvaluator(mEvaluator);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160; 其实就是遍历设置PropertyValuesHolder中的mEvaluator属性，默认根据valueType进行判断，IntEvaluator或者FloatEvaluator。</p>
+<p>&#160; &#160; &#160; &#160;initAnimation()完了，然后看doAnimationFrame(currentTime)：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">final</span> <span class="keyword">boolean</span> <span class="title">doAnimationFrame</span><span class="params">(<span class="keyword">long</span> frameTime)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (mPlayingState == STOPPED) &#123; <span class="comment">//上面已赋为SEEKED，所以不进入下面逻辑</span></span><br><span class="line">        mPlayingState = RUNNING;</span><br><span class="line">        <span class="keyword">if</span> (mSeekTime &lt; <span class="number">0</span>) &#123;</span><br><span class="line">            mStartTime = frameTime;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            mStartTime = frameTime - mSeekTime;</span><br><span class="line">            <span class="comment">// Now that we're playing, reset the seek time</span></span><br><span class="line">            mSeekTime = -<span class="number">1</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (mPaused) &#123;<span class="comment">//mPaused上面已赋为false</span></span><br><span class="line">        <span class="keyword">if</span> (mPauseTime &lt; <span class="number">0</span>) &#123;</span><br><span class="line">            mPauseTime = frameTime;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (mResumed) &#123;<span class="comment">//默认是false</span></span><br><span class="line">        mResumed = <span class="keyword">false</span>;</span><br><span class="line">        <span class="keyword">if</span> (mPauseTime &gt; <span class="number">0</span>) &#123;</span><br><span class="line">            <span class="comment">// Offset by the duration that the animation was paused</span></span><br><span class="line">            mStartTime += (frameTime - mPauseTime);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// The frame time might be before the start time during the first frame of</span></span><br><span class="line">    <span class="comment">// an animation.  The "current time" must always be on or after the start</span></span><br><span class="line">    <span class="comment">// time to avoid animating frames at negative time intervals.  In practice, this</span></span><br><span class="line">    <span class="comment">// is very rare and only happens when seeking backwards.</span></span><br><span class="line">    <span class="keyword">final</span> <span class="keyword">long</span> currentTime = Math.max(frameTime, mStartTime);</span><br><span class="line">    <span class="keyword">return</span> animationFrame(currentTime);<span class="comment">//最后只走了这个</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160; 继续跟animationFrame(currentTime)：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">boolean</span> <span class="title">animationFrame</span><span class="params">(<span class="keyword">long</span> currentTime)</span> </span>&#123;</span><br><span class="line">     <span class="keyword">boolean</span> done = <span class="keyword">false</span>;</span><br><span class="line">     <span class="keyword">switch</span> (mPlayingState) &#123;<span class="comment">//上面已赋为SEEKED</span></span><br><span class="line">     <span class="keyword">case</span> RUNNING:</span><br><span class="line">     <span class="keyword">case</span> SEEKED:</span><br><span class="line">         <span class="keyword">float</span> fraction = mDuration &gt; <span class="number">0</span> ? (<span class="keyword">float</span>)(currentTime - mStartTime) / mDuration : <span class="number">1f</span>;<span class="comment">//此时currentTime和mStartTime相等，fraction为0，刚开始嘛</span></span><br><span class="line">         <span class="keyword">if</span> (fraction &gt;= <span class="number">1f</span>) &#123;<span class="comment">//刚开始不会走这段逻辑</span></span><br><span class="line">             <span class="keyword">if</span> (mCurrentIteration &lt; mRepeatCount || mRepeatCount == INFINITE) &#123;</span><br><span class="line">                 <span class="comment">// Time to repeat</span></span><br><span class="line">                 <span class="keyword">if</span> (mListeners != <span class="keyword">null</span>) &#123;</span><br><span class="line">                     <span class="keyword">int</span> numListeners = mListeners.size();</span><br><span class="line">                     <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; numListeners; ++i) &#123;</span><br><span class="line">                         mListeners.get(i).onAnimationRepeat(<span class="keyword">this</span>);</span><br><span class="line">                     &#125;</span><br><span class="line">                 &#125;</span><br><span class="line">                 <span class="keyword">if</span> (mRepeatMode == REVERSE) &#123;</span><br><span class="line">                     mPlayingBackwards = !mPlayingBackwards;</span><br><span class="line">                 &#125;</span><br><span class="line">                 mCurrentIteration += (<span class="keyword">int</span>)fraction;</span><br><span class="line">                 fraction = fraction % <span class="number">1f</span>;</span><br><span class="line">                 mStartTime += mDuration;</span><br><span class="line">             &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                 done = <span class="keyword">true</span>;</span><br><span class="line">                 fraction = Math.min(fraction, <span class="number">1.0f</span>);</span><br><span class="line">             &#125;</span><br><span class="line">         &#125;</span><br><span class="line">         <span class="keyword">if</span> (mPlayingBackwards) &#123;<span class="comment">//这个是false，因为没有设置reverse</span></span><br><span class="line">             fraction = <span class="number">1f</span> - fraction;</span><br><span class="line">         &#125;</span><br><span class="line">         animateValue(fraction);<span class="comment">//最后只会走这个，继续往下看</span></span><br><span class="line">         <span class="keyword">break</span>;</span><br><span class="line">     &#125;</span><br><span class="line"></span><br><span class="line">     <span class="keyword">return</span> done;</span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160; 然后又到了这一步animateValue(fraction)，此时fraction是0，刚开始嘛。<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//这里会调用子类ObjectAnimator的animateValue方法</span></span><br><span class="line">   <span class="function"><span class="keyword">void</span> <span class="title">animateValue</span><span class="params">(<span class="keyword">float</span> fraction)</span> </span>&#123;</span><br><span class="line">       <span class="keyword">final</span> Object target = getTarget();</span><br><span class="line">       <span class="keyword">if</span> (mTarget != <span class="keyword">null</span> &amp;&amp; target == <span class="keyword">null</span>) &#123;</span><br><span class="line">           <span class="comment">// We lost the target reference, cancel and clean up.</span></span><br><span class="line">           cancel();</span><br><span class="line">           <span class="keyword">return</span>;</span><br><span class="line">       &#125;</span><br><span class="line"></span><br><span class="line">       <span class="keyword">super</span>.animateValue(fraction);<span class="comment">//这里调用父类的方法</span></span><br><span class="line">       <span class="keyword">int</span> numValues = mValues.length;</span><br><span class="line">       <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; numValues; ++i) &#123;</span><br><span class="line">           mValues[i].setAnimatedValue(target);<span class="comment">//设置属性，下面会分析</span></span><br><span class="line">       &#125;</span><br><span class="line">   &#125;</span><br><span class="line">   <span class="comment">//ValueAnimator的方法</span></span><br><span class="line">   <span class="function"><span class="keyword">void</span> <span class="title">animateValue</span><span class="params">(<span class="keyword">float</span> fraction)</span> </span>&#123;</span><br><span class="line">       fraction = mInterpolator.getInterpolation(fraction);<span class="comment">//插值器处理一下fraction</span></span><br><span class="line">       mCurrentFraction = fraction;</span><br><span class="line">       <span class="keyword">int</span> numValues = mValues.length;</span><br><span class="line">       <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; numValues; ++i) &#123;</span><br><span class="line">           mValues[i].calculateValue(fraction);<span class="comment">//之前ofInt得到的IntPropertyValueHolder对象的calculateValue方法</span></span><br><span class="line">       &#125;</span><br><span class="line">       <span class="comment">//UpdateListener监听接口开始回调，比较简单</span></span><br><span class="line">       <span class="keyword">if</span> (mUpdateListeners != <span class="keyword">null</span>) &#123;</span><br><span class="line">           <span class="keyword">int</span> numListeners = mUpdateListeners.size();</span><br><span class="line">           <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; numListeners; ++i) &#123;</span><br><span class="line">               mUpdateListeners.get(i).onAnimationUpdate(<span class="keyword">this</span>);</span><br><span class="line">           &#125;</span><br><span class="line">       &#125;</span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160; 我们跟一下IntPropertyValueHolder的calculateValue方法：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">calculateValue</span><span class="params">(<span class="keyword">float</span> fraction)</span> </span>&#123;<span class="comment">//这个fraction是经过插值器处理过的fraction</span></span><br><span class="line">    mIntAnimatedValue = mIntKeyframes.getIntValue(fraction);<span class="comment">//这里注意是IntKeyFrameSet，千万不要看错方法了</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;go on，IntKeyFrameSet的getIntValue方法，fraction是经过插值器处理过的fraction ：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">getIntValue</span><span class="params">(<span class="keyword">float</span> fraction)</span> </span>&#123;<span class="comment">//raction是经过插值器处理过的fraction</span></span><br><span class="line">    <span class="keyword">if</span> (mNumKeyframes == <span class="number">2</span>) &#123;<span class="comment">//在ofInt里只设置了一个value，则只有两个关键帧，上面分析过</span></span><br><span class="line">        <span class="keyword">if</span> (firstTime) &#123;<span class="comment">//默认是true</span></span><br><span class="line">            firstTime = <span class="keyword">false</span>;</span><br><span class="line">            firstValue = ((IntKeyframe) mKeyframes.get(<span class="number">0</span>)).getIntValue();<span class="comment">//取起始帧的value，为0</span></span><br><span class="line">            lastValue = ((IntKeyframe) mKeyframes.get(<span class="number">1</span>)).getIntValue();<span class="comment">//结束帧的value，即我们设进去的值</span></span><br><span class="line">            deltaValue = lastValue - firstValue;<span class="comment">//计算delta值</span></span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> (mInterpolator != <span class="keyword">null</span>) &#123;<span class="comment">//这玩意儿是null，他是IntKeyFrameSet的，不是ObjectAnimator的</span></span><br><span class="line">            fraction = mInterpolator.getInterpolation(fraction);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> (mEvaluator == <span class="keyword">null</span>) &#123;<span class="comment">//估值器，其实此处设与不设一样，实现都是firstValue + (int)(fraction * deltaValue)；这个很好看懂，想想函数y=f(X)之类，return的就是y</span></span><br><span class="line">            <span class="keyword">return</span> firstValue + (<span class="keyword">int</span>)(fraction * deltaValue);</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;<span class="comment">//扒一下IntEvaluator和上面那个一样</span></span><br><span class="line">            <span class="keyword">return</span> ((Number)mEvaluator.evaluate(fraction, firstValue, lastValue)).intValue();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//下面逻辑是ofInt设置了多个value的</span></span><br><span class="line">    <span class="keyword">if</span> (fraction &lt;= <span class="number">0f</span>) &#123;<span class="comment">//小于区间范围，将第0和第1帧作为参考</span></span><br><span class="line">        <span class="keyword">final</span> IntKeyframe prevKeyframe = (IntKeyframe) mKeyframes.get(<span class="number">0</span>);<span class="comment">//第1帧</span></span><br><span class="line">        <span class="keyword">final</span> IntKeyframe nextKeyframe = (IntKeyframe) mKeyframes.get(<span class="number">1</span>);<span class="comment">//第2帧</span></span><br><span class="line">        <span class="keyword">int</span> prevValue = prevKeyframe.getIntValue();<span class="comment">//第1帧的属性值y1</span></span><br><span class="line">        <span class="keyword">int</span> nextValue = nextKeyframe.getIntValue();<span class="comment">//第2帧属性值y2</span></span><br><span class="line">        <span class="keyword">float</span> prevFraction = prevKeyframe.getFraction();<span class="comment">//第1帧的关系因子，x1</span></span><br><span class="line">        <span class="keyword">float</span> nextFraction = nextKeyframe.getFraction();<span class="comment">//第2帧的关系因子，x2</span></span><br><span class="line">        <span class="keyword">final</span> TimeInterpolator interpolator = nextKeyframe.getInterpolator();</span><br><span class="line">        <span class="keyword">if</span> (interpolator != <span class="keyword">null</span>) &#123;<span class="comment">//null</span></span><br><span class="line">            fraction = interpolator.getInterpolation(fraction);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">//(x-x1)/(x2-x1)</span></span><br><span class="line">        <span class="keyword">float</span> intervalFraction = (fraction - prevFraction) / (nextFraction - prevFraction);</span><br><span class="line">        <span class="comment">//y=y1 + (x-x1)/(x2-x1)*(y2-y1),怎么样，直线方程既视感</span></span><br><span class="line">        <span class="keyword">return</span> mEvaluator == <span class="keyword">null</span> ?</span><br><span class="line">                prevValue + (<span class="keyword">int</span>)(intervalFraction * (nextValue - prevValue)) :</span><br><span class="line">                ((Number)mEvaluator.evaluate(intervalFraction, prevValue, nextValue)).</span><br><span class="line">                        intValue();</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (fraction &gt;= <span class="number">1f</span>) &#123;<span class="comment">//大于区间范围，将倒1和倒2帧作为参考，一下逻辑同上</span></span><br><span class="line">        <span class="keyword">final</span> IntKeyframe prevKeyframe = (IntKeyframe) mKeyframes.get(mNumKeyframes - <span class="number">2</span>);</span><br><span class="line">        <span class="keyword">final</span> IntKeyframe nextKeyframe = (IntKeyframe) mKeyframes.get(mNumKeyframes - <span class="number">1</span>);</span><br><span class="line">        <span class="keyword">int</span> prevValue = prevKeyframe.getIntValue();</span><br><span class="line">        <span class="keyword">int</span> nextValue = nextKeyframe.getIntValue();</span><br><span class="line">        <span class="keyword">float</span> prevFraction = prevKeyframe.getFraction();</span><br><span class="line">        <span class="keyword">float</span> nextFraction = nextKeyframe.getFraction();</span><br><span class="line">        <span class="keyword">final</span> TimeInterpolator interpolator = nextKeyframe.getInterpolator();</span><br><span class="line">        <span class="keyword">if</span> (interpolator != <span class="keyword">null</span>) &#123;</span><br><span class="line">            fraction = interpolator.getInterpolation(fraction);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">float</span> intervalFraction = (fraction - prevFraction) / (nextFraction - prevFraction);</span><br><span class="line">        <span class="keyword">return</span> mEvaluator == <span class="keyword">null</span> ?</span><br><span class="line">                prevValue + (<span class="keyword">int</span>)(intervalFraction * (nextValue - prevValue)) :</span><br><span class="line">                ((Number)mEvaluator.evaluate(intervalFraction, prevValue, nextValue)).intValue();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//正常范围</span></span><br><span class="line">    IntKeyframe prevKeyframe = (IntKeyframe) mKeyframes.get(<span class="number">0</span>);</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">1</span>; i &lt; mNumKeyframes; ++i) &#123;<span class="comment">//循环遍历</span></span><br><span class="line">        IntKeyframe nextKeyframe = (IntKeyframe) mKeyframes.get(i);</span><br><span class="line">        <span class="keyword">if</span> (fraction &lt; nextKeyframe.getFraction()) &#123;<span class="comment">//这就比较好理解了，就进参考，往下逻辑同上</span></span><br><span class="line">            <span class="keyword">final</span> TimeInterpolator interpolator = nextKeyframe.getInterpolator();</span><br><span class="line">            <span class="keyword">if</span> (interpolator != <span class="keyword">null</span>) &#123;</span><br><span class="line">                fraction = interpolator.getInterpolation(fraction);</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">float</span> intervalFraction = (fraction - prevKeyframe.getFraction()) /</span><br><span class="line">                (nextKeyframe.getFraction() - prevKeyframe.getFraction());</span><br><span class="line">            <span class="keyword">int</span> prevValue = prevKeyframe.getIntValue();</span><br><span class="line">            <span class="keyword">int</span> nextValue = nextKeyframe.getIntValue();</span><br><span class="line">            <span class="keyword">return</span> mEvaluator == <span class="keyword">null</span> ?</span><br><span class="line">                    prevValue + (<span class="keyword">int</span>)(intervalFraction * (nextValue - prevValue)) :</span><br><span class="line">                    ((Number)mEvaluator.evaluate(intervalFraction, prevValue, nextValue)).</span><br><span class="line">                            intValue();</span><br><span class="line">        &#125;</span><br><span class="line">        prevKeyframe = nextKeyframe;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// shouldn't get here</span></span><br><span class="line">    <span class="comment">//确实不该到这儿，google注释都这么说了</span></span><br><span class="line">    <span class="keyword">return</span> ((Number)mKeyframes.get(mNumKeyframes - <span class="number">1</span>).getValue()).intValue();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;看注释是不是有种学霸附体的感觉^  。^至于第一种在ofInt里只设置了一个value，则只有两个关键帧，这个很好理解。可以比喻为：已知x和y成线性关系，公式为y=kx+b，告知其中一点x值为x1，求y1。一次函数的直视感。</p>
+<p>&#160; &#160; &#160; &#160;第二种设置多个value也很好理解，因为动画是连续的，这是个连续函数，所以函数曲线是一条连续的线。每个关键帧都是连续函数上的固定点。虽然函数图像是连续的，但是他确是个分段函数，这些关键帧就是分段函数的拐点，而两个拐点之间的规则是一样的，就是我们定义的插值器interpolator 。<br>&#160; &#160; &#160; &#160;动画之间都是连续的，如果要求出某个时间段对象的属性值，一定要参考距离它最近两帧。所以问题就转为已知两点坐标（x1，y1），（x2，y2），和另一点的x值，求其y值。果断高一数学的直线方程整起：<br>$$    \dfrac{x-x1 }{x2-x1} = \dfrac{y-y1}{y2-y1} $$</p>
+<p>$$    y=\dfrac{(x-x1) * (y2-y1) }{x2-x1} +y1 $$</p>
+<p>&#160; &#160; &#160; &#160;IntKeyFrameSet的getIntValue方法就分析玩了，然后找到之前的逻辑。这样就求出属性值了，并把它赋给了ObjectAnimator的IntPropertyValueHolder类对象mValues的mIntAnimatedValue中。回到上面的子类animateValue(fraction)方法，还有一步mValues[i].setAnimatedValue(target)：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">setAnimatedValue</span><span class="params">(Object target)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (mIntProperty != <span class="keyword">null</span>) &#123;</span><br><span class="line">        mIntProperty.setValue(target, mIntAnimatedValue);</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (mProperty != <span class="keyword">null</span>) &#123;</span><br><span class="line">        mProperty.set(target, mIntAnimatedValue);</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (mJniSetter != <span class="number">0</span>) &#123;</span><br><span class="line">        nCallIntMethod(target, mJniSetter, mIntAnimatedValue);</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (mSetter != <span class="keyword">null</span>) &#123;</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            mTmpValueArray[<span class="number">0</span>] = mIntAnimatedValue;</span><br><span class="line">            mSetter.invoke(target, mTmpValueArray);</span><br><span class="line">        &#125; <span class="keyword">catch</span> (InvocationTargetException e) &#123;</span><br><span class="line">            Log.e(<span class="string">"PropertyValuesHolder"</span>, e.toString());</span><br><span class="line">        &#125; <span class="keyword">catch</span> (IllegalAccessException e) &#123;</span><br><span class="line">            Log.e(<span class="string">"PropertyValuesHolder"</span>, e.toString());</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;果然有反射，看来我们的猜测八九不离十。这样就把刚才计算的属性值设置给目标对象了。</p>
+<p>&#160; &#160; &#160; &#160;确实有点晕了。。。。。回一下神，赶紧回到ObjectAnimator父类ValueAnimator的start方法里，还要继续分析第二个重要地方animationHandler.start()。animationHandler我们上面已经介绍了，存储在当前线程的ThreadLocal里面，里面放了一些集合用于存储各种状态的ObjectAnimator，我们当前的ObjectAnimator对象也存储在其mPendingAnimations的集合中（上面提到过~~）。<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">start</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    scheduleAnimation();</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">scheduleAnimation</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (!mAnimationScheduled) &#123;<span class="comment">//mAnimationScheduled默认false</span></span><br><span class="line">        mChoreographer.postCallback(Choreographer.CALLBACK_ANIMATION, <span class="keyword">this</span>, <span class="keyword">null</span>);<span class="comment">//Choreographer.CALLBACK_ANIMATION为1</span></span><br><span class="line">        mAnimationScheduled = <span class="keyword">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;要用到mChoreographer这个对象的postCallback方法，其中有一个参数是this；至于什么是Choreographer，暂时不用管；但是你需要知道一件事，其实我们的animationHandler是Runnable的子类，而 mChoreographer.postCallback(Choreographer.CALLBACK_ANIMATION, this, null);类似与handler发送消息，最终执行这个Runnable的run方法。<br>&#160; &#160; &#160; &#160;Choreographer这个类里面障眼法太多了，就不贴了。绕来绕去，其实就是一句话，这里调用了animationHandler的 run方法。<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br></pre></td><td class="code"><pre><span class="line">   <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        mAnimationScheduled = <span class="keyword">false</span>;</span><br><span class="line">        doAnimationFrame(mChoreographer.getFrameTime());</span><br><span class="line">    &#125;</span><br><span class="line">   <span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">doAnimationFrame</span><span class="params">(<span class="keyword">long</span> frameTime)</span> </span>&#123;</span><br><span class="line">        <span class="comment">// mPendingAnimations holds any animations that have requested to be started</span></span><br><span class="line">        <span class="comment">// We're going to clear mPendingAnimations, but starting animation may</span></span><br><span class="line">        <span class="comment">// cause more to be added to the pending list (for example, if one animation</span></span><br><span class="line">        <span class="comment">// starting triggers another starting). So we loop until mPendingAnimations</span></span><br><span class="line">        <span class="comment">// is empty.</span></span><br><span class="line">        <span class="keyword">while</span> (mPendingAnimations.size() &gt; <span class="number">0</span>) &#123;<span class="comment">//while循环，遍历所有在mPendingAnimations中的ObjectAnimator，依次调用anim.startAnimation(this);</span></span><br><span class="line">            ArrayList&lt;ValueAnimator&gt; pendingCopy =</span><br><span class="line">                    (ArrayList&lt;ValueAnimator&gt;) mPendingAnimations.clone();</span><br><span class="line">            mPendingAnimations.clear();</span><br><span class="line">            <span class="keyword">int</span> count = pendingCopy.size();</span><br><span class="line">            <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; count; ++i) &#123;</span><br><span class="line">                ValueAnimator anim = pendingCopy.get(i);</span><br><span class="line">                <span class="comment">// If the animation has a startDelay, place it on the delayed list</span></span><br><span class="line">                <span class="keyword">if</span> (anim.mStartDelay == <span class="number">0</span>) &#123;<span class="comment">//不延时的直接start</span></span><br><span class="line">                    anim.startAnimation(<span class="keyword">this</span>);</span><br><span class="line">                &#125; <span class="keyword">else</span> &#123;<span class="comment">//延时的先加入mDelayedAnims队列</span></span><br><span class="line">                    mDelayedAnims.add(anim);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// Next, process animations currently sitting on the delayed queue, adding</span></span><br><span class="line">        <span class="comment">// them to the active animations if they are ready</span></span><br><span class="line">        <span class="comment">//看有多少延时的，如果延时的时间到了就加入到准备队列mReadyAnims</span></span><br><span class="line">        <span class="keyword">int</span> numDelayedAnims = mDelayedAnims.size();</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; numDelayedAnims; ++i) &#123;</span><br><span class="line">            ValueAnimator anim = mDelayedAnims.get(i);</span><br><span class="line">            <span class="keyword">if</span> (anim.delayedAnimationFrame(frameTime)) &#123;<span class="comment">//看方法注释就是说如果延时到了就该加入动画准备集合</span></span><br><span class="line">                mReadyAnims.add(anim);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">//准备队列的开始start</span></span><br><span class="line">        <span class="keyword">int</span> numReadyAnims = mReadyAnims.size();</span><br><span class="line">        <span class="keyword">if</span> (numReadyAnims &gt; <span class="number">0</span>) &#123;</span><br><span class="line">            <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; numReadyAnims; ++i) &#123;</span><br><span class="line">                ValueAnimator anim = mReadyAnims.get(i);</span><br><span class="line">                anim.startAnimation(<span class="keyword">this</span>);</span><br><span class="line">                anim.mRunning = <span class="keyword">true</span>;</span><br><span class="line">                mDelayedAnims.remove(anim);</span><br><span class="line">            &#125;</span><br><span class="line">            mReadyAnims.clear();</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Now process all active animations. The return value from animationFrame()</span></span><br><span class="line">        <span class="comment">// tells the handler whether it should now be ended</span></span><br><span class="line">        <span class="comment">//将animationHandler的mAnimations集合中的每个anim，加入到mTmpAnimations中；</span></span><br><span class="line">        <span class="keyword">int</span> numAnims = mAnimations.size();</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; numAnims; ++i) &#123;</span><br><span class="line">            mTmpAnimations.add(mAnimations.get(i));</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">//依次调用mTmpAnimations中的anim，anim.doAnimationFrame(frameTime)。doAnimationFrame（frameTime）上面已经分析过了，如果返回true，即doAnimationFrame的done为true，则将该动画加入到结束动画集合。 </span></span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; numAnims; ++i) &#123;</span><br><span class="line">            ValueAnimator anim = mTmpAnimations.get(i);</span><br><span class="line">            <span class="keyword">if</span> (mAnimations.contains(anim) &amp;&amp; anim.doAnimationFrame(frameTime)) &#123;</span><br><span class="line">                mEndingAnims.add(anim);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        mTmpAnimations.clear();</span><br><span class="line">        <span class="comment">//循环调用mEndingAnims， mEndingAnims.get(i).endAnimation(this);内部，会将动画移除mAnimations，回调动画监听接口onAnimationEnd；以及重置各种标志变量。</span></span><br><span class="line">        <span class="keyword">if</span> (mEndingAnims.size() &gt; <span class="number">0</span>) &#123;</span><br><span class="line">            <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; mEndingAnims.size(); ++i) &#123;</span><br><span class="line">                mEndingAnims.get(i).endAnimation(<span class="keyword">this</span>);</span><br><span class="line">            &#125;</span><br><span class="line">            mEndingAnims.clear();</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// If there are still active or delayed animations, schedule a future call to</span></span><br><span class="line">        <span class="comment">// onAnimate to process the next frame of the animations.</span></span><br><span class="line">        <span class="comment">//如果mAnimations不为null，则再次调用scheduleAnimation();</span></span><br><span class="line">        <span class="keyword">if</span> (!mAnimations.isEmpty() || !mDelayedAnims.isEmpty()) &#123;</span><br><span class="line">            scheduleAnimation();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"> <span class="comment">/**</span><br><span class="line"> * Internal function called to process an animation frame on an animation that is currently</span><br><span class="line"> * sleeping through its &lt;code&gt;startDelay&lt;/code&gt; phase. The return value indicates whether it</span><br><span class="line"> * should be woken up and put on the active animations queue.</span><br><span class="line"> *</span><br><span class="line"> * <span class="doctag">@param</span> currentTime The current animation time, used to calculate whether the animation</span><br><span class="line"> * has exceeded its &lt;code&gt;startDelay&lt;/code&gt; and should be started.</span><br><span class="line"> * <span class="doctag">@return</span> True if the animation's &lt;code&gt;startDelay&lt;/code&gt; has been exceeded and the animation</span><br><span class="line"> * should be added to the set of active animations.</span><br><span class="line"> */</span></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">boolean</span> <span class="title">delayedAnimationFrame</span><span class="params">(<span class="keyword">long</span> currentTime)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (!mStartedDelay) &#123;<span class="comment">//默认false</span></span><br><span class="line">        mStartedDelay = <span class="keyword">true</span>;</span><br><span class="line">        mDelayStartTime = currentTime;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (mPaused) &#123;<span class="comment">//默认false</span></span><br><span class="line">        <span class="keyword">if</span> (mPauseTime &lt; <span class="number">0</span>) &#123;</span><br><span class="line">            mPauseTime = currentTime;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (mResumed) &#123;<span class="comment">//默认false</span></span><br><span class="line">        mResumed = <span class="keyword">false</span>;</span><br><span class="line">        <span class="keyword">if</span> (mPauseTime &gt; <span class="number">0</span>) &#123;</span><br><span class="line">            <span class="comment">// Offset by the duration that the animation was paused</span></span><br><span class="line">            mDelayStartTime += (currentTime - mPauseTime);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">long</span> deltaTime = currentTime - mDelayStartTime;<span class="comment">//延时间隔</span></span><br><span class="line">    <span class="keyword">if</span> (deltaTime &gt; mStartDelay) &#123;<span class="comment">//延时超了规定延时时间，应该执行了</span></span><br><span class="line">        <span class="comment">// startDelay ended - start the anim and record the</span></span><br><span class="line">        <span class="comment">// mStartTime appropriately</span></span><br><span class="line">        mStartTime = currentTime - (deltaTime - mStartDelay);</span><br><span class="line">        mPlayingState = RUNNING;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">startAnimation</span><span class="params">(AnimationHandler handler)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (Trace.isTagEnabled(Trace.TRACE_TAG_VIEW)) &#123;</span><br><span class="line">        Trace.asyncTraceBegin(Trace.TRACE_TAG_VIEW, getNameForTrace(),</span><br><span class="line">                System.identityHashCode(<span class="keyword">this</span>));</span><br><span class="line">    &#125;</span><br><span class="line">    initAnimation();</span><br><span class="line">    handler.mAnimations.add(<span class="keyword">this</span>);</span><br><span class="line">    <span class="keyword">if</span> (mStartDelay &gt; <span class="number">0</span> &amp;&amp; mListeners != <span class="keyword">null</span>) &#123;</span><br><span class="line">        <span class="comment">// Listeners were already notified in start() if startDelay is 0; this is</span></span><br><span class="line">        <span class="comment">// just for delayed animations</span></span><br><span class="line">        notifyStartListeners();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;scheduleAnimation()一旦调用，就像Handler不停发消息一样，AnimationHandler的run方法就会一直调用，mChoreographer.getFrameTime()控制动画时间段，然后一直调用AnimationHandler的doAnimationFrame方法，这个方法里面又调用了ValueAnimator的doAnimationFrame方法，这个方法上面分析过了，就是计算属性应该的值，然后反射设置；再startAnimation通知回调。这样动画就一帧一帧的执行了。</p>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>&#160; &#160; &#160; &#160;ofInt中实例化了一个ObjectAnimator对象，然后设置了target，propName，values(PropertyValuesHolder) ；然后分别在setInterpolator，setDuration设置了Interpolator和duration。其中setEvaluator是给PropertyValuesHolder，以及keyframeSet设置估值算法。</p>
+<p>&#160; &#160; &#160; &#160;PropertyValueHolder实际上是IntPropertyValueHolder类型对象，包含propName,valueType,keyframeSet .</p>
+<p>&#160; &#160; &#160; &#160;keyframeset中存了Keyframe集合，keyframe中存储了（fraction , valuetype , value , hasValue）。</p>
+<p>&#160; &#160; &#160; &#160;start()中：<br>&#160; &#160; &#160; &#160;首先更新动画各种状态，然后初步计算fraction为(currentTime - mStartTime) / mDuration；然后将这个fraction交给我们的插值器计算后得到新的fraction，再将新的fraction交给我们的估值算法，估值算法根据开始、结束、fraction得到当前属性（动画作用的属性）应该的值，最大调用反射进行设置；<br>&#160; &#160; &#160; &#160;start中还会根据动画的状态，如果没有结束，不断的调用AnimationHanlder的run方法;该方法内部利用mChoreographer不断的去重复第一步。</p>
+<p>&#160; &#160; &#160; &#160;至此属性动画流程分析完了，也算马马虎虎，至少和我们的猜想八九不离十。看源码看的也快吐血了，这么长代码也只能了解个大概，以后有时间再好好整理一下思路。</p>
+
+      
+    </div>
+    
+  </div>
+  
+    
+    <div class="copyright">
+        <p><span>Title:</span><a href="/2016/06/24/Android属性动画原理分析/">Android属性动画流程分析</a></p>
+        <p><span>Author:</span><a href="/" title="Back to Homepage">windrunnerlihuan</a></p>
+        <p><span>Created:</span>2016-06-24, 00:00:02</p>
+        <p><span>Updated:</span>2016-06-24, 09:36:23</p>
+        <p>
+            <span>Full URL:</span><a class="post-url" href="/2016/06/24/Android属性动画原理分析/" title="Android属性动画流程分析">http://windrunnerlihuan.com/2016/06/24/Android属性动画原理分析/</a>
+            <span class="copy-path" data-clipboard-text="From http://windrunnerlihuan.com/2016/06/24/Android属性动画原理分析/　　By windrunnerlihuan" title="Copy Article&#39;s Link &amp; Author"><i class="fa fa-clipboard"></i></span>
+            <script> var clipboard = new Clipboard('.copy-path'); </script>
+        </p>
+        <p>
+            <span>License:</span><i class="fa fa-creative-commons"></i> <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/" title="CC BY-NC-SA 4.0 International" target = "_blank">"CC BY-NC-SA 4.0"</a> Keep Link &amp; Author if Distribute.
+        </p>
+    </div>
+
+
+
+    <nav id="article-nav">
+        
+        
+            <div id="article-nav-older" class="article-nav-title">
+                <a href="/2016/06/12/Binder简要分析/">
+                    Android跨进程通信机制Binder简要分析
+                </a>
+            </div>
+        
+    </nav>
+
+  
+</article>
+
+    <div id="toc" class="toc-article">
+    <strong class="toc-title">Contents</strong>
+    <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#前言"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#基本用法"><span class="toc-number">1.1.</span> <span class="toc-text">基本用法</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#猜想与假设"><span class="toc-number">1.2.</span> <span class="toc-text">猜想与假设</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#流程分析"><span class="toc-number">2.</span> <span class="toc-text">流程分析</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#主流程源码"><span class="toc-number">2.1.</span> <span class="toc-text">主流程源码</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#ofInt"><span class="toc-number">2.1.1.</span> <span class="toc-text">ofInt</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#setInterpolator"><span class="toc-number">2.1.2.</span> <span class="toc-text">setInterpolator</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#setEvaluator"><span class="toc-number">2.1.3.</span> <span class="toc-text">setEvaluator</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#setDuration"><span class="toc-number">2.1.4.</span> <span class="toc-text">setDuration</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#start"><span class="toc-number">2.1.5.</span> <span class="toc-text">start</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#总结"><span class="toc-number">3.</span> <span class="toc-text">总结</span></a></li></ol>
+</div>
+<style>
+    .left-col .switch-btn {
+        display: none;
+    }
+    .left-col .switch-area {
+        display: none;
+    }
+</style>
+
+<input type="button" id="tocButton" value="Hide"  title="Show or Hide Table of Contents">
+<script>
+    var valueHide = "Hide";
+    var valueShow = "Show";
+
+    if ($(".left-col").is(":hidden")) {
+        $("#tocButton").attr("value", valueShow);
+    }
+
+    $("#tocButton").click(function() {
+        if ($("#toc").is(":hidden")) {
+            $("#tocButton").attr("value", valueHide);
+            $("#toc").slideDown(320);
+            $(".switch-btn, .switch-area").fadeOut(300);
+        }
+        else {
+            $("#tocButton").attr("value", valueShow);
+            $("#toc").slideUp(350);
+            $(".switch-btn, .switch-area").fadeIn(500);
+        }
+    })
+
+    if ($(".toc").length < 1) {
+        $("#toc, #tocButton").hide();
+        $(".switch-btn, .switch-area").show();
+    }
+</script>
+
+
+
+
+
+    
+<div class="share">
+    
+        <div class="bdsharebuttonbox">
+            <a href="#" class="fa fa-twitter bds_twi" data-cmd="twi" title="分享到推特"></a>
+            <a href="#" class="fa fa-weibo bds_tsina" data-cmd="tsina" title="分享到新浪微博"></a>
+            <a href="#" class="fa fa-qq bds_sqq" data-cmd="sqq" title="分享给 QQ 好友"></a>
+            <a href="#" class="fa fa-files-o bds_copy" data-cmd="copy" title="复制网址"></a>
+            <a href="#" class="fa fa fa-envelope-o bds_mail" data-cmd="mail" title="通过邮件分享"></a>
+            <a href="#" class="fa fa-weixin bds_weixin" data-cmd="weixin" title="生成文章二维码"></a>
+            <a href="#" class="fa fa-share-alt bds_more" data-cmd="more"></i></a>
+        </div>
+        <script>
+            window._bd_share_config={
+                "common":{"bdSnsKey":{},"bdText":"Android属性动画流程分析　| April is your lie　","bdMini":"2","bdMiniList":false,"bdPic":"","bdStyle":"0","bdSize":"24"},"share":{}};with(document)0[(getElementsByTagName('head')[0]||body).appendChild(createElement('script')).src='http://bdimg.share.baidu.com/static/api/js/share.js?v=89860593.js?cdnversion='+~(-new Date()/36e5)];
+        </script>
+    
+
+    
+</div>
+
+
+
+
+
+
+
+    
+      <div class="duoshuo" id="comments">
+    <!-- 多说评论框 start -->
+    <div class="ds-thread" data-thread-key="2016/06/24/Android属性动画原理分析/" data-title="Android属性动画流程分析" data-url="http://windrunnerlihuan.com/2016/06/24/Android属性动画原理分析/"></div>
+    <!-- 多说评论框 end -->
+    <!-- 多说公共JS代码 start (一个网页只需插入一次) -->
+    <script type="text/javascript">
+    var duoshuoQuery = {short_name:"windrunnerlihuan"};
+    (function() {
+        var ds = document.createElement('script');
+        ds.type = 'text/javascript';ds.async = true;
+        ds.src = 'http://windrunnerlihuan.com/js/embed.js';
+        ds.charset = 'UTF-8';
+        (document.getElementsByTagName('head')[0] 
+         || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+    </script>
+    <!-- 多说公共JS代码 end -->
+</div>
+
+    
+
+
+
+
+    <div class="scroll" id="post-nav-button">
+        
+            <a href="/" title="Back to Homepage"><i class="fa fa-home"></i></a>
+        
+
+        <a title="Mini Archives"><i class="fa fa-bars"></i><i class="fa fa-times"></i></a>
+
+        
+            <a href="/2016/06/12/Binder简要分析/" title="Next: Android跨进程通信机制Binder简要分析">
+                <i class="fa fa-angle-right"></i>
+            </a>
+        
+    </div>
+
+    <ul class="post-list"><li class="post-list-item"><a class="post-list-link" href="/2016/06/24/Android属性动画原理分析/">Android属性动画流程分析</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/06/12/Binder简要分析/">Android跨进程通信机制Binder简要分析</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/06/06/移动直播技术秒开优化经验/">移动直播技术秒开优化经验</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/05/27/博客搭建历程/">博客搭建历程————————Github和Hexo</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/05/27/新的开始/">新的开始</a></li></ul>
+
+
+
+
+    <script>
+        
+    </script>
+</div>
+      <footer id="footer">
+    <div class="outer">
+        <div id="footer-info">
+            <div class="footer-left">
+                <i class="fa fa-copyright"></i> 
+                2016 windrunnerlihuan
+            </div>
+            <div class="footer-right">
+                <a href="http://hexo.io/" target="_blank" title="A fast, simple &amp; powerful blog framework">Hexo</a>  Theme <a href="https://github.com/MOxFIVE/hexo-theme-yelee" target="_blank" title="Another simple and elegant theme for Hexo  v3.0">Yelee</a> by HuanLi & MOxFIVE <i class="fa fa-heart animated infinite pulse"></i>
+            </div>
+        </div>
+        
+            <div class="visit">
+                
+                    <span id="busuanzi_container_site_pv" style='display:none'>
+                        <span id="site-visit" >Site Visitors: 
+                            <span id="busuanzi_value_site_uv"></span>
+                        </span>
+                    </span>
+                
+                
+                    <span>, </span>
+                
+                
+                    <span id="busuanzi_container_page_pv" style='display:none'>
+                        <span id="page-visit">Page Hits: 
+                            <span id="busuanzi_value_page_pv"></span>
+                        </span>
+                    </span>
+                
+            </div>
+        
+    </div>
+</footer>
+    </div>
+    
+    <script src="/js/GithubRepoWidget.js"></script>
+
+<script data-main="/js/main.js" src="//cdn.bootcss.com/require.js/2.2.0/require.min.js"></script>
+
+
+
+
+    <script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+    tex2jax: {
+        inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+        processEscapes: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+    }
+});
+
+MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for(i=0; i < all.length; i += 1) {
+        all[i].SourceElement().parentNode.className += ' has-jax';                 
+    }       
+});
+</script>
+
+<script src="//cdn.bootcss.com/mathjax/2.6.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+<div class="scroll" id="scroll">
+    <a href="#" title="Back to Top"><i class="fa fa-arrow-up"></i></a>
+    <a href="#comments" title="Comments"><i class="fa fa-comments-o"></i></a>
+    <a href="#footer" title="Go to Bottom"><i class="fa fa-arrow-down"></i></a>
+</div>
+<script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js">
+</script>
+  </div>
+</body>
+</html>
