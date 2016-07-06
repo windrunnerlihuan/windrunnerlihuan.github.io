@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://windrunnerlihuan.com/"/>
-  <updated>2016-07-06T22:20:36.100Z</updated>
+  <updated>2016-07-06T22:27:30.222Z</updated>
   <id>http://windrunnerlihuan.com/</id>
   
   <author>
@@ -16,11 +16,11 @@
   <generator uri="http://hexo.io/">Hexo</generator>
   
   <entry>
-    <title>DanmakuFlameMaster简单分析</title>
+    <title>弹幕框架DanmakuFlameMaster简单分析</title>
     <link href="http://windrunnerlihuan.com/2016/07/02/DanmakuFlameMaster%E7%AE%80%E5%8D%95%E5%88%86%E6%9E%90/"/>
     <id>http://windrunnerlihuan.com/2016/07/02/DanmakuFlameMaster简单分析/</id>
     <published>2016-07-02T12:13:04.000Z</published>
-    <updated>2016-07-06T22:20:36.100Z</updated>
+    <updated>2016-07-06T22:27:30.222Z</updated>
     
     <content type="html">&lt;hr&gt;
 &lt;p&gt;&amp;#160; &amp;#160; &amp;#160; &amp;#160;随着B站逐渐崛起，其开源弹幕项目&lt;a href=&quot;https://github.com/Bilibili/DanmakuFlameMaster&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;DanmakuFlameMaster&lt;/a&gt;应用场景也越来越多。我也是在一次偶然机会下发现了这个项目，被其惊艳的效果震撼。以前我就对弹幕技术很感兴趣，可能是因为B站动漫看多，几乎每一部番都是漫天的弹幕乱飞，如果哪部剧没有弹幕反而觉得不适应；久而久之就愈发倾向钻研其原理。&lt;br&gt;&amp;#160; &amp;#160; &amp;#160; &amp;#160;看到效果后，我猜想&lt;strong&gt;绘制原理&lt;/strong&gt;应该是创建一个定时器作为全部弹幕的时间参考，然后每条弹幕出现的位置都以这个定时器去计算x、y值，然后定时任务定期postInvalidate，弹幕画布重新绘制onDraw；弹幕如此之多，应该有&lt;strong&gt;缓存机制&lt;/strong&gt;，也许建立了一个弹幕池让出现过的弹幕缓存起来，新弹幕可以复用旧弹幕item。&lt;br&gt;&amp;#160; &amp;#160; &amp;#160; &amp;#160;先这么假设吧，然后验证我们的猜想，看看有哪些坑。&lt;br&gt;&lt;a id=&quot;more&quot;&gt;&lt;/a&gt;&lt;/p&gt;

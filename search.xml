@@ -4,7 +4,7 @@
   
     
     <entry>
-      <title><![CDATA[DanmakuFlameMaster简单分析]]></title>
+      <title><![CDATA[弹幕框架DanmakuFlameMaster简单分析]]></title>
       <url>http://windrunnerlihuan.com/2016/07/02/DanmakuFlameMaster%E7%AE%80%E5%8D%95%E5%88%86%E6%9E%90/</url>
       <content type="html"><![CDATA[<hr>
 <p>&#160; &#160; &#160; &#160;随着B站逐渐崛起，其开源弹幕项目<a href="https://github.com/Bilibili/DanmakuFlameMaster" target="_blank" rel="external">DanmakuFlameMaster</a>应用场景也越来越多。我也是在一次偶然机会下发现了这个项目，被其惊艳的效果震撼。以前我就对弹幕技术很感兴趣，可能是因为B站动漫看多，几乎每一部番都是漫天的弹幕乱飞，如果哪部剧没有弹幕反而觉得不适应；久而久之就愈发倾向钻研其原理。<br>&#160; &#160; &#160; &#160;看到效果后，我猜想<strong>绘制原理</strong>应该是创建一个定时器作为全部弹幕的时间参考，然后每条弹幕出现的位置都以这个定时器去计算x、y值，然后定时任务定期postInvalidate，弹幕画布重新绘制onDraw；弹幕如此之多，应该有<strong>缓存机制</strong>，也许建立了一个弹幕池让出现过的弹幕缓存起来，新弹幕可以复用旧弹幕item。<br>&#160; &#160; &#160; &#160;先这么假设吧，然后验证我们的猜想，看看有哪些坑。<br><a id="more"></a></p>
