@@ -22,7 +22,14 @@
 
     <url>
         <loc>http://windrunnerlihuan.com/categories/Android%E6%8A%80%E6%9C%AF%E7%82%B9/</loc>
-        <lastmod>2016-07-12T17:37:52.407Z</lastmod>
+        <lastmod>2016-08-01T22:33:27.494Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.2</priority>
+    </url>
+
+    <url>
+        <loc>http://windrunnerlihuan.com/categories/C-%E6%8B%BE%E9%81%97/</loc>
+        <lastmod>2016-08-24T00:02:42.885Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.2</priority>
     </url>
