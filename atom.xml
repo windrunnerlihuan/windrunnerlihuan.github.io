@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://windrunnerlihuan.com/"/>
-  <updated>2016-11-28T20:57:45.580Z</updated>
+  <updated>2016-11-29T19:43:48.678Z</updated>
   <id>http://windrunnerlihuan.com/</id>
   
   <author>
@@ -20,9 +20,9 @@
     <link href="http://windrunnerlihuan.com/2016/11/28/Android%E5%A4%9A%E5%AA%92%E4%BD%93%E5%BC%80%E5%8F%91-%E4%B8%80-MediaPlayer%E6%A1%86%E6%9E%B6%E5%BC%80%E5%A7%8B/"/>
     <id>http://windrunnerlihuan.com/2016/11/28/Android多媒体开发-一-MediaPlayer框架开始/</id>
     <published>2016-11-28T05:13:12.000Z</published>
-    <updated>2016-11-28T20:57:45.580Z</updated>
+    <updated>2016-11-29T19:43:48.678Z</updated>
     
-    <content type="html">&lt;p&gt;&amp;#160; &amp;#160; &amp;#160; &amp;#160;The Android multimedia framework includes support for playing variety of common mediatypes, so that you can easily integrate audio, video and images into your applications. You can play audio or video from media files stored in your application’s resources (raw resources), from standalone files in the filesystem, or from a data stream arriving over a network connection, all using MediaPlayer APIs.&lt;br&gt; —————————————————————————————————————————————抄自官网&lt;br&gt;&lt;a id=&quot;more&quot;&gt;&lt;/a&gt;&lt;/p&gt;
+    <content type="html">&lt;p&gt;&amp;#160; &amp;#160; &amp;#160; &amp;#160;The Android multimedia framework includes support for playing variety of common mediatypes, so that you can easily integrate audio, video and images into your applications. You can play audio or video from media files stored in your application’s resources (raw resources), from standalone files in the filesystem, or from a data stream arriving over a network connection, all using MediaPlayer APIs.&lt;br&gt;&lt;a id=&quot;more&quot;&gt;&lt;/a&gt;&lt;/p&gt;
 &lt;h1 id=&quot;前言-忽略&quot;&gt;&lt;a href=&quot;#前言-忽略&quot; class=&quot;headerlink&quot; title=&quot;前言(忽略)&quot;&gt;&lt;/a&gt;前言(忽略)&lt;/h1&gt;&lt;p&gt;&amp;#160; &amp;#160; &amp;#160; &amp;#160;做多媒体开发都离不开&lt;strong&gt;MediaPlayer&lt;/strong&gt;这个类，现在android市场已经趋于饱和，在API调用方面人人基本上已是轻车熟路。&lt;br&gt;&amp;#160; &amp;#160; &amp;#160; &amp;#160;这里不详细赘述MediaPlayer的使用，毕竟网上例子一搜一大堆，逛网也给出了详细介绍和用法。&lt;br&gt;&amp;#160; &amp;#160; &amp;#160; &amp;#160;官网介绍：&lt;a href=&quot;https://developer.android.com/reference/android/media/MediaPlayer.html&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;https://developer.android.com/reference/android/media/MediaPlayer.html&lt;/a&gt;&lt;br&gt;&amp;#160; &amp;#160; &amp;#160; &amp;#160;官网用法：&lt;a href=&quot;https://developer.android.com/guide/topics/media/mediaplayer.html&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;https://developer.android.com/guide/topics/media/mediaplayer.html&lt;/a&gt;  (这里官网已经把&lt;em&gt;ExoPlayer&lt;/em&gt;贴在导航页了，关于ExoPlayer可以点&lt;a href=&quot;https://github.com/google/ExoPlayer&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;这里&lt;/a&gt;看Github)&lt;/p&gt;
 &lt;p&gt;&amp;#160; &amp;#160; &amp;#160; &amp;#160;一个很简单的demo如下：&lt;br&gt;&lt;figure class=&quot;highlight java&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;3&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;4&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;5&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;MediaPlayer mediaPlayer = &lt;span class=&quot;keyword&quot;&gt;new&lt;/span&gt; MediaPlayer();  &lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;mediaPlayer.setDataSource(path);  &lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;mediaPlayer.setDisplay(surfaceView.getHolder());  &lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;mediaPlayer.prepare();  &lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;mediaPlayer.start();&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;&lt;/p&gt;
 &lt;p&gt;&amp;#160; &amp;#160; &amp;#160; &amp;#160;&lt;br&gt;我们就从这个很简单的例子着手，一步一步分析整个播放流程。&lt;/p&gt;
@@ -50,12 +50,13 @@
 &lt;p&gt;&amp;#160; &amp;#160; &amp;#160; &amp;#160;IGraphicBufferProducer是SurfaceFlinger的内容，一个UI完全显示到diplay的过程，SurfaceFlinger扮演着重要的角色但是它的职责是“Flinger”，即把系统中所有应用程序的最终的“绘图结果”进行“混合”，然后统一显示到物理屏幕上，而其他方面比如各个程序的绘画过程，就由其他东西来担任了。这个光荣的任务自然而然地落在了BufferQueue的肩膀上，它是每个应用程序“一对一”的辅导老师，指导着UI程序的“画板申请”、“作画流程”等一系列细节。下面的图描述了这三者的关系：&lt;/p&gt;
 &lt;p&gt;&lt;img src=&quot;http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E5%A4%9A%E5%AA%92%E4%BD%93%E5%BC%80%E5%8F%91%28%E4%B8%80%29----MediaPlayer%E6%A1%86%E6%9E%B6%E5%BC%80%E5%A7%8B/IGraphicBufferProducer.png&quot; alt=&quot;IGraphicBufferProducer&quot;&gt;&lt;/p&gt;
 &lt;p&gt;&amp;#160; &amp;#160; &amp;#160; &amp;#160;虽说是三者的关系，但是他们所属的层却只有两个，app属于Java层，BufferQueue/SurfaceFlinger属于native层。也就是说BufferQueue也是隶属SurfaceFlinger，所有工作围绕SurfaceFlinger展开。&lt;br&gt;&amp;#160; &amp;#160; &amp;#160; &amp;#160;这里IGraphicBufferProducer就是app和BufferQueue重要桥梁，GraphicBufferProducer承担着单个应用进程中的UI显示需求，与BufferQueue打交道的就是它。&lt;/p&gt;
+&lt;p&gt;&amp;#160; &amp;#160; &amp;#160; &amp;#160;后面的prepare和start直接和C++层MediaPlayer相关，因此我们再下一节分析，这里就简单到此。&lt;/p&gt;
 &lt;h1 id=&quot;小结&quot;&gt;&lt;a href=&quot;#小结&quot; class=&quot;headerlink&quot; title=&quot;小结&quot;&gt;&lt;/a&gt;小结&lt;/h1&gt;&lt;p&gt;&amp;#160; &amp;#160; &amp;#160; &amp;#160;本节只是简单分析上层MediaPlayer调用的一些工作，下一节开始将详细分析后续流程，包括对不同数据源创建不同DataSource，prepare过程中对于系统播放器的选择，底层解码和厂商对OpenMax接口的实现，当然还有整个多媒体框架的C/S架构分析。&lt;br&gt;&lt;img src=&quot;http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E5%A4%9A%E5%AA%92%E4%BD%93%E5%BC%80%E5%8F%91%28%E4%B8%80%29----MediaPlayer%E6%A1%86%E6%9E%B6%E5%BC%80%E5%A7%8B/meizi.jpg&quot; alt=&quot;妹子&quot;&gt;&lt;/p&gt;
 </content>
     
     <summary type="html">
     
-      &lt;p&gt;&amp;#160; &amp;#160; &amp;#160; &amp;#160;The Android multimedia framework includes support for playing variety of common mediatypes, so that you can easily integrate audio, video and images into your applications. You can play audio or video from media files stored in your application’s resources (raw resources), from standalone files in the filesystem, or from a data stream arriving over a network connection, all using MediaPlayer APIs.&lt;br&gt; —————————————————————————————————————————————抄自官网&lt;br&gt;
+      &lt;p&gt;&amp;#160; &amp;#160; &amp;#160; &amp;#160;The Android multimedia framework includes support for playing variety of common mediatypes, so that you can easily integrate audio, video and images into your applications. You can play audio or video from media files stored in your application’s resources (raw resources), from standalone files in the filesystem, or from a data stream arriving over a network connection, all using MediaPlayer APIs.&lt;br&gt;
     
     </summary>
     
