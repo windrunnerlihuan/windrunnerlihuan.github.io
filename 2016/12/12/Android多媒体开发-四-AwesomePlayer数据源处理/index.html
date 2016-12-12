@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html >
+<head>
+  
+    <!--[if lt IE 9]>
+        <style>body {display: none; background: none !important} </style>
+        <meta http-equiv="Refresh" Content="0; url=//outdatedbrowser.com/" />
+    <![endif]-->
+
+  <meta charset="utf-8">
+  <meta name="baidu-site-verification" content="zzKGwrFJYw" />
+  
+  <title>Android多媒体开发(四)----AwesomePlayer数据源处理 | April is your lie</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="&amp;#160; &amp;#160; &amp;#160; &amp;#160;我们追着setDataSource都能挖出这么多内容，这次我们分析AwesomePlayer的setDataSource流程。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android多媒体开发(四)----AwesomePlayer数据源处理">
+<meta property="og:url" content="http://windrunnerlihuan.com/2016/12/12/Android多媒体开发-四-AwesomePlayer数据源处理/index.html">
+<meta property="og:site_name" content="April is your lie">
+<meta property="og:description" content="&amp;#160; &amp;#160; &amp;#160; &amp;#160;我们追着setDataSource都能挖出这么多内容，这次我们分析AwesomePlayer的setDataSource流程。">
+<meta property="og:image" content="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E5%A4%9A%E5%AA%92%E4%BD%93%E5%BC%80%E5%8F%91%28%E5%9B%9B%29----AwesomePlayer%E6%95%B0%E6%8D%AE%E6%BA%90%E5%A4%84%E7%90%86/stagefrightrole.jpg">
+<meta property="og:image" content="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E5%A4%9A%E5%AA%92%E4%BD%93%E5%BC%80%E5%8F%91%28%E5%9B%9B%29----AwesomePlayer%E6%95%B0%E6%8D%AE%E6%BA%90%E5%A4%84%E7%90%86/setdatasource.jpg">
+<meta property="og:image" content="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E5%A4%9A%E5%AA%92%E4%BD%93%E5%BC%80%E5%8F%91%28%E5%9B%9B%29----AwesomePlayer%E6%95%B0%E6%8D%AE%E6%BA%90%E5%A4%84%E7%90%86/meizi.jpg">
+<meta property="og:updated_time" content="2016-12-12T18:48:48.938Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Android多媒体开发(四)----AwesomePlayer数据源处理">
+<meta name="twitter:description" content="&amp;#160; &amp;#160; &amp;#160; &amp;#160;我们追着setDataSource都能挖出这么多内容，这次我们分析AwesomePlayer的setDataSource流程。">
+<meta name="twitter:image" content="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E5%A4%9A%E5%AA%92%E4%BD%93%E5%BC%80%E5%8F%91%28%E5%9B%9B%29----AwesomePlayer%E6%95%B0%E6%8D%AE%E6%BA%90%E5%A4%84%E7%90%86/stagefrightrole.jpg">
+  
+    <link rel="alternative" href="/atom.xml" title="April is your lie" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/img/favicon.png">
+  
+  
+      <link href="//cdn.bootcss.com/animate.css/3.5.1/animate.min.css" rel="stylesheet">
+  
+  
+      <script src="//cdn.bootcss.com/pace/1.0.2/pace.min.js"></script>
+      <link href="//cdn.bootcss.com/pace/1.0.2/themes/blue/pace-theme-minimal.css" rel="stylesheet">
+  
+  <link rel="stylesheet" href="/css/style.css">
+  
+  <link href="//cdn.bootcss.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet">
+  <link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
+  
+  
+      <link href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.min.css" rel="stylesheet">
+  
+  <script src="//cdn.bootcss.com/jquery/2.2.4/jquery.min.js"></script>
+  <script src="//cdn.bootcss.com/clipboard.js/1.5.10/clipboard.min.js"></script>
+  <script>
+      var yiliaConfig = {
+          fancybox: true,
+          animate: true,
+          isHome: false,
+          isPost: true,
+          isArchive: false,
+          isTag: false,
+          isCategory: false,
+          open_in_new: false,
+          fancybox_js: "//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.min.js",
+          scrollreveal: "//cdn.bootcss.com/scrollReveal.js/3.1.4/scrollreveal.min.js",
+          search: true
+      }
+  </script>
+
+  
+      <script>
+          yiliaConfig.jquery_ui = [true, "//cdn.bootcss.com/jqueryui/1.10.4/jquery-ui.min.js", "//cdn.bootcss.com/jqueryui/1.10.4/css/jquery-ui.min.css"];
+      </script>
+  
+
+  
+      <script>
+          yiliaConfig.rootUrl = "/";
+      </script>
+  
+
+  
+  
+  <!-- 自动推送工具代码 start -->
+  <script>
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+<!-- 自动推送工具代码 end -->
+</head>
+<body>
+  <div id="container">
+    <div class="left-col">
+    <div class="overlay"></div>
+<div class="intrude-less">
+    <header id="header" class="inner">
+        <a href="/" class="profilepic">
+            <img src="/img/avatar.jpg" class="animated zoomIn">
+        </a>
+        <hgroup>
+          <h1 class="header-author"><a href="/">windrunnerlihuan</a></h1>
+        </hgroup>
+
+        
+        <p class="header-subtitle">四月是你的谎言</p>
+        
+
+        
+            <form id="search-form">
+            <input type="text" id="local-search-input" name="q" results="0" placeholder="search..." class="search form-control" autocomplete="off" autocorrect="off" searchonload="undefined" />
+            <i class="fa fa-times" onclick="resetSearch()"></i>
+            </form>
+            <div id="local-search-result"></div>
+            <p class='no-result'>No results found <i class='fa fa-spinner fa-pulse'></i></p>
+        
+
+
+        
+            <div id="switch-btn" class="switch-btn">
+                <div class="icon">
+                    <div class="icon-ctn">
+                        <div class="icon-wrap icon-house" data-idx="0">
+                            <div class="birdhouse"></div>
+                            <div class="birdhouse_holes"></div>
+                        </div>
+                        <div class="icon-wrap icon-ribbon hide" data-idx="1">
+                            <div class="ribbon"></div>
+                        </div>
+                        
+                        <div class="icon-wrap icon-link hide" data-idx="2">
+                            <div class="loopback_l"></div>
+                            <div class="loopback_r"></div>
+                        </div>
+                        
+                        
+                        <div class="icon-wrap icon-me hide" data-idx="3">
+                            <div class="user"></div>
+                            <div class="shoulder"></div>
+                        </div>
+                        
+                    </div>
+                    
+                </div>
+                <div class="tips-box hide">
+                    <div class="tips-arrow"></div>
+                    <ul class="tips-inner">
+                        <li>菜单</li>
+                        <li>标签</li>
+                        
+                        <li>友情链接</li>
+                        
+                        
+                        <li>关于我</li>
+                        
+                    </ul>
+                </div>
+            </div>
+        
+
+        <div id="switch-area" class="switch-area">
+            <div class="switch-wrap">
+                <section class="switch-part switch-part1">
+                    <nav class="header-menu">
+                        <ul>
+                        
+                            <li><a href="/">主页</a></li>
+                        
+                            <li><a href="/archives/">时间轴</a></li>
+                        
+                            <li><a href="/tags/">标签云</a></li>
+                        
+                            <li><a href="/about/">关于我</a></li>
+                        
+                        </ul>
+                    </nav>
+                    <nav class="header-nav">
+                        <ul class="social">
+                            
+                                <a class="fa Email" target="_blank" href="mailto:937874128@qq.com" title="Email"></a>
+                            
+                                <a class="fa GitHub" target="_blank" href="https://github.com/windrunnerlihuan" title="GitHub"></a>
+                            
+                                <a class="fa RSS" target="_blank" href="/atom.xml" title="RSS"></a>
+                            
+                        </ul>
+                    </nav>
+                </section>
+                
+                
+                <section class="switch-part switch-part2">
+                    <div class="widget tagcloud" id="js-tagcloud">
+                        <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/Binder/">Binder</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Bitmap/">Bitmap</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/IPC/">IPC</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/SO库/">SO库</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/博客搭建/">博客搭建</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/壁纸/">壁纸</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/多媒体/">多媒体</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/属性动画/">属性动画</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/开始/">开始</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/弹幕/">弹幕</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/插件开发/">插件开发</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/智能指针/">智能指针</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/消息/">消息</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/移动直播/">移动直播</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/线程池/">线程池</a></li></ul>
+                    </div>
+                </section>
+                
+                
+                
+                <section class="switch-part switch-part3">
+                    <div id="js-friends">
+                    
+                      <a target="_blank" class="main-nav-link switch-friends-link" href="http://gank.io/">干货集中营</a>
+                    
+                      <a target="_blank" class="main-nav-link switch-friends-link" href="http://www.jcodecraeer.com/">泡在网上的日子</a>
+                    
+                      <a target="_blank" class="main-nav-link switch-friends-link" href="http://trinea.cn/">Trinea</a>
+                    
+                    </div>
+                </section>
+                
+
+                
+                
+                <section class="switch-part switch-part4">
+                
+                    <div id="js-aboutme">windrunnerlihuan，开发小菜一枚，坐标位于上海。</div>
+                </section>
+                
+            </div>
+        </div>
+    </header>                
+</div>
+    </div>
+    <div class="mid-col">
+      <nav id="mobile-nav">
+      <div class="overlay">
+          <div class="slider-trigger"></div>
+          <h1 class="header-author js-mobile-header hide"><a href="/" title="回到主页">windrunnerlihuan</a></h1>
+      </div>
+    <div class="intrude-less">
+        <header id="header" class="inner">
+            <a href="/" class="profilepic">
+                <img src="/img/avatar.jpg" class="animated zoomIn">
+            </a>
+            <hgroup>
+              <h1 class="header-author"><a href="/" title="回到主页">windrunnerlihuan</a></h1>
+            </hgroup>
+            
+            <p class="header-subtitle">四月是你的谎言</p>
+            
+            <nav class="header-menu">
+                <ul>
+                
+                    <li><a href="/">主页</a></li>
+                
+                    <li><a href="/archives/">时间轴</a></li>
+                
+                    <li><a href="/tags/">标签云</a></li>
+                
+                    <li><a href="/about/">关于我</a></li>
+                
+                <div class="clearfix"></div>
+                </ul>
+            </nav>
+            <nav class="header-nav">
+                        <ul class="social">
+                            
+                                <a class="fa Email" target="_blank" href="mailto:937874128@qq.com" title="Email"></a>
+                            
+                                <a class="fa GitHub" target="_blank" href="https://github.com/windrunnerlihuan" title="GitHub"></a>
+                            
+                                <a class="fa RSS" target="_blank" href="/atom.xml" title="RSS"></a>
+                            
+                        </ul>
+            </nav>
+        </header>                
+    </div>
+    <link class="menu-list" tags="标签" friends="友情链接" about="关于我"/>
+</nav>
+      <div class="body-wrap"><article id="post-Android多媒体开发-四-AwesomePlayer数据源处理" class="article article-type-post" itemscope itemprop="blogPost">
+  
+    <div class="article-meta">
+      <a href="/2016/12/12/Android多媒体开发-四-AwesomePlayer数据源处理/" class="article-date">
+      <time datetime="2016-12-12T12:13:12.000Z" itemprop="datePublished">2016-12-12</time>
+</a>
+    </div>
+  
+  <div class="article-inner">
+    
+      <input type="hidden" class="isFancy" />
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      Android多媒体开发(四)----AwesomePlayer数据源处理
+    </h1>
+  
+
+      </header>
+      
+      <div class="article-info article-info-post">
+        
+    <div class="article-category tagcloud">
+    <a class="article-category-link" href="/categories/Android技术点/">Android技术点</a>
+    </div>
+
+
+        
+    <div class="article-tag tagcloud">
+        <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/多媒体/">多媒体</a></li></ul>
+    </div>
+
+        <div class="clearfix"></div>
+      </div>
+      
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+          
+        <p>&#160; &#160; &#160; &#160;我们追着setDataSource都能挖出这么多内容，这次我们分析AwesomePlayer的setDataSource流程。<br><a id="more"></a></p>
+<h1 id="设置数据源"><a href="#设置数据源" class="headerlink" title="设置数据源"></a>设置数据源</h1><p>&#160; &#160; &#160; &#160;通过前几篇的了解，我们知道StageFright框架在整个playback的位置：<br><img src="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E5%A4%9A%E5%AA%92%E4%BD%93%E5%BC%80%E5%8F%91%28%E5%9B%9B%29----AwesomePlayer%E6%95%B0%E6%8D%AE%E6%BA%90%E5%A4%84%E7%90%86/stagefrightrole.jpg" alt="StageFright角色"></p>
+<p>&#160; &#160; &#160; &#160;前一个章节我们了解了播放器的大概流程。如果要分析数据源设置，就要在前一章节的图上稍作改动。<br><img src="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E5%A4%9A%E5%AA%92%E4%BD%93%E5%BC%80%E5%8F%91%28%E5%9B%9B%29----AwesomePlayer%E6%95%B0%E6%8D%AE%E6%BA%90%E5%A4%84%E7%90%86/setdatasource.jpg" alt="数据源设置改动"></p>
+<p>&#160; &#160; &#160; &#160;通过setDataSource 指定播放器的数据源。可以是URI或者fd.可以是http:// 、rtsp://、本地地址或者本地文件描述符fd。其最终调用是将上层传递来的参数转化为<strong>DataSource</strong>，为下一步的demux提供数据支持。</p>
+<p>&#160; &#160; &#160; &#160;继续跟进AwesomePlayer的setDataSource，我们依然选取Fd类型，方便分析。位于framework/av/media/libstagefright/AwesomePlayer.cpp：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">status_t</span> AwesomePlayer::setDataSource(</span><br><span class="line">        <span class="keyword">int</span> fd, <span class="keyword">int64_t</span> offset, <span class="keyword">int64_t</span> length) &#123;</span><br><span class="line">    Mutex::<span class="function">Autolock <span class="title">autoLock</span><span class="params">(mLock)</span></span>;</span><br><span class="line"></span><br><span class="line">    reset_l();</span><br><span class="line">    <span class="comment">//创建了一个FileSource的类对象，主要提供一些文件操作的方法</span></span><br><span class="line">    sp&lt;DataSource&gt; dataSource = <span class="keyword">new</span> FileSource(fd, offset, length);</span><br><span class="line">    <span class="comment">//检查文件是否ok</span></span><br><span class="line">    <span class="keyword">status_t</span> err = dataSource-&gt;initCheck();</span><br><span class="line">    <span class="keyword">if</span> (err != OK) &#123;</span><br><span class="line">        <span class="keyword">return</span> err;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//赋给全局变量</span></span><br><span class="line">    mFileSource = dataSource;</span><br><span class="line"></span><br><span class="line">    &#123;</span><br><span class="line">        Mutex::<span class="function">Autolock <span class="title">autoLock</span><span class="params">(mStatsLock)</span></span>;</span><br><span class="line">        mStats.mFd = fd;</span><br><span class="line">        mStats.mURI = String8();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//最后会调用setDataSource_l(dataSource)方法</span></span><br><span class="line">    <span class="keyword">return</span> setDataSource_l(dataSource);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;这里主要讲外部传入的fd封装了一个FileSource的对象，FileSource.cpp主要实现了一些对文件的操作方法，位于framework/av/media/libstagefright/FileSource.cpp，有兴趣的可以看看。我们继续查看setDataSource_l(dataSource)方法：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">status_t</span> AwesomePlayer::setDataSource_l(</span><br><span class="line">        <span class="keyword">const</span> sp&lt;DataSource&gt; &amp;dataSource) &#123;</span><br><span class="line">    <span class="comment">//这里根据文件类型创建不同的MediaExtractor对象</span></span><br><span class="line">    sp&lt;MediaExtractor&gt; extractor = MediaExtractor::Create(dataSource);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (extractor == <span class="literal">NULL</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> UNKNOWN_ERROR;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//检查是否是DRM加密文件</span></span><br><span class="line">    <span class="keyword">if</span> (extractor-&gt;getDrmFlag()) &#123;</span><br><span class="line">        checkDrmStatus(dataSource);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//最后会调用到这里</span></span><br><span class="line">    <span class="keyword">return</span> setDataSource_l(extractor);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;方法中又根据文件类型创建不同的MediaExtractor对象，我们看看它是怎么对文件类型进行分类的，位于framework/av/media/libstagefright/MediaExtractor.cpp中：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// static</span></span><br><span class="line"><span class="comment">//这个Create方法第二个参数mime是缺省参数，缺省为NULL</span></span><br><span class="line">sp&lt;MediaExtractor&gt; MediaExtractor::Create(</span><br><span class="line">        <span class="keyword">const</span> sp&lt;DataSource&gt; &amp;source, <span class="keyword">const</span> <span class="keyword">char</span> *mime) &#123;</span><br><span class="line">    sp&lt;AMessage&gt; meta;</span><br><span class="line"></span><br><span class="line">    String8 tmp;</span><br><span class="line">    <span class="keyword">if</span> (mime == <span class="literal">NULL</span>) &#123;<span class="comment">//如果外部没有传入文件的mime类型(缺省为NULL)</span></span><br><span class="line">        <span class="keyword">float</span> confidence;</span><br><span class="line">        <span class="comment">//从FileSource中读取文件的mime类型</span></span><br><span class="line">        <span class="keyword">if</span> (!source-&gt;sniff(&amp;tmp, &amp;confidence, &amp;meta)) &#123;</span><br><span class="line">            ALOGV(<span class="string">"FAILED to autodetect media content."</span>);</span><br><span class="line"></span><br><span class="line">            <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">//将读取到的mime复制给局部变量</span></span><br><span class="line">        mime = tmp.<span class="built_in">string</span>();</span><br><span class="line">        ALOGV(<span class="string">"Autodetected media content as '%s' with confidence %.2f"</span>,</span><br><span class="line">             mime, confidence);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//是否为DRM加密文件</span></span><br><span class="line">    <span class="keyword">bool</span> isDrm = <span class="literal">false</span>;</span><br><span class="line">    <span class="comment">// DRM MIME type syntax is "drm+type+original" where</span></span><br><span class="line">    <span class="comment">// type is "es_based" or "container_based" and</span></span><br><span class="line">    <span class="comment">// original is the content's cleartext MIME type</span></span><br><span class="line">    <span class="comment">//如果是DRM加密文件，则mime字符串有些不同，这里检查是否为"drm+type+original"这种格式</span></span><br><span class="line">    <span class="keyword">if</span> (!<span class="built_in">strncmp</span>(mime, <span class="string">"drm+"</span>, <span class="number">4</span>)) &#123;</span><br><span class="line">        <span class="keyword">const</span> <span class="keyword">char</span> *originalMime = <span class="built_in">strchr</span>(mime+<span class="number">4</span>, <span class="string">'+'</span>);</span><br><span class="line">        <span class="keyword">if</span> (originalMime == <span class="literal">NULL</span>) &#123;</span><br><span class="line">            <span class="comment">// second + not found</span></span><br><span class="line">            <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        ++originalMime;</span><br><span class="line">        <span class="keyword">if</span> (!<span class="built_in">strncmp</span>(mime, <span class="string">"drm+es_based+"</span>, <span class="number">13</span>)) &#123;</span><br><span class="line">            <span class="comment">// DRMExtractor sets container metadata kKeyIsDRM to 1</span></span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">new</span> DRMExtractor(source, originalMime);</span><br><span class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span> (!<span class="built_in">strncmp</span>(mime, <span class="string">"drm+container_based+"</span>, <span class="number">20</span>)) &#123;</span><br><span class="line">            mime = originalMime;</span><br><span class="line">            isDrm = <span class="literal">true</span>;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//下面逻辑就是根据mime对文件类型的判断了，比如audio/wav wav,video/x-msvideo avi,然后选择创建哪一种Extractor数据解析器</span></span><br><span class="line">    MediaExtractor *ret = <span class="literal">NULL</span>;</span><br><span class="line">    <span class="keyword">if</span> (!strcasecmp(mime, MEDIA_MIMETYPE_CONTAINER_MPEG4)</span><br><span class="line">            || !strcasecmp(mime, <span class="string">"audio/mp4"</span>)) &#123;</span><br><span class="line">        ret = <span class="keyword">new</span> MPEG4Extractor(source);</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (!strcasecmp(mime, MEDIA_MIMETYPE_AUDIO_MPEG)) &#123;</span><br><span class="line">        ret = <span class="keyword">new</span> MP3Extractor(source, meta);</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (!strcasecmp(mime, MEDIA_MIMETYPE_AUDIO_AMR_NB)</span><br><span class="line">            || !strcasecmp(mime, MEDIA_MIMETYPE_AUDIO_AMR_WB)) &#123;</span><br><span class="line">        ret = <span class="keyword">new</span> AMRExtractor(source);</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (!strcasecmp(mime, MEDIA_MIMETYPE_AUDIO_FLAC)) &#123;</span><br><span class="line">        ret = <span class="keyword">new</span> FLACExtractor(source);</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (!strcasecmp(mime, MEDIA_MIMETYPE_CONTAINER_WAV)) &#123;</span><br><span class="line">        ret = <span class="keyword">new</span> WAVExtractor(source);</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (!strcasecmp(mime, MEDIA_MIMETYPE_CONTAINER_OGG)) &#123;</span><br><span class="line">        ret = <span class="keyword">new</span> OggExtractor(source);</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (!strcasecmp(mime, MEDIA_MIMETYPE_CONTAINER_MATROSKA)) &#123;</span><br><span class="line">        ret = <span class="keyword">new</span> MatroskaExtractor(source);</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (!strcasecmp(mime, MEDIA_MIMETYPE_CONTAINER_MPEG2TS)) &#123;</span><br><span class="line">        ret = <span class="keyword">new</span> MPEG2TSExtractor(source);</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (!strcasecmp(mime, MEDIA_MIMETYPE_CONTAINER_WVM)) &#123;</span><br><span class="line">        <span class="comment">// Return now.  WVExtractor should not have the DrmFlag set in the block below.</span></span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> WVMExtractor(source);</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (!strcasecmp(mime, MEDIA_MIMETYPE_AUDIO_AAC_ADTS)) &#123;</span><br><span class="line">        ret = <span class="keyword">new</span> AACExtractor(source, meta);</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (!strcasecmp(mime, MEDIA_MIMETYPE_CONTAINER_MPEG2PS)) &#123;</span><br><span class="line">        ret = <span class="keyword">new</span> MPEG2PSExtractor(source);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//如果文件经过DRM处理，则设置一下标签</span></span><br><span class="line">    <span class="keyword">if</span> (ret != <span class="literal">NULL</span>) &#123;</span><br><span class="line">       <span class="keyword">if</span> (isDrm) &#123;</span><br><span class="line">           ret-&gt;setDrmFlag(<span class="literal">true</span>);</span><br><span class="line">       &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">           ret-&gt;setDrmFlag(<span class="literal">false</span>);</span><br><span class="line">       &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> ret;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;上面逻辑只要先获取文件的mime，然后根绝mime的类型去创造不同的文件解析器Extractor。MIME(Multipurpose Internet Mail Extensions)多用途互联网邮件扩展类型，这个应该都很熟悉了吧。列一些常见的比如：(类型/子类型     扩展名)</p>
+<ul>
+<li>image/jpeg        jpg</li>
+<li>application/msword        doc</li>
+<li>audio/mpeg        mp3</li>
+<li>application/octet-stream        flv //特殊处理</li>
+<li>video/x-ms-wmv        wmv</li>
+<li>video/mp4        mp4 //特殊处理</li>
+</ul>
+<p>&#160; &#160; &#160; &#160;<strong>(如果不知道MIME类型 可以写通用的: application/octet-stream；还有一些规律是平台工具直接打开类型的，比如文本：text/扩展名，音频：audio/扩展名，视频：video/扩展名)</strong><br>&#160; &#160; &#160; &#160;常见的mime可以上<strong>w3school</strong>查询，可以点<a href="http://www.w3school.com.cn/media/media_mimeref.asp" target="_blank" rel="external">这里</a>。</p>
+<p>&#160; &#160; &#160; &#160;创建好了数据解析器，比如MPEG4Extractor，位于framework/av/media/libstagefright/MPEG4Extractor.cpp。<br>&#160; &#160; &#160; &#160;然后我们继续往下看，进入setDataSource_l(extractor)方法：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">status_t</span> AwesomePlayer::setDataSource_l(<span class="keyword">const</span> sp&lt;MediaExtractor&gt; &amp;extractor) &#123;</span><br><span class="line">    <span class="comment">// Attempt to approximate overall stream bitrate by summing all</span></span><br><span class="line">    <span class="comment">// tracks' individual bitrates, if not all of them advertise bitrate,</span></span><br><span class="line">    <span class="comment">// we have to fail.</span></span><br><span class="line">    <span class="comment">//比特率为每一路音频/视频/字幕流各自比特率的累加，如果又哪一路数据流没有拿到它单个的比特率，则数据解析失败</span></span><br><span class="line">    <span class="keyword">int64_t</span> totalBitRate = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">    mExtractor = extractor;</span><br><span class="line">    <span class="comment">//遍历每一路数据流</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">size_t</span> i = <span class="number">0</span>; i &lt; extractor-&gt;countTracks(); ++i) &#123;</span><br><span class="line">        <span class="comment">//读取数据流的元数据，比如MPEG4Extractor中的获取方法，对文件头部信息的读取(也有一些类型文件元数据在尾部)</span></span><br><span class="line">        sp&lt;MetaData&gt; meta = extractor-&gt;getTrackMetaData(i);</span><br><span class="line">        <span class="comment">//单独数据流的比特率</span></span><br><span class="line">        <span class="keyword">int32_t</span> bitrate;</span><br><span class="line">        <span class="keyword">if</span> (!meta-&gt;findInt32(kKeyBitRate, &amp;bitrate)) &#123;</span><br><span class="line">            <span class="keyword">const</span> <span class="keyword">char</span> *mime;</span><br><span class="line">            CHECK(meta-&gt;findCString(kKeyMIMEType, &amp;mime));</span><br><span class="line">            ALOGV(<span class="string">"track of type '%s' does not publish bitrate"</span>, mime);</span><br><span class="line"></span><br><span class="line">            totalBitRate = <span class="number">-1</span>;</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">//将单个数据流比特率累加，比特率越大，码率越高，片子质量越清晰越好</span></span><br><span class="line">        totalBitRate += bitrate;</span><br><span class="line">    &#125;</span><br><span class="line">    sp&lt;MetaData&gt; fileMeta = mExtractor-&gt;getMetaData();</span><br><span class="line">    <span class="keyword">if</span> (fileMeta != <span class="literal">NULL</span>) &#123;</span><br><span class="line">        <span class="keyword">int64_t</span> duration;</span><br><span class="line">        <span class="keyword">if</span> (fileMeta-&gt;findInt64(kKeyDuration, &amp;duration)) &#123;</span><br><span class="line">            mDurationUs = duration;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    mBitrate = totalBitRate;</span><br><span class="line"></span><br><span class="line">    ALOGV(<span class="string">"mBitrate = %lld bits/sec"</span>, mBitrate);</span><br><span class="line"></span><br><span class="line">    &#123;</span><br><span class="line">        Mutex::<span class="function">Autolock <span class="title">autoLock</span><span class="params">(mStatsLock)</span></span>;</span><br><span class="line">        mStats.mBitrate = mBitrate;</span><br><span class="line">        mStats.mTracks.clear();</span><br><span class="line">        mStats.mAudioTrackIndex = <span class="number">-1</span>;</span><br><span class="line">        mStats.mVideoTrackIndex = <span class="number">-1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//是否有音频流</span></span><br><span class="line">    <span class="keyword">bool</span> haveAudio = <span class="literal">false</span>;</span><br><span class="line">    <span class="comment">//是否有视频流</span></span><br><span class="line">    <span class="keyword">bool</span> haveVideo = <span class="literal">false</span>;</span><br><span class="line">    <span class="comment">//开始遍历文件的每一路数据流</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">size_t</span> i = <span class="number">0</span>; i &lt; extractor-&gt;countTracks(); ++i) &#123;</span><br><span class="line">        sp&lt;MetaData&gt; meta = extractor-&gt;getTrackMetaData(i);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">const</span> <span class="keyword">char</span> *_mime;</span><br><span class="line">        CHECK(meta-&gt;findCString(kKeyMIMEType, &amp;_mime));</span><br><span class="line"></span><br><span class="line">        String8 mime = String8(_mime);</span><br><span class="line">        <span class="comment">//根据每一路数据流的mime判断是音频还是视频，然后做轨道分离</span></span><br><span class="line">        <span class="keyword">if</span> (!haveVideo &amp;&amp; !strncasecmp(mime.<span class="built_in">string</span>(), <span class="string">"video/"</span>, <span class="number">6</span>)) &#123;<span class="comment">//是否是视频流</span></span><br><span class="line">            <span class="comment">//将视频流分离，生成mVideoTrack这个MediaSource，比如MPEG4Source：MediaSource</span></span><br><span class="line">            setVideoSource(extractor-&gt;getTrack(i));</span><br><span class="line">            <span class="comment">//有视频流标签置为true</span></span><br><span class="line">            haveVideo = <span class="literal">true</span>;</span><br><span class="line"></span><br><span class="line">            <span class="comment">// Set the presentation/display size</span></span><br><span class="line">            <span class="comment">//显示宽高</span></span><br><span class="line">            <span class="keyword">int32_t</span> displayWidth, displayHeight;</span><br><span class="line">            <span class="keyword">bool</span> success = meta-&gt;findInt32(kKeyDisplayWidth, &amp;displayWidth);</span><br><span class="line">            <span class="keyword">if</span> (success) &#123;</span><br><span class="line">                success = meta-&gt;findInt32(kKeyDisplayHeight, &amp;displayHeight);</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">if</span> (success) &#123;</span><br><span class="line">                mDisplayWidth = displayWidth;</span><br><span class="line">                mDisplayHeight = displayHeight;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            &#123;</span><br><span class="line">                Mutex::<span class="function">Autolock <span class="title">autoLock</span><span class="params">(mStatsLock)</span></span>;</span><br><span class="line">                mStats.mVideoTrackIndex = mStats.mTracks.size();</span><br><span class="line">                mStats.mTracks.push();</span><br><span class="line">                TrackStat *stat =</span><br><span class="line">                    &amp;mStats.mTracks.editItemAt(mStats.mVideoTrackIndex);</span><br><span class="line">                stat-&gt;mMIME = mime.<span class="built_in">string</span>();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span> (!haveAudio &amp;&amp; !strncasecmp(mime.<span class="built_in">string</span>(), <span class="string">"audio/"</span>, <span class="number">6</span>)) &#123;<span class="comment">//音频流分离</span></span><br><span class="line">            <span class="comment">//将视频流分离，生成mAudioTrack</span></span><br><span class="line">            setAudioSource(extractor-&gt;getTrack(i));</span><br><span class="line">            <span class="comment">//重置有音频流标签</span></span><br><span class="line">            haveAudio = <span class="literal">true</span>;</span><br><span class="line">            mActiveAudioTrackIndex = i;</span><br><span class="line">            </span><br><span class="line">            &#123;</span><br><span class="line">                Mutex::<span class="function">Autolock <span class="title">autoLock</span><span class="params">(mStatsLock)</span></span>;</span><br><span class="line">                mStats.mAudioTrackIndex = mStats.mTracks.size();</span><br><span class="line">                mStats.mTracks.push();</span><br><span class="line">                TrackStat *stat =</span><br><span class="line">                    &amp;mStats.mTracks.editItemAt(mStats.mAudioTrackIndex);</span><br><span class="line">                stat-&gt;mMIME = mime.<span class="built_in">string</span>();</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="comment">//对ogg类型音频的额外处理</span></span><br><span class="line">            <span class="keyword">if</span> (!strcasecmp(mime.<span class="built_in">string</span>(), MEDIA_MIMETYPE_AUDIO_VORBIS)) &#123;</span><br><span class="line">                <span class="comment">// Only do this for vorbis audio, none of the other audio</span></span><br><span class="line">                <span class="comment">// formats even support this ringtone specific hack and</span></span><br><span class="line">                <span class="comment">// retrieving the metadata on some extractors may turn out</span></span><br><span class="line">                <span class="comment">// to be very expensive.</span></span><br><span class="line">                sp&lt;MetaData&gt; fileMeta = extractor-&gt;getMetaData();</span><br><span class="line">                <span class="keyword">int32_t</span> loop;</span><br><span class="line">                <span class="keyword">if</span> (fileMeta != <span class="literal">NULL</span></span><br><span class="line">                        &amp;&amp; fileMeta-&gt;findInt32(kKeyAutoLoop, &amp;loop) &amp;&amp; loop != <span class="number">0</span>) &#123;</span><br><span class="line">                    modifyFlags(AUTO_LOOPING, SET);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span> (!strcasecmp(mime.<span class="built_in">string</span>(), MEDIA_MIMETYPE_TEXT_3GPP)) &#123;<span class="comment">//分离字幕</span></span><br><span class="line">            <span class="comment">//对字幕流分离</span></span><br><span class="line">            addTextSource_l(i, extractor-&gt;getTrack(i));</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//如果既没有视频也没有音频，则返回错误</span></span><br><span class="line">    <span class="keyword">if</span> (!haveAudio &amp;&amp; !haveVideo) &#123;</span><br><span class="line">        <span class="keyword">if</span> (mWVMExtractor != <span class="literal">NULL</span>) &#123;</span><br><span class="line">            <span class="keyword">return</span> mWVMExtractor-&gt;getError();</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="keyword">return</span> UNKNOWN_ERROR;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    mExtractorFlags = extractor-&gt;flags();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> OK;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;上述方法比较长，总结如下：</p>
+<ul>
+<li>根据MediaExtractor，读取数据源文件的元数据信息，将每一路数据流的比特率进行累加；</li>
+<li>分离数据流，音频/视频/字幕分离：设置视频源mVideoTrack ；设置音频源mAudioTrack；分离字幕。mVideoTrack和mAudioTrack的做为创建的AwesomePlayer的成员函数，举个例子，比如其类型为MPEG4Source，继承了MediaSource。</li>
+</ul>
+<p>&#160; &#160; &#160; &#160;注释已经写得比较清楚了。到这里文件类型的setDataSource就分析完了，这个自己挖的大坑也算填的差不多了。</p>
+<h1 id="网络类型数据源"><a href="#网络类型数据源" class="headerlink" title="网络类型数据源"></a>网络类型数据源</h1><p>&#160; &#160; &#160; &#160;如果我们给MediaPlayer里面setDataSource设置的路径是网络路径，比如 <a href="http://xxxxxx......xx.mp4" target="_blank" rel="external">http://xxxxxx......xx.mp4</a> ,那么在setDataSource时候是不能直接获取数据流的，要到prepareAsync才能得到数据信息。所以我们继续顺着思路，看看网络类型数据信息怎么获取。<br>&#160; &#160; &#160; &#160;依然先看AwesomePlayer的另一个重载方法setDataSource：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">status_t</span> AwesomePlayer::setDataSource(</span><br><span class="line">        <span class="keyword">const</span> sp&lt;IMediaHTTPService&gt; &amp;httpService,</span><br><span class="line">        <span class="keyword">const</span> <span class="keyword">char</span> *uri,</span><br><span class="line">        <span class="keyword">const</span> KeyedVector&lt;String8, String8&gt; *headers) &#123;</span><br><span class="line">    Mutex::<span class="function">Autolock <span class="title">autoLock</span><span class="params">(mLock)</span></span>;</span><br><span class="line">    <span class="comment">//会调用下一个方法</span></span><br><span class="line">    <span class="keyword">return</span> setDataSource_l(httpService, uri, headers);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">status_t</span> AwesomePlayer::setDataSource_l(</span><br><span class="line">        <span class="keyword">const</span> sp&lt;IMediaHTTPService&gt; &amp;httpService,</span><br><span class="line">        <span class="keyword">const</span> <span class="keyword">char</span> *uri,</span><br><span class="line">        <span class="keyword">const</span> KeyedVector&lt;String8, String8&gt; *headers) &#123;</span><br><span class="line">    reset_l();</span><br><span class="line">    <span class="comment">//仅仅将httpservice保存到全局变量而已</span></span><br><span class="line">    mHTTPService = httpService;</span><br><span class="line">    <span class="comment">//保存了上层传入的uri</span></span><br><span class="line">    mUri = uri;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (headers) &#123;</span><br><span class="line">        mUriHeaders = *headers;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">ssize_t</span> index = mUriHeaders.indexOfKey(String8(<span class="string">"x-hide-urls-from-log"</span>));</span><br><span class="line">        <span class="keyword">if</span> (index &gt;= <span class="number">0</span>) &#123;</span><br><span class="line">            <span class="comment">// Browser is in "incognito" mode, suppress logging URLs.</span></span><br><span class="line"></span><br><span class="line">            <span class="comment">// This isn't something that should be passed to the server.</span></span><br><span class="line">            mUriHeaders.removeItemsAt(index);</span><br><span class="line"></span><br><span class="line">            modifyFlags(INCOGNITO, SET);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    ALOGI(<span class="string">"setDataSource_l(%s)"</span>, uriDebugString(mUri, mFlags &amp; INCOGNITO).c_str());</span><br><span class="line"></span><br><span class="line">    <span class="comment">// The actual work will be done during preparation in the call to</span></span><br><span class="line">    <span class="comment">// ::finishSetDataSource_l to avoid blocking the calling thread in</span></span><br><span class="line">    <span class="comment">// setDataSource for any significant time.</span></span><br><span class="line"></span><br><span class="line">    &#123;</span><br><span class="line">        Mutex::<span class="function">Autolock <span class="title">autoLock</span><span class="params">(mStatsLock)</span></span>;</span><br><span class="line">        mStats.mFd = <span class="number">-1</span>;</span><br><span class="line">        mStats.mURI = mUri;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> OK;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;上面代码仅仅保存了httpService变量，这个用于请求网络；还有上层传入的uri。那么获取数据应该在prepareAsync中。我们知道prepare和prepareAsync不同在于一个是同步操作，一个是异步回调。那么我们先看看prepare：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">status_t</span> AwesomePlayer::prepare() &#123;</span><br><span class="line">    ATRACE_CALL();</span><br><span class="line">    Mutex::<span class="function">Autolock <span class="title">autoLock</span><span class="params">(mLock)</span></span>;</span><br><span class="line">    <span class="comment">//会调用prepare_l方法</span></span><br><span class="line">    <span class="keyword">return</span> prepare_l();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">status_t</span> AwesomePlayer::prepare_l() &#123;</span><br><span class="line">    <span class="keyword">if</span> (mFlags &amp; PREPARED) &#123;<span class="comment">//已经prepare完成了，则返回</span></span><br><span class="line">        <span class="keyword">return</span> OK;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (mFlags &amp; PREPARING) &#123;<span class="comment">//如果正在preparing，则返回错误</span></span><br><span class="line">        <span class="keyword">return</span> UNKNOWN_ERROR;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    mIsAsyncPrepare = <span class="literal">false</span>;<span class="comment">//将异步标签置为false</span></span><br><span class="line">    <span class="comment">//最终还是会调用prepareAsync_l，只不过在同一线程</span></span><br><span class="line">    <span class="keyword">status_t</span> err = prepareAsync_l();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (err != OK) &#123;</span><br><span class="line">        <span class="keyword">return</span> err;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//因此prepare会等待在同步线程</span></span><br><span class="line">    <span class="keyword">while</span> (mFlags &amp; PREPARING) &#123;</span><br><span class="line">        mPreparedCondition.wait(mLock);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> mPrepareResult;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;同步prepare很简单，执行方法最终还是会调用prepareAsync_l方法，只不过在同一线程等待。<br>&#160; &#160; &#160; &#160;那么我们看看异步prepareAsync：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">status_t</span> AwesomePlayer::prepareAsync() &#123;</span><br><span class="line">    ATRACE_CALL();</span><br><span class="line">    Mutex::<span class="function">Autolock <span class="title">autoLock</span><span class="params">(mLock)</span></span>;</span><br><span class="line">    <span class="comment">//如果正在preparing，则返回错误</span></span><br><span class="line">    <span class="keyword">if</span> (mFlags &amp; PREPARING) &#123;</span><br><span class="line">        <span class="keyword">return</span> UNKNOWN_ERROR;  <span class="comment">// async prepare already pending</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    mIsAsyncPrepare = <span class="literal">true</span>;</span><br><span class="line">    <span class="comment">//调用prepareAsync_l方法</span></span><br><span class="line">    <span class="keyword">return</span> prepareAsync_l();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">status_t</span> AwesomePlayer::prepareAsync_l() &#123;</span><br><span class="line">    <span class="keyword">if</span> (mFlags &amp; PREPARING) &#123;<span class="comment">//同上</span></span><br><span class="line">        <span class="keyword">return</span> UNKNOWN_ERROR;  <span class="comment">// async prepare already pending</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//这一步就是我们上一节分析的事件调度线程启动，可以参考上一节</span></span><br><span class="line">    <span class="keyword">if</span> (!mQueueStarted) &#123;</span><br><span class="line">        mQueue.start();</span><br><span class="line">        mQueueStarted = <span class="literal">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//修改标志位，加上PREPARING标志</span></span><br><span class="line">    modifyFlags(PREPARING, SET);</span><br><span class="line">    <span class="comment">//将封装onPrepareAsyncEvent方法的时间加入事件队列中</span></span><br><span class="line">    mAsyncPrepareEvent = <span class="keyword">new</span> AwesomeEvent(</span><br><span class="line">            <span class="keyword">this</span>, &amp;AwesomePlayer::onPrepareAsyncEvent);</span><br><span class="line"></span><br><span class="line">    mQueue.postEvent(mAsyncPrepareEvent);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> OK;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;这里我们可以看到它启动了事件调度队列，这个我们上一节分析过了，如果不太明白可以回去看看：<a href="http://windrunnerlihuan.com/2016/12/21/Android%E5%A4%9A%E5%AA%92%E4%BD%93%E5%BC%80%E5%8F%91-%E4%B8%89-%E4%BB%8EStageFright%E5%88%B0AwesomePlayer/#">Android多媒体开发(三)—-从StageFright到AwesomePlayer</a> 。<br>&#160; &#160; &#160; &#160;然后给事件队列加入封装onPrepareAsyncEvent方法的事件，我们接着看这个方法：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">void</span> AwesomePlayer::onPrepareAsyncEvent() &#123;</span><br><span class="line">    Mutex::<span class="function">Autolock <span class="title">autoLock</span><span class="params">(mLock)</span></span>;</span><br><span class="line">    <span class="comment">//调用beginPrepareAsync_l</span></span><br><span class="line">    beginPrepareAsync_l();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">void</span> AwesomePlayer::beginPrepareAsync_l() &#123;</span><br><span class="line">    <span class="keyword">if</span> (mFlags &amp; PREPARE_CANCELLED) &#123;</span><br><span class="line">        ALOGI(<span class="string">"prepare was cancelled before doing anything"</span>);</span><br><span class="line">        abortPrepare(UNKNOWN_ERROR);</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//主要在这一步，设置网络数据源</span></span><br><span class="line">    <span class="keyword">if</span> (mUri.size() &gt; <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="keyword">status_t</span> err = finishSetDataSource_l();</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (err != OK) &#123;</span><br><span class="line">            abortPrepare(err);</span><br><span class="line">            <span class="keyword">return</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//初始化视频解码器</span></span><br><span class="line">    <span class="keyword">if</span> (mVideoTrack != <span class="literal">NULL</span> &amp;&amp; mVideoSource == <span class="literal">NULL</span>) &#123;</span><br><span class="line">        <span class="keyword">status_t</span> err = initVideoDecoder();</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (err != OK) &#123;</span><br><span class="line">            abortPrepare(err);</span><br><span class="line">            <span class="keyword">return</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//初始化音频解码器</span></span><br><span class="line">    <span class="keyword">if</span> (mAudioTrack != <span class="literal">NULL</span> &amp;&amp; mAudioSource == <span class="literal">NULL</span>) &#123;</span><br><span class="line">        <span class="keyword">status_t</span> err = initAudioDecoder();</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (err != OK) &#123;</span><br><span class="line">            abortPrepare(err);</span><br><span class="line">            <span class="keyword">return</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    modifyFlags(PREPARING_CONNECTED, SET);</span><br><span class="line">    <span class="comment">//是否是http的网络数据流</span></span><br><span class="line">    <span class="keyword">if</span> (isStreamingHTTP()) &#123;</span><br><span class="line">        postBufferingEvent_l();<span class="comment">//开始onBufferingUpdate回调，开始缓冲视频</span></span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        finishAsyncPrepare_l();<span class="comment">//完成prepare</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">bool</span> AwesomePlayer::isStreamingHTTP() <span class="keyword">const</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> mCachedSource != <span class="literal">NULL</span> || mWVMExtractor != <span class="literal">NULL</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;我们这一步的重点是在设置网络数据源，调用finishSetDataSource_l方法：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">status_t</span> AwesomePlayer::finishSetDataSource_l() &#123;</span><br><span class="line">    ATRACE_CALL();</span><br><span class="line">    sp&lt;DataSource&gt; dataSource;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">bool</span> isWidevineStreaming = <span class="literal">false</span>;</span><br><span class="line">    <span class="comment">//Widevine是google在ICS版本上新推出的一种DRM数字版权管理功能，有这个功能的话，就能从google指定的服务器上，下载经过google加密的版权文件，例如视频、应用等等。</span></span><br><span class="line">    <span class="keyword">if</span> (!strncasecmp(<span class="string">"widevine://"</span>, mUri.<span class="built_in">string</span>(), <span class="number">11</span>)) &#123;</span><br><span class="line">        isWidevineStreaming = <span class="literal">true</span>;</span><br><span class="line">        <span class="comment">//如果是google自家的私货，就要在uri加上http://的前缀</span></span><br><span class="line">        String8 newURI = String8(<span class="string">"http://"</span>);</span><br><span class="line">        newURI.append(mUri.<span class="built_in">string</span>() + <span class="number">11</span>);</span><br><span class="line"></span><br><span class="line">        mUri = newURI;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//mime</span></span><br><span class="line">    AString sniffedMIME;</span><br><span class="line">    <span class="comment">//如果是http、https的网络数据流，或者是谷歌自家的私货widevine</span></span><br><span class="line">    <span class="keyword">if</span> (!strncasecmp(<span class="string">"http://"</span>, mUri.<span class="built_in">string</span>(), <span class="number">7</span>)</span><br><span class="line">            || !strncasecmp(<span class="string">"https://"</span>, mUri.<span class="built_in">string</span>(), <span class="number">8</span>)</span><br><span class="line">            || isWidevineStreaming) &#123;</span><br><span class="line">        <span class="comment">//这个就是我们在setDataSource里面取到的httpservice，用于发送http请求    </span></span><br><span class="line">        <span class="keyword">if</span> (mHTTPService == <span class="literal">NULL</span>) &#123;</span><br><span class="line">            ALOGE(<span class="string">"Attempt to play media from http URI without HTTP service."</span>);</span><br><span class="line">            <span class="keyword">return</span> UNKNOWN_ERROR;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">//建立http链接</span></span><br><span class="line">        sp&lt;IMediaHTTPConnection&gt; conn = mHTTPService-&gt;makeHTTPConnection();</span><br><span class="line">        mConnectingDataSource = <span class="keyword">new</span> MediaHTTP(conn);</span><br><span class="line"></span><br><span class="line">        String8 cacheConfig;</span><br><span class="line">        <span class="keyword">bool</span> disconnectAtHighwatermark;</span><br><span class="line">        NuCachedSource2::RemoveCacheSpecificHeaders(</span><br><span class="line">                &amp;mUriHeaders, &amp;cacheConfig, &amp;disconnectAtHighwatermark);</span><br><span class="line"></span><br><span class="line">        mLock.unlock();</span><br><span class="line">        <span class="comment">//开始链接网络</span></span><br><span class="line">        <span class="keyword">status_t</span> err = mConnectingDataSource-&gt;connect(mUri, &amp;mUriHeaders);</span><br><span class="line">        <span class="comment">// force connection at this point, to avoid a race condition between getMIMEType and the</span></span><br><span class="line">        <span class="comment">// caching datasource constructed below, which could result in multiple requests to the</span></span><br><span class="line">        <span class="comment">// server, and/or failed connections.</span></span><br><span class="line">        String8 contentType = mConnectingDataSource-&gt;getMIMEType();</span><br><span class="line">        mLock.lock();</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">if</span> (err != OK) &#123;</span><br><span class="line">            mConnectingDataSource.clear();</span><br><span class="line"></span><br><span class="line">            ALOGI(<span class="string">"mConnectingDataSource-&gt;connect() returned %d"</span>, err);</span><br><span class="line">            <span class="keyword">return</span> err;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (!isWidevineStreaming) &#123;<span class="comment">//非google的私货，正常的http网络请求读取数据</span></span><br><span class="line">            <span class="comment">// The widevine extractor does its own caching.</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">if</span> 0</span></span><br><span class="line">            mCachedSource = <span class="keyword">new</span> NuCachedSource2(</span><br><span class="line">                    <span class="keyword">new</span> ThrottledSource(</span><br><span class="line">                        mConnectingDataSource, <span class="number">50</span> * <span class="number">1024</span> <span class="comment">/* bytes/sec */</span>));</span><br><span class="line"><span class="meta">#<span class="meta-keyword">else</span>       </span></span><br><span class="line">            <span class="comment">// NuCachedSource2，带缓存的DataSource，不包含媒体信息，只管理缓存以及调用底层的DataSource读取和缓存数据。可以获取缓存的信息以及操作缓存。</span></span><br><span class="line">            mCachedSource = <span class="keyword">new</span> NuCachedSource2(</span><br><span class="line">                    mConnectingDataSource,</span><br><span class="line">                    cacheConfig.isEmpty() ? <span class="literal">NULL</span> : cacheConfig.<span class="built_in">string</span>(),</span><br><span class="line">                    disconnectAtHighwatermark);</span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br><span class="line">            <span class="comment">//获取缓存数据源</span></span><br><span class="line">            dataSource = mCachedSource;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;<span class="comment">//是google的私货</span></span><br><span class="line">            dataSource = mConnectingDataSource;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        mConnectingDataSource.clear();</span><br><span class="line">        <span class="comment">//如果不是纯音频的文件类型</span></span><br><span class="line">        <span class="keyword">if</span> (strncasecmp(contentType.<span class="built_in">string</span>(), <span class="string">"audio/"</span>, <span class="number">6</span>)) &#123;</span><br><span class="line">            <span class="comment">// We're not doing this for streams that appear to be audio-only</span></span><br><span class="line">            <span class="comment">// streams to ensure that even low bandwidth streams start</span></span><br><span class="line">            <span class="comment">// playing back fairly instantly.</span></span><br><span class="line">            </span><br><span class="line">                ...省略一些代码...</span><br><span class="line">                        <span class="keyword">if</span> (!dataSource-&gt;sniff(&amp;tmp, &amp;confidence, &amp;meta)) &#123;</span><br><span class="line">                            mLock.lock();</span><br><span class="line">                            <span class="keyword">return</span> UNKNOWN_ERROR;</span><br><span class="line">                        &#125;</span><br><span class="line"></span><br><span class="line">                        <span class="comment">// We successfully identified the file's extractor to</span></span><br><span class="line">                        <span class="comment">// be, remember this mime type so we don't have to</span></span><br><span class="line">                        <span class="comment">// sniff it again when we call MediaExtractor::Create()</span></span><br><span class="line">                        <span class="comment">// below.</span></span><br><span class="line">                        <span class="comment">//获取mime</span></span><br><span class="line">                        sniffedMIME = tmp.<span class="built_in">string</span>();</span><br><span class="line">                        </span><br><span class="line">                ...省略一些代码...</span><br><span class="line">       </span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;<span class="comment">//如果是不http、https的网络数据流、谷歌自家的私货widevine</span></span><br><span class="line">        <span class="comment">//请求网络数据</span></span><br><span class="line">        dataSource = DataSource::CreateFromURI(</span><br><span class="line">                mHTTPService, mUri.<span class="built_in">string</span>(), &amp;mUriHeaders);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (dataSource == <span class="literal">NULL</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> UNKNOWN_ERROR;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    sp&lt;MediaExtractor&gt; extractor;</span><br><span class="line">    <span class="comment">//是google的私货</span></span><br><span class="line">    <span class="keyword">if</span> (isWidevineStreaming) &#123;</span><br><span class="line">        String8 mimeType;</span><br><span class="line">        <span class="keyword">float</span> confidence;</span><br><span class="line">        sp&lt;AMessage&gt; dummy;</span><br><span class="line">        <span class="keyword">bool</span> success;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// SniffWVM is potentially blocking since it may require network access.</span></span><br><span class="line">        <span class="comment">// Do not call it with mLock held.</span></span><br><span class="line">        mLock.unlock();</span><br><span class="line">        <span class="comment">//嗅探wvm类型资源</span></span><br><span class="line">        success = SniffWVM(dataSource, &amp;mimeType, &amp;confidence, &amp;dummy);</span><br><span class="line">        mLock.lock();</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (!success</span><br><span class="line">                || strcasecmp(</span><br><span class="line">                    mimeType.<span class="built_in">string</span>(), MEDIA_MIMETYPE_CONTAINER_WVM)) &#123;</span><br><span class="line">            <span class="keyword">return</span> ERROR_UNSUPPORTED;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">//创建wvm的数据解析器</span></span><br><span class="line">        mWVMExtractor = <span class="keyword">new</span> WVMExtractor(dataSource);</span><br><span class="line">        mWVMExtractor-&gt;setAdaptiveStreamingMode(<span class="literal">true</span>);</span><br><span class="line">        <span class="keyword">if</span> (mUIDValid)</span><br><span class="line">            mWVMExtractor-&gt;setUID(mUID);</span><br><span class="line">        extractor = mWVMExtractor;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;<span class="comment">//如果不是google的私货，则根据MIME创建相应的数据解析器</span></span><br><span class="line">        extractor = MediaExtractor::Create(</span><br><span class="line">                dataSource, sniffedMIME.empty() ? <span class="literal">NULL</span> : sniffedMIME.c_str());</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (extractor == <span class="literal">NULL</span>) &#123;</span><br><span class="line">            <span class="keyword">return</span> UNKNOWN_ERROR;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//检查是否有DRM处理</span></span><br><span class="line">    <span class="keyword">if</span> (extractor-&gt;getDrmFlag()) &#123;</span><br><span class="line">        checkDrmStatus(dataSource);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//setDataSource_l(extractor)我们本节分析，主要是分流音频/视频/字幕</span></span><br><span class="line">    <span class="keyword">status_t</span> err = setDataSource_l(extractor);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (err != OK) &#123;</span><br><span class="line">        mWVMExtractor.clear();</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> err;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> OK;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;上述就是网络获取数据源的过程：1）setDataSource获取一个网络连接服务；2）prepareAsync中请求网络，读取缓存，然后得到文件类型mime；3）根据mime创建MediaExtractor，然后分离音频/视频/字幕流数据。</p>
+<h1 id="初窥解码器"><a href="#初窥解码器" class="headerlink" title="初窥解码器"></a>初窥解码器</h1><p>&#160; &#160; &#160; &#160;上一步我们分析完了setDataSource，并且进入了prepare环节。走完了finishSetDataSource_l，但是beginPrepareAsync_l方法还没有走完。接下来应该是初始化音/视频解码器了。</p>
+<h2 id="视频解码器入口"><a href="#视频解码器入口" class="headerlink" title="视频解码器入口"></a>视频解码器入口</h2><p>&#160; &#160; &#160; &#160;进入beginPrepareAsync_l方法，执行到initVideoDecoder方法位置，我们继续查看：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">status_t</span> AwesomePlayer::initVideoDecoder(<span class="keyword">uint32_t</span> flags) &#123;</span><br><span class="line">    ATRACE_CALL();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Either the application or the DRM system can independently say</span></span><br><span class="line">    <span class="comment">// that there must be a hardware-protected path to an external video sink.</span></span><br><span class="line">    <span class="comment">// For now we always require a hardware-protected path to external video sink</span></span><br><span class="line">    <span class="comment">// if content is DRMed, but eventually this could be optional per DRM agent.</span></span><br><span class="line">    <span class="comment">// When the application wants protection, then</span></span><br><span class="line">    <span class="comment">//   (USE_SURFACE_ALLOC &amp;&amp; (mSurface != 0) &amp;&amp;</span></span><br><span class="line">    <span class="comment">//   (mSurface-&gt;getFlags() &amp; ISurfaceComposer::eProtectedByApp))</span></span><br><span class="line">    <span class="comment">// will be true, but that part is already handled by SurfaceFlinger.</span></span><br><span class="line"></span><br><span class="line">    ......</span><br><span class="line">    <span class="keyword">if</span> (mDecryptHandle != <span class="literal">NULL</span>) &#123;</span><br><span class="line">        flags |= OMXCodec::kEnableGrallocUsageProtected;</span><br><span class="line">    &#125;</span><br><span class="line">    ......</span><br><span class="line">    </span><br><span class="line">    ALOGV(<span class="string">"initVideoDecoder flags=0x%x"</span>, flags);</span><br><span class="line">    <span class="comment">//和视频解码关，视频解码器</span></span><br><span class="line">    mVideoSource = OMXCodec::Create(</span><br><span class="line">            mClient.interface(), mVideoTrack-&gt;getFormat(),</span><br><span class="line">            <span class="literal">false</span>, <span class="comment">// createEncoder</span></span><br><span class="line">            mVideoTrack,</span><br><span class="line">            <span class="literal">NULL</span>, flags, USE_SURFACE_ALLOC ? mNativeWindow : <span class="literal">NULL</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (mVideoSource != <span class="literal">NULL</span>) &#123;</span><br><span class="line">        <span class="keyword">int64_t</span> durationUs;</span><br><span class="line">        <span class="comment">//获取视频轨道格式，然后读取时长</span></span><br><span class="line">        <span class="keyword">if</span> (mVideoTrack-&gt;getFormat()-&gt;findInt64(kKeyDuration, &amp;durationUs)) &#123;</span><br><span class="line">            Mutex::<span class="function">Autolock <span class="title">autoLock</span><span class="params">(mMiscStateLock)</span></span>;</span><br><span class="line">            <span class="keyword">if</span> (mDurationUs &lt; <span class="number">0</span> || durationUs &gt; mDurationUs) &#123;</span><br><span class="line">                mDurationUs = durationUs;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">//读取原始视频数据</span></span><br><span class="line">        <span class="keyword">status_t</span> err = mVideoSource-&gt;start();</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (err != OK) &#123;</span><br><span class="line">            ALOGE(<span class="string">"failed to start video source"</span>);</span><br><span class="line">            mVideoSource.clear();</span><br><span class="line">            <span class="keyword">return</span> err;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//一些检查逻辑</span></span><br><span class="line">    <span class="keyword">if</span> (mVideoSource != <span class="literal">NULL</span>) &#123;</span><br><span class="line">        <span class="keyword">const</span> <span class="keyword">char</span> *componentName;</span><br><span class="line">        CHECK(mVideoSource-&gt;getFormat()</span><br><span class="line">                -&gt;findCString(kKeyDecoderComponent, &amp;componentName));</span><br><span class="line"></span><br><span class="line">        &#123;</span><br><span class="line">            Mutex::<span class="function">Autolock <span class="title">autoLock</span><span class="params">(mStatsLock)</span></span>;</span><br><span class="line">            TrackStat *stat = &amp;mStats.mTracks.editItemAt(mStats.mVideoTrackIndex);</span><br><span class="line"></span><br><span class="line">            stat-&gt;mDecoderName = componentName;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">static</span> <span class="keyword">const</span> <span class="keyword">char</span> *kPrefix = <span class="string">"OMX.Nvidia."</span>;</span><br><span class="line">        <span class="keyword">static</span> <span class="keyword">const</span> <span class="keyword">char</span> *kSuffix = <span class="string">".decode"</span>;</span><br><span class="line">        <span class="keyword">static</span> <span class="keyword">const</span> <span class="keyword">size_t</span> kSuffixLength = <span class="built_in">strlen</span>(kSuffix);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">size_t</span> componentNameLength = <span class="built_in">strlen</span>(componentName);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (!<span class="built_in">strncmp</span>(componentName, kPrefix, <span class="built_in">strlen</span>(kPrefix))</span><br><span class="line">                &amp;&amp; componentNameLength &gt;= kSuffixLength</span><br><span class="line">                &amp;&amp; !<span class="built_in">strcmp</span>(&amp;componentName[</span><br><span class="line">                    componentNameLength - kSuffixLength], kSuffix)) &#123;</span><br><span class="line">            modifyFlags(SLOW_DECODER_HACK, SET);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> mVideoSource != <span class="literal">NULL</span> ? OK : UNKNOWN_ERROR;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;视频解码器的入口，核心是OMXCodec::Create()方法，创建解码器。这个我们下一节会自信分析，本节只是入口。</p>
+<h2 id="音频解码器入口"><a href="#音频解码器入口" class="headerlink" title="音频解码器入口"></a>音频解码器入口</h2><p>&#160; &#160; &#160; &#160;然后我们看看音频解码器：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">status_t</span> AwesomePlayer::initAudioDecoder() &#123;</span><br><span class="line">    ATRACE_CALL();</span><br><span class="line">    <span class="comment">//获取音频轨道跟踪格式</span></span><br><span class="line">    sp&lt;MetaData&gt; meta = mAudioTrack-&gt;getFormat();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">const</span> <span class="keyword">char</span> *mime;</span><br><span class="line">    CHECK(meta-&gt;findCString(kKeyMIMEType, &amp;mime));</span><br><span class="line">    <span class="comment">// Check whether there is a hardware codec for this stream</span></span><br><span class="line">    <span class="comment">// This doesn't guarantee that the hardware has a free stream</span></span><br><span class="line">    <span class="comment">// but it avoids us attempting to open (and re-open) an offload</span></span><br><span class="line">    <span class="comment">// stream to hardware that doesn't have the necessary codec</span></span><br><span class="line">    <span class="keyword">audio_stream_type_t</span> streamType = AUDIO_STREAM_MUSIC;</span><br><span class="line">    <span class="keyword">if</span> (mAudioSink != <span class="literal">NULL</span>) &#123;</span><br><span class="line">        <span class="comment">//得到音频流类型</span></span><br><span class="line">        streamType = mAudioSink-&gt;getAudioStreamType();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    mOffloadAudio = canOffloadStream(meta, (mVideoSource != <span class="literal">NULL</span>),</span><br><span class="line">                                     isStreamingHTTP(), streamType);</span><br><span class="line">    <span class="comment">//如果是原始数据不用解码</span></span><br><span class="line">    <span class="keyword">if</span> (!strcasecmp(mime, MEDIA_MIMETYPE_AUDIO_RAW)) &#123;</span><br><span class="line">        ALOGV(<span class="string">"createAudioPlayer: bypass OMX (raw)"</span>);</span><br><span class="line">        mAudioSource = mAudioTrack;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="comment">// If offloading we still create a OMX decoder as a fall-back</span></span><br><span class="line">        <span class="comment">// but we don't start it</span></span><br><span class="line">        <span class="comment">//创建音频解码器。和上面的视频解码器一样，只不过参数由mVideoTrack变为mAudioTrack</span></span><br><span class="line">        mOmxSource = OMXCodec::Create(</span><br><span class="line">                mClient.interface(), mAudioTrack-&gt;getFormat(),</span><br><span class="line">                <span class="literal">false</span>, <span class="comment">// createEncoder</span></span><br><span class="line">                mAudioTrack);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (mOffloadAudio) &#123;</span><br><span class="line">            ALOGV(<span class="string">"createAudioPlayer: bypass OMX (offload)"</span>);</span><br><span class="line">            mAudioSource = mAudioTrack;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            mAudioSource = mOmxSource;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (mAudioSource != <span class="literal">NULL</span>) &#123;</span><br><span class="line">        <span class="keyword">int64_t</span> durationUs;</span><br><span class="line">        <span class="keyword">if</span> (mAudioTrack-&gt;getFormat()-&gt;findInt64(kKeyDuration, &amp;durationUs)) &#123;</span><br><span class="line">            Mutex::<span class="function">Autolock <span class="title">autoLock</span><span class="params">(mMiscStateLock)</span></span>;</span><br><span class="line">            <span class="keyword">if</span> (mDurationUs &lt; <span class="number">0</span> || durationUs &gt; mDurationUs) &#123;</span><br><span class="line">                mDurationUs = durationUs;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">//读取音频原始数据</span></span><br><span class="line">        <span class="keyword">status_t</span> err = mAudioSource-&gt;start();</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (err != OK) &#123;</span><br><span class="line">            mAudioSource.clear();</span><br><span class="line">            mOmxSource.clear();</span><br><span class="line">            <span class="keyword">return</span> err;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (!strcasecmp(mime, MEDIA_MIMETYPE_AUDIO_QCELP)) &#123;</span><br><span class="line">        <span class="comment">// For legacy reasons we're simply going to ignore the absence</span></span><br><span class="line">        <span class="comment">// of an audio decoder for QCELP instead of aborting playback</span></span><br><span class="line">        <span class="comment">// altogether.</span></span><br><span class="line">        <span class="keyword">return</span> OK;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (mAudioSource != <span class="literal">NULL</span>) &#123;</span><br><span class="line">        Mutex::<span class="function">Autolock <span class="title">autoLock</span><span class="params">(mStatsLock)</span></span>;</span><br><span class="line">        TrackStat *stat = &amp;mStats.mTracks.editItemAt(mStats.mAudioTrackIndex);</span><br><span class="line">        <span class="keyword">const</span> <span class="keyword">char</span> *component;</span><br><span class="line">        <span class="keyword">if</span> (!mAudioSource-&gt;getFormat()</span><br><span class="line">                -&gt;findCString(kKeyDecoderComponent, &amp;component)) &#123;</span><br><span class="line">            component = <span class="string">"none"</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        stat-&gt;mDecoderName = component;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> mAudioSource != <span class="literal">NULL</span> ? OK : UNKNOWN_ERROR;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;初始化音频解码和视频解码器代码部分大同小异，核心还是OMXCodec::Create()方法，只是参数不用。</p>
+<p>&#160; &#160; &#160; &#160;总结一下上述流程：</p>
+<ul>
+<li>通过setDataSource 指定播放器的数据源。可以是URI或者fd.可以是http:// 、rtsp://、本地地址或者本地文件描述符fd。其最终调用是将上层传递来的参数转化为DataSource，为下一步的demux提供数据支持。</li>
+<li>在真正Prepare功能函数onPrepareAsyncEvent()会调用finishSetDataSource_l。通过第一步产生的DataSource来生成extractor，因为封装的格式很多，所以需要通过DataSource的信息，去创建不同的extractor。</li>
+<li>得到extractor之后，通过setVideoSource() setAudioSource()产生独立的mVideoTrack(视频)、mAudioTrack(音频)数据流，分别为音视频解码器提供有各自需要的数据流。</li>
+<li>接下来就是initVideoDecoder() initAudioDecoder().依赖上面产生的mVideoTrack(视频)、mAudioTrack(音频)数据流。生成了mVideoSource和mAudioSource这两个音视频解码器。</li>
+</ul>
+<p>&#160; &#160; &#160; &#160;最后一步创建解码器都是调用同样的接口：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">mVideoSource = OMXCodec::Create(  </span><br><span class="line">            mClient.interface(), mVideoTrack-&gt;getFormat(),  </span><br><span class="line">            <span class="literal">false</span>, <span class="comment">// createEncoder  </span></span><br><span class="line">            mVideoTrack,  </span><br><span class="line">            <span class="literal">NULL</span>, flags, USE_SURFACE_ALLOC ? mNativeWindow : <span class="literal">NULL</span>);  </span><br><span class="line"> mAudioSource = OMXCodec::Create(  </span><br><span class="line">                mClient.interface(), mAudioTrack-&gt;getFormat(),  </span><br><span class="line">                <span class="literal">false</span>, <span class="comment">// createEncoder  </span></span><br><span class="line">                mAudioTrack);  </span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;mVideoSource、mAudioSource组成了播放器模型中的decoder部分。</p>
+<p>&#160; &#160; &#160; &#160;Android系统中的编解码器部分用的是openmax，以后会深入了解。openma x是一套标准接口，各家硬件厂商都可以遵循这个标准来做自己的实现，发挥自己芯片特性。然后提供给android系统来用。因为大部分的机顶盒芯片产品硬件的编解码是它的优势，可以把这种优势完全融入到android平台中。以后手机高清视频硬解码也会是个趋势。</p>
+<p>&#160; &#160; &#160; &#160;解码完之后的数据就要输出了。AwesomePlayer分别用了mVideoRenderer做视频输出、mAudioPlayer做音频输出。他们分别调用android图像和音频的相关服务。mVideoRenderer和mAudioPlayer就组成了播放器中output的部分。这俩部分是android平台中十分重要的2块，以后会深入了解。</p>
+<h1 id="结语"><a href="#结语" class="headerlink" title="结语"></a>结语</h1><p>&#160; &#160; &#160; &#160;综上AwesomePlayer的整体框架和流程就清晰了，其实也脱离不了DataSource、demux、decoder、output这4大部分。接下来会分别了解每个部分是怎么实现的。<br>&#160; &#160; &#160; &#160;下一节我们就从openmax开始。<br><img src="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E5%A4%9A%E5%AA%92%E4%BD%93%E5%BC%80%E5%8F%91%28%E5%9B%9B%29----AwesomePlayer%E6%95%B0%E6%8D%AE%E6%BA%90%E5%A4%84%E7%90%86/meizi.jpg" alt="妹子"></p>
+
+      
+    </div>
+    
+  </div>
+  
+    
+    <div class="copyright">
+        <p><span>本文标题:</span><a href="/2016/12/12/Android多媒体开发-四-AwesomePlayer数据源处理/">Android多媒体开发(四)----AwesomePlayer数据源处理</a></p>
+        <p><span>文章作者:</span><a href="/" title="回到主页">windrunnerlihuan</a></p>
+        <p><span>发布时间:</span>2016-12-12, 20:13:12</p>
+        <p><span>最后更新:</span>2016-12-13, 02:48:48</p>
+        <p>
+            <span>原始链接:</span><a class="post-url" href="/2016/12/12/Android多媒体开发-四-AwesomePlayer数据源处理/" title="Android多媒体开发(四)----AwesomePlayer数据源处理">http://windrunnerlihuan.com/2016/12/12/Android多媒体开发-四-AwesomePlayer数据源处理/</a>
+            <span class="copy-path" data-clipboard-text="原文: http://windrunnerlihuan.com/2016/12/12/Android多媒体开发-四-AwesomePlayer数据源处理/　　作者: windrunnerlihuan" title="点击复制文章链接"><i class="fa fa-clipboard"></i></span>
+            <script> var clipboard = new Clipboard('.copy-path'); </script>
+        </p>
+        <p>
+            <span>许可协议:</span><i class="fa fa-creative-commons"></i> <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/" title="CC BY-NC-SA 4.0 International" target = "_blank">"署名-非商用-相同方式共享 4.0"</a> 转载请保留原文链接及作者。
+        </p>
+    </div>
+
+
+
+    <nav id="article-nav">
+        
+        
+            <div id="article-nav-older" class="article-nav-title">
+                <a href="/2016/12/11/Android多媒体开发-三-从StageFright到AwesomePlayer/">
+                    Android多媒体开发(三)----从StageFright到AwesomePlayer
+                </a>
+            </div>
+        
+    </nav>
+
+  
+</article>
+
+    <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#设置数据源"><span class="toc-number">1.</span> <span class="toc-text">设置数据源</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#网络类型数据源"><span class="toc-number">2.</span> <span class="toc-text">网络类型数据源</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#初窥解码器"><span class="toc-number">3.</span> <span class="toc-text">初窥解码器</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#视频解码器入口"><span class="toc-number">3.1.</span> <span class="toc-text">视频解码器入口</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#音频解码器入口"><span class="toc-number">3.2.</span> <span class="toc-text">音频解码器入口</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#结语"><span class="toc-number">4.</span> <span class="toc-text">结语</span></a></li></ol>
+</div>
+<style>
+    .left-col .switch-btn {
+        display: none;
+    }
+    .left-col .switch-area {
+        display: none;
+    }
+</style>
+
+<input type="button" id="tocButton" value="隐藏目录"  title="点击按钮隐藏或者显示文章目录">
+<script>
+    var valueHide = "隐藏目录";
+    var valueShow = "显示目录";
+
+    if ($(".left-col").is(":hidden")) {
+        $("#tocButton").attr("value", valueShow);
+    }
+
+    $("#tocButton").click(function() {
+        if ($("#toc").is(":hidden")) {
+            $("#tocButton").attr("value", valueHide);
+            $("#toc").slideDown(320);
+            $(".switch-btn, .switch-area").fadeOut(300);
+        }
+        else {
+            $("#tocButton").attr("value", valueShow);
+            $("#toc").slideUp(350);
+            $(".switch-btn, .switch-area").fadeIn(500);
+        }
+    })
+
+    if ($(".toc").length < 1) {
+        $("#toc, #tocButton").hide();
+        $(".switch-btn, .switch-area").show();
+    }
+</script>
+
+
+
+
+
+    
+<div class="share">
+    
+        <div class="bdsharebuttonbox">
+            <a href="#" class="fa fa-twitter bds_twi" data-cmd="twi" title="分享到推特"></a>
+            <a href="#" class="fa fa-weibo bds_tsina" data-cmd="tsina" title="分享到新浪微博"></a>
+            <a href="#" class="fa fa-qq bds_sqq" data-cmd="sqq" title="分享给 QQ 好友"></a>
+            <a href="#" class="fa fa-files-o bds_copy" data-cmd="copy" title="复制网址"></a>
+            <a href="#" class="fa fa fa-envelope-o bds_mail" data-cmd="mail" title="通过邮件分享"></a>
+            <a href="#" class="fa fa-weixin bds_weixin" data-cmd="weixin" title="生成文章二维码"></a>
+            <a href="#" class="fa fa-share-alt bds_more" data-cmd="more"></i></a>
+        </div>
+        <script>
+            window._bd_share_config={
+                "common":{"bdSnsKey":{},"bdText":"Android多媒体开发(四)----AwesomePlayer数据源处理　| April is your lie　","bdMini":"2","bdMiniList":false,"bdPic":"","bdStyle":"0","bdSize":"24"},"share":{}};with(document)0[(getElementsByTagName('head')[0]||body).appendChild(createElement('script')).src='http://bdimg.share.baidu.com/static/api/js/share.js?v=89860593.js?cdnversion='+~(-new Date()/36e5)];
+        </script>
+    
+
+    
+</div>
+
+
+
+
+
+
+
+    
+      <div class="duoshuo" id="comments">
+    <!-- ��˵���ۿ� start -->
+    <div class="ds-thread" data-thread-key="2016/12/12/Android多媒体开发-四-AwesomePlayer数据源处理/" data-title="Android多媒体开发(四)----AwesomePlayer数据源处理" data-url="http://windrunnerlihuan.com/2016/12/12/Android多媒体开发-四-AwesomePlayer数据源处理/"></div>
+    <!-- ��˵���ۿ� end -->
+    <!-- ��˵����JS���� start (һ����ҳֻ������һ��) -->
+    <script type="text/javascript">
+    var duoshuoQuery = {short_name:"windrunnerlihuan"};
+    (function() {
+        var ds = document.createElement('script');
+        ds.type = 'text/javascript';ds.async = true;
+        ds.src = 'http://windrunnerlihuan.com/js/embed.js';
+        ds.charset = 'UTF-8';
+        (document.getElementsByTagName('head')[0] 
+         || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+    </script>
+    <!-- ��˵����JS���� end -->
+</div>
+
+    
+
+
+
+
+    <div class="scroll" id="post-nav-button">
+        
+            <a href="/" title="回到主页"><i class="fa fa-home"></i></a>
+        
+
+        <a title="文章列表"><i class="fa fa-bars"></i><i class="fa fa-times"></i></a>
+
+        
+            <a href="/2016/12/11/Android多媒体开发-三-从StageFright到AwesomePlayer/" title="下一篇: Android多媒体开发(三)----从StageFright到AwesomePlayer">
+                <i class="fa fa-angle-right"></i>
+            </a>
+        
+    </div>
+
+    <ul class="post-list"><li class="post-list-item"><a class="post-list-link" href="/2016/12/12/Android多媒体开发-四-AwesomePlayer数据源处理/">Android多媒体开发(四)----AwesomePlayer数据源处理</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/12/11/Android多媒体开发-三-从StageFright到AwesomePlayer/">Android多媒体开发(三)----从StageFright到AwesomePlayer</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/11/30/Android多媒体开发-二-MediaPlayer的C-S架构以及C-层调用步骤/">Android多媒体开发(二)----MediaPlayer的C/S架构以及C++层调用步骤</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/11/28/Android多媒体开发-一-MediaPlayer框架开始/">Android多媒体开发(一)----MediaPlayer框架开始</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/10/31/JAVA线程池简单分析/">JAVA线程池简单分析</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/10/08/Android壁纸开发流程分析/">Android壁纸开发流程分析</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/09/18/如何实现1080P延迟低于500ms的实时超清直播传输技术/">如何实现1080P延迟低于500ms的实时超清直播传输技术</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/09/05/插件开发中的资源问题分析及填坑处理/">插件开发中的资源问题分析及填坑处理</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/08/23/智能指针简单分析/">智能指针简单分析</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/07/31/Android消息机制零散分析/">Android消息处理零散分析</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/07/12/浅析Bitmap占据内存大小/">浅析Bitmap占据内存大小</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/07/02/DanmakuFlameMaster简单分析/">弹幕框架DanmakuFlameMaster简单分析</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/06/24/Android属性动画原理分析/">Android属性动画流程分析</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/06/12/Binder简要分析/">Android跨进程通信机制Binder简要分析</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/06/06/移动直播技术秒开优化经验/">移动直播技术秒开优化经验</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/05/27/博客搭建历程/">博客搭建历程————————Github和Hexo</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/05/27/新的开始/">新的开始</a></li></ul>
+
+
+
+
+    <script>
+        
+    </script>
+</div>
+      <footer id="footer">
+    <div class="outer">
+        <div id="footer-info">
+            <div class="footer-left">
+                <i class="fa fa-copyright"></i> 
+                2016 windrunnerlihuan
+            </div>
+            <div class="footer-right">
+                <a href="http://hexo.io/" target="_blank" title="快速、简洁且高效的博客框架">Hexo</a>  Theme <a href="https://github.com/MOxFIVE/hexo-theme-yelee" target="_blank" title="简而不减 Hexo 双栏博客主题  v3.0">Yelee</a> by HuanLi & MOxFIVE <i class="fa fa-heart animated infinite pulse"></i>
+            </div>
+        </div>
+        
+            <div class="visit">
+                
+                    <span id="busuanzi_container_site_pv" style='display:none'>
+                        <span id="site-visit" >本站到访数: 
+                            <span id="busuanzi_value_site_uv"></span>
+                        </span>
+                    </span>
+                
+                
+                    <span>, </span>
+                
+                
+                    <span id="busuanzi_container_page_pv" style='display:none'>
+                        <span id="page-visit">本页阅读量: 
+                            <span id="busuanzi_value_page_pv"></span>
+                        </span>
+                    </span>
+                
+            </div>
+        
+    </div>
+</footer>
+    </div>
+    
+    <script src="/js/GithubRepoWidget.js"></script>
+
+<script data-main="/js/main.js" src="//cdn.bootcss.com/require.js/2.2.0/require.min.js"></script>
+
+
+
+
+    <script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+    tex2jax: {
+        inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+        processEscapes: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+    }
+});
+
+MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for(i=0; i < all.length; i += 1) {
+        all[i].SourceElement().parentNode.className += ' has-jax';                 
+    }       
+});
+</script>
+
+<script src="//cdn.bootcss.com/mathjax/2.6.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+<div class="scroll" id="scroll">
+    <a href="#" title="返回顶部"><i class="fa fa-arrow-up"></i></a>
+    <a href="#comments" title="查看评论"><i class="fa fa-comments-o"></i></a>
+    <a href="#footer" title="转到底部"><i class="fa fa-arrow-down"></i></a>
+</div>
+<script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js">
+</script>
+  </div>
+</body>
+</html>
