@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html >
+<head>
+  
+    <!--[if lt IE 9]>
+        <style>body {display: none; background: none !important} </style>
+        <meta http-equiv="Refresh" Content="0; url=//outdatedbrowser.com/" />
+    <![endif]-->
+
+  <meta charset="utf-8">
+  <meta name="baidu-site-verification" content="zzKGwrFJYw" />
+  
+  <title>Android多媒体开发(五)----OpenMax简介 | April is your lie</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="&amp;#160; &amp;#160; &amp;#160; &amp;#160;android中的 AwesomePlayer就是用OpenMax来做(codec)编解码的，上一篇最后一步初始化解码器我们只是初窥了一下，以后会仔细分析。本节就主要科普一下OpenMax和它在Android系统中扮演的角色。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android多媒体开发(五)----OpenMax简介">
+<meta property="og:url" content="http://windrunnerlihuan.com/2016/12/15/Android多媒体开发-五-OpenMax简介/index.html">
+<meta property="og:site_name" content="April is your lie">
+<meta property="og:description" content="&amp;#160; &amp;#160; &amp;#160; &amp;#160;android中的 AwesomePlayer就是用OpenMax来做(codec)编解码的，上一篇最后一步初始化解码器我们只是初窥了一下，以后会仔细分析。本节就主要科普一下OpenMax和它在Android系统中扮演的角色。">
+<meta property="og:image" content="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E5%A4%9A%E5%AA%92%E4%BD%93%E5%BC%80%E5%8F%91%28%E4%BA%94%29----OpenMax%E7%AE%80%E4%BB%8B/openmaxsystem.png">
+<meta property="og:image" content="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E5%A4%9A%E5%AA%92%E4%BD%93%E5%BC%80%E5%8F%91%28%E4%BA%94%29----OpenMax%E7%AE%80%E4%BB%8B/openmaxuse.png">
+<meta property="og:image" content="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E5%A4%9A%E5%AA%92%E4%BD%93%E5%BC%80%E5%8F%91%28%E4%BA%94%29----OpenMax%E7%AE%80%E4%BB%8B/openmaxIL.png">
+<meta property="og:image" content="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E5%A4%9A%E5%AA%92%E4%BD%93%E5%BC%80%E5%8F%91%28%E4%BA%94%29----OpenMax%E7%AE%80%E4%BB%8B/openmaxilbase.png">
+<meta property="og:image" content="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E5%A4%9A%E5%AA%92%E4%BD%93%E5%BC%80%E5%8F%91%28%E4%BA%94%29----OpenMax%E7%AE%80%E4%BB%8B/openilinternal.JPG">
+<meta property="og:image" content="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E5%A4%9A%E5%AA%92%E4%BD%93%E5%BC%80%E5%8F%91%28%E4%BA%94%29----OpenMax%E7%AE%80%E4%BB%8B/openmaxinandroid.jpg">
+<meta property="og:image" content="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E5%A4%9A%E5%AA%92%E4%BD%93%E5%BC%80%E5%8F%91%28%E4%BA%94%29----OpenMax%E7%AE%80%E4%BB%8B/openmaxsult.jpg">
+<meta property="og:image" content="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E5%A4%9A%E5%AA%92%E4%BD%93%E5%BC%80%E5%8F%91%28%E4%BA%94%29----OpenMax%E7%AE%80%E4%BB%8B/meizi.jpg">
+<meta property="og:updated_time" content="2016-12-15T20:47:29.400Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Android多媒体开发(五)----OpenMax简介">
+<meta name="twitter:description" content="&amp;#160; &amp;#160; &amp;#160; &amp;#160;android中的 AwesomePlayer就是用OpenMax来做(codec)编解码的，上一篇最后一步初始化解码器我们只是初窥了一下，以后会仔细分析。本节就主要科普一下OpenMax和它在Android系统中扮演的角色。">
+<meta name="twitter:image" content="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E5%A4%9A%E5%AA%92%E4%BD%93%E5%BC%80%E5%8F%91%28%E4%BA%94%29----OpenMax%E7%AE%80%E4%BB%8B/openmaxsystem.png">
+  
+    <link rel="alternative" href="/atom.xml" title="April is your lie" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/img/favicon.png">
+  
+  
+      <link href="//cdn.bootcss.com/animate.css/3.5.1/animate.min.css" rel="stylesheet">
+  
+  
+      <script src="//cdn.bootcss.com/pace/1.0.2/pace.min.js"></script>
+      <link href="//cdn.bootcss.com/pace/1.0.2/themes/blue/pace-theme-minimal.css" rel="stylesheet">
+  
+  <link rel="stylesheet" href="/css/style.css">
+  
+  <link href="//cdn.bootcss.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet">
+  <link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
+  
+  
+      <link href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.min.css" rel="stylesheet">
+  
+  <script src="//cdn.bootcss.com/jquery/2.2.4/jquery.min.js"></script>
+  <script src="//cdn.bootcss.com/clipboard.js/1.5.10/clipboard.min.js"></script>
+  <script>
+      var yiliaConfig = {
+          fancybox: true,
+          animate: true,
+          isHome: false,
+          isPost: true,
+          isArchive: false,
+          isTag: false,
+          isCategory: false,
+          open_in_new: false,
+          fancybox_js: "//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.min.js",
+          scrollreveal: "//cdn.bootcss.com/scrollReveal.js/3.1.4/scrollreveal.min.js",
+          search: true
+      }
+  </script>
+
+  
+      <script>
+          yiliaConfig.jquery_ui = [true, "//cdn.bootcss.com/jqueryui/1.10.4/jquery-ui.min.js", "//cdn.bootcss.com/jqueryui/1.10.4/css/jquery-ui.min.css"];
+      </script>
+  
+
+  
+      <script>
+          yiliaConfig.rootUrl = "/";
+      </script>
+  
+
+  
+  
+  <!-- 自动推送工具代码 start -->
+  <script>
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+<!-- 自动推送工具代码 end -->
+</head>
+<body>
+  <div id="container">
+    <div class="left-col">
+    <div class="overlay"></div>
+<div class="intrude-less">
+    <header id="header" class="inner">
+        <a href="/" class="profilepic">
+            <img src="/img/avatar.jpg" class="animated zoomIn">
+        </a>
+        <hgroup>
+          <h1 class="header-author"><a href="/">windrunnerlihuan</a></h1>
+        </hgroup>
+
+        
+        <p class="header-subtitle">四月是你的谎言</p>
+        
+
+        
+            <form id="search-form">
+            <input type="text" id="local-search-input" name="q" results="0" placeholder="search..." class="search form-control" autocomplete="off" autocorrect="off" searchonload="undefined" />
+            <i class="fa fa-times" onclick="resetSearch()"></i>
+            </form>
+            <div id="local-search-result"></div>
+            <p class='no-result'>No results found <i class='fa fa-spinner fa-pulse'></i></p>
+        
+
+
+        
+            <div id="switch-btn" class="switch-btn">
+                <div class="icon">
+                    <div class="icon-ctn">
+                        <div class="icon-wrap icon-house" data-idx="0">
+                            <div class="birdhouse"></div>
+                            <div class="birdhouse_holes"></div>
+                        </div>
+                        <div class="icon-wrap icon-ribbon hide" data-idx="1">
+                            <div class="ribbon"></div>
+                        </div>
+                        
+                        <div class="icon-wrap icon-link hide" data-idx="2">
+                            <div class="loopback_l"></div>
+                            <div class="loopback_r"></div>
+                        </div>
+                        
+                        
+                        <div class="icon-wrap icon-me hide" data-idx="3">
+                            <div class="user"></div>
+                            <div class="shoulder"></div>
+                        </div>
+                        
+                    </div>
+                    
+                </div>
+                <div class="tips-box hide">
+                    <div class="tips-arrow"></div>
+                    <ul class="tips-inner">
+                        <li>Menu</li>
+                        <li>Tags</li>
+                        
+                        <li>Friends</li>
+                        
+                        
+                        <li>About Me</li>
+                        
+                    </ul>
+                </div>
+            </div>
+        
+
+        <div id="switch-area" class="switch-area">
+            <div class="switch-wrap">
+                <section class="switch-part switch-part1">
+                    <nav class="header-menu">
+                        <ul>
+                        
+                            <li><a href="/">主页</a></li>
+                        
+                            <li><a href="/archives/">时间轴</a></li>
+                        
+                            <li><a href="/tags/">标签云</a></li>
+                        
+                            <li><a href="/about/">关于我</a></li>
+                        
+                        </ul>
+                    </nav>
+                    <nav class="header-nav">
+                        <ul class="social">
+                            
+                                <a class="fa Email" target="_blank" href="mailto:937874128@qq.com" title="Email"></a>
+                            
+                                <a class="fa GitHub" target="_blank" href="https://github.com/windrunnerlihuan" title="GitHub"></a>
+                            
+                                <a class="fa RSS" target="_blank" href="/atom.xml" title="RSS"></a>
+                            
+                        </ul>
+                    </nav>
+                </section>
+                
+                
+                <section class="switch-part switch-part2">
+                    <div class="widget tagcloud" id="js-tagcloud">
+                        <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/Binder/">Binder</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Bitmap/">Bitmap</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/IPC/">IPC</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/SO库/">SO库</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/博客搭建/">博客搭建</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/壁纸/">壁纸</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/多媒体/">多媒体</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/属性动画/">属性动画</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/开始/">开始</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/弹幕/">弹幕</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/插件开发/">插件开发</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/智能指针/">智能指针</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/消息/">消息</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/移动直播/">移动直播</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/线程池/">线程池</a></li></ul>
+                    </div>
+                </section>
+                
+                
+                
+                <section class="switch-part switch-part3">
+                    <div id="js-friends">
+                    
+                      <a target="_blank" class="main-nav-link switch-friends-link" href="http://gank.io/">干货集中营</a>
+                    
+                      <a target="_blank" class="main-nav-link switch-friends-link" href="http://www.jcodecraeer.com/">泡在网上的日子</a>
+                    
+                      <a target="_blank" class="main-nav-link switch-friends-link" href="http://trinea.cn/">Trinea</a>
+                    
+                    </div>
+                </section>
+                
+
+                
+                
+                <section class="switch-part switch-part4">
+                
+                    <div id="js-aboutme">windrunnerlihuan，开发小菜一枚，坐标位于上海。</div>
+                </section>
+                
+            </div>
+        </div>
+    </header>                
+</div>
+    </div>
+    <div class="mid-col">
+      <nav id="mobile-nav">
+      <div class="overlay">
+          <div class="slider-trigger"></div>
+          <h1 class="header-author js-mobile-header hide"><a href="/" title="回到主页">windrunnerlihuan</a></h1>
+      </div>
+    <div class="intrude-less">
+        <header id="header" class="inner">
+            <a href="/" class="profilepic">
+                <img src="/img/avatar.jpg" class="animated zoomIn">
+            </a>
+            <hgroup>
+              <h1 class="header-author"><a href="/" title="回到主页">windrunnerlihuan</a></h1>
+            </hgroup>
+            
+            <p class="header-subtitle">四月是你的谎言</p>
+            
+            <nav class="header-menu">
+                <ul>
+                
+                    <li><a href="/">主页</a></li>
+                
+                    <li><a href="/archives/">时间轴</a></li>
+                
+                    <li><a href="/tags/">标签云</a></li>
+                
+                    <li><a href="/about/">关于我</a></li>
+                
+                <div class="clearfix"></div>
+                </ul>
+            </nav>
+            <nav class="header-nav">
+                        <ul class="social">
+                            
+                                <a class="fa Email" target="_blank" href="mailto:937874128@qq.com" title="Email"></a>
+                            
+                                <a class="fa GitHub" target="_blank" href="https://github.com/windrunnerlihuan" title="GitHub"></a>
+                            
+                                <a class="fa RSS" target="_blank" href="/atom.xml" title="RSS"></a>
+                            
+                        </ul>
+            </nav>
+        </header>                
+    </div>
+    <link class="menu-list" tags="Tags" friends="Friends" about="About Me"/>
+</nav>
+      <div class="body-wrap"><article id="post-Android多媒体开发-五-OpenMax简介" class="article article-type-post" itemscope itemprop="blogPost">
+  
+    <div class="article-meta">
+      <a href="/2016/12/15/Android多媒体开发-五-OpenMax简介/" class="article-date">
+      <time datetime="2016-12-15T10:45:12.000Z" itemprop="datePublished">2016-12-15</time>
+</a>
+    </div>
+  
+  <div class="article-inner">
+    
+      <input type="hidden" class="isFancy" />
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      Android多媒体开发(五)----OpenMax简介
+    </h1>
+  
+
+      </header>
+      
+      <div class="article-info article-info-post">
+        
+    <div class="article-category tagcloud">
+    <a class="article-category-link" href="/categories/Android技术点/">Android技术点</a>
+    </div>
+
+
+        
+    <div class="article-tag tagcloud">
+        <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/多媒体/">多媒体</a></li></ul>
+    </div>
+
+        <div class="clearfix"></div>
+      </div>
+      
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+          
+        <p>&#160; &#160; &#160; &#160;android中的 AwesomePlayer就是用OpenMax来做(codec)编解码的，上一篇最后一步初始化解码器我们只是初窥了一下，以后会仔细分析。本节就主要科普一下OpenMax和它在Android系统中扮演的角色。<br><a id="more"></a></p>
+<h1 id="OpenMax系统的结构"><a href="#OpenMax系统的结构" class="headerlink" title="OpenMax系统的结构"></a>OpenMax系统的结构</h1><h2 id="OpenMax总体层次结构"><a href="#OpenMax总体层次结构" class="headerlink" title="OpenMax总体层次结构"></a>OpenMax总体层次结构</h2><p>&#160; &#160; &#160; &#160;OpenMax是一个多媒体应用程序的框架标准，由<strong>NVIDIA</strong>公司和<strong>Khronos</strong>在2006年推出。<br>&#160; &#160; &#160; &#160;OpenMax是无授权费的，跨平台的应用程序接口API，<strong>通过使媒体加速组件能够在开发、集成和编程环节中实现跨多操作系统和处理器硬件平台，提供全面的流媒体编解码器和应用程序便携化</strong>。<br>&#160; &#160; &#160; &#160;OpenMax的官方网站如下所示：<br>&#160; &#160; &#160; &#160;<a href="http://www.khronos.org/openmax/" target="_blank" rel="external">http://www.khronos.org/openmax/</a></p>
+<p>&#160; &#160; &#160; &#160;OpenMax实际上分成三个层次，自上而下分别是，OpenMax DL（开发层），OpenMax IL（集成层）和OpenMax AL（应用层）。三个层次的内容分别如下所示：</p>
+<blockquote>
+<p>&#160; &#160; &#160; &#160;<strong>第一层：OpenMax DL（Development Layer，开发层）</strong><br>&#160; &#160; &#160; &#160; OpenMax DL定义了一个API，它是音频、视频和图像功能的集合。供应商能够在一个新的处理器上实现并优化，然后编解码供应商使用它来编写更广泛的编解码器功能。它包括音频信号的处理功能，如FFT和filter，图像原始处理，如颜色空间转换、视频原始处理，以实现例如MPEG-4、H.264、MP3、AAC和JPEG等编解码器的优化。</p>
+<p>&#160; &#160; &#160; &#160;<strong>第二层：OpenMax IL（Integration Layer，集成层）</strong><br>&#160; &#160; &#160; &#160;<em>OpenMax IL作为音频、视频和图像编解码器能与多媒体编解码器交互，并以统一的行为支持组件（例如，资源和皮肤）。</em>这些编解码器或许是软硬件的混合体，对用户是透明的底层接口应用于嵌入式、移动设备。它提供了应用程序和媒体框架，透明的。编解码器供应商必须写私有的或者封闭的接口，集成进移动设备。IL的主要目的是使用特征集合为编解码器提供一个系统抽象，为解决多个不同媒体系统之间轻便性的问题。</p>
+<p>&#160; &#160; &#160; &#160;<strong>第三层：OpenMax AL（Appliction Layer，应用层）</strong><br>&#160; &#160; &#160; &#160;OpenMax AL API在应用程序和多媒体中间件之间提供了一个标准化接口，多媒体中间件提供服务以实现被期待的API功能。</p>
+</blockquote>
+<p><img src="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E5%A4%9A%E5%AA%92%E4%BD%93%E5%BC%80%E5%8F%91%28%E4%BA%94%29----OpenMax%E7%AE%80%E4%BB%8B/openmaxsystem.png" alt="OpenMax系统分层"></p>
+<p>&#160; &#160; &#160; &#160;OpenMax API将会与处理器一同提供，以<strong>使库和编解码器开发者能够高速有效地利用新器件的完整加速潜能，无须担心其底层的硬件结构</strong>。该标准是针对嵌入式设备和移动设备的多媒体软件架构。在架构底层上为多媒体的编解码和数据处理定义了一套统一的编程接口，对多媒体数据的处理功能进行<code>系统级抽象</code>，为用户屏蔽了底层的细节。因此，<strong>多媒体应用程序和多媒体框架通过OpenMax IL可以以一种统一的方式来使用编解码和其他多媒体数据处理功能，具有了</strong><code>跨越软硬件平台的移植性</code>。</p>
+<p>&#160; &#160; &#160; &#160;<font color="red">注：在实际的应用中，OpenMax的三个层次中使用较多的是OpenMax IL集成层，由于操作系统到硬件的差异和多媒体应用的差异，OpenMax的DL和AL层使用相对较少</font>。 </p>
+<h2 id="OpenMax-IL简介"><a href="#OpenMax-IL简介" class="headerlink" title="OpenMax IL简介"></a>OpenMax IL简介</h2><p>&#160; &#160; &#160; &#160;OpenMax IL 处在中间层的位置，OpenMAX IL 作为音频，视频和图像编解码器 能与多媒体编解码器交互，并以统一的行为支持组件（例如资源和皮肤）。这些编解码器或许是软硬件的混合体，对用户是 的底层接口应用于嵌入式或 / 和移动设备。它提供了应用程序和媒体框架， 透明的。本质上不存在这种标准化的接口，编解码器供 应商必须写私有的或者封闭的接口，集成进移动设备。 IL 的主要目的 是使用特征集合为编解码器提供一个系统抽象，为解决多个不同媒体系统之间轻便性的问题。<br>&#160; &#160; &#160; &#160;OpenMax IL 的目的就是为硬件平台的图形及音视频提供一个抽象层，可以为上层的应用提供一个可跨平台的支撑。这一点对于跨平台的媒体应用来说十分重要。本人也接触过几家高清解码芯片，这些芯片底层的音视频接口虽然功能上大致相同，但是接口设计及用法上各有不同，而且相差很多。你要想让自己开发的媒体应用完美的运行在不同的硬件厂商平台上，就得适应不同芯片的底层解码接口。这个对于应用开发来说十分繁琐。所以就需要类似于OpenMax IL 这种接口规范。应用假如涉及到音视频相关功能时，只需调用这些标准的接口，而不需要关心接口下方硬件相关的实现。假如换了硬件平台时，只需要把接口层与硬件适配好了就行了。上层应用不需要频繁改动。<br>&#160; &#160; &#160; &#160;你可以把OpenMax IL 看作是中间件中的porting层接口，但是现在中间件大部分都是自家定义自己的。</p>
+<p>&#160; &#160; &#160; &#160;OpenMax 想做的就是定义一个这样的行业标准，这样媒体应用、硬件厂商都遵循这种标准。硬件厂商将OpenMax 与处理器一并提供，上层的多媒体框架想要用到硬件音视频加速功能时，只需遵循openmax的接口就可以扩平台运行。<br>&#160; &#160; &#160; &#160;可喜的，现在越来越多的多媒体框架及多媒体应用正在遵循openmax标准，包括各种知名的媒体开源软件。越来越多的芯片厂商也在遵循openmax的标准。对于现在的音视频编解码来说，分辨率越来越高，需要芯片提供硬件加速功能是个大的趋势。我相信 接口的标准化是一定要走的。如下图所示， openmax IL在多媒体框架中的应用：</p>
+<p><img src="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E5%A4%9A%E5%AA%92%E4%BD%93%E5%BC%80%E5%8F%91%28%E4%BA%94%29----OpenMax%E7%AE%80%E4%BB%8B/openmaxuse.png" alt="openmax use"></p>
+<p>&#160; &#160; &#160; &#160;<strong>OpenMax IL目前已经成为了事实上的多媒体框架标准</strong>。嵌入式处理器或者多媒体编解码模块的硬件生产者，通常提供标准的OpenMax IL层的软件接口，这样软件的开发者就可以基于这个层次的标准化接口进行多媒体程序的开发。<br>&#160; &#160; &#160; &#160;OpenMax IL的接口层次结构适中，既不是硬件编解码的接口，也不是应用程序层的接口，因此比较容易实现标准化。OpenMax IL的层次结构如下：</p>
+<p><img src="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E5%A4%9A%E5%AA%92%E4%BD%93%E5%BC%80%E5%8F%91%28%E4%BA%94%29----OpenMax%E7%AE%80%E4%BB%8B/openmaxIL.png" alt="openmax IL"></p>
+<p>&#160; &#160; &#160; &#160;图中的虚线中的内容是OpenMax IL层的内容，其主要实现了OpenMax IL中的各个组件（Component）。<strong>对下层，OpenMax IL可以调用OpenMax DL层的接口，也可以直接调用各种Codec实现。对上层，OpenMax IL可以给OpenMax AL 层等框架层（Middleware）调用，也可以给应用程序直接调用</strong>。</p>
+<h2 id="OpenMax-IL结构"><a href="#OpenMax-IL结构" class="headerlink" title="OpenMax IL结构"></a>OpenMax IL结构</h2><p>&#160; &#160; &#160; &#160;OpenMax IL主要内容如下所示。</p>
+<ul>
+<li><strong>客户端（Client）</strong>：OpenMax IL的调用者</li>
+<li><strong>组件（Component）</strong>：OpenMax IL的单元，每一个组件实现一种功能</li>
+<li><strong>端口（Port）</strong>：组件的输入输出接口</li>
+<li><strong>隧道化（Tunneled）</strong>：让两个组件直接连接的方式</li>
+</ul>
+<p>&#160; &#160; &#160; &#160;OpenMax IL的基本运作过程如图所示：</p>
+<p><img src="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E5%A4%9A%E5%AA%92%E4%BD%93%E5%BC%80%E5%8F%91%28%E4%BA%94%29----OpenMax%E7%AE%80%E4%BB%8B/openmaxilbase.png" alt="基本运作"></p>
+<p>&#160; &#160; &#160; &#160;OpenMAL IL的客户端，通过调用四个OpenMAL IL组件，实现了一个功能。四个组件分别是Source组件、Host组件、Accelerator组件和Sink组件。Source组件只有一个输出端口；而Host组件有一个输入端口和一个输出端口；Accelerator组件具有一个输入端口，调用了硬件的编解码器，加速主要体现在这个环节上。Accelerator组件和Sink组件通过私有通讯方式在内部进行连接，没有经过明确的组件端口。<br>&#160; &#160; &#160; &#160;OpenMAL IL在使用的时候，其数据流也有不同的处理方式：既可以经由客户端，也可以不经由客户端。图中Source组件到Host组件的数据流就是经过客户端的；而Host组件到Accelerator组件的数据流就没有经过客户端，使用了隧道化的方式；Accelerator组件和Sink组件甚至可以使用私有的通讯方式。</p>
+<p>&#160; &#160; &#160; &#160;OpenMax Core是辅助各个组件运行的部分，它通常需要完成各个组件的初始化等工作，在真正运行过程中，重点是各个OpenMax IL的组件，OpenMax Core不是重点，也不是标准。</p>
+<p>&#160; &#160; &#160; &#160;OpenMAL IL的组件是OpenMax IL实现的核心内容，一个组件以输入、输出端口为接口，端口可以被连接到另一个组件上。外部对组件可以发送命令，还进行设置/获取参数、配置等内容。组件的端口可以包含缓冲区（Buffer）的队列。<br>&#160; &#160; &#160; &#160;组件的处理的核心内容是：通过输入端口消耗Buffer，通过输出端口填充Buffer，由此多组件相联接可以构成流式的处理。OpenMAL IL中一个组件的结构如下图所示：</p>
+<p><img src="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E5%A4%9A%E5%AA%92%E4%BD%93%E5%BC%80%E5%8F%91%28%E4%BA%94%29----OpenMax%E7%AE%80%E4%BB%8B/openilinternal.JPG" alt="openmax IL组件"></p>
+<p>&#160; &#160; &#160; &#160;组件的功能和其定义的端口类型密切相关，通常情况下：只有一个输出端口的，为<strong>Source</strong>组件；只有一个输入端口的，为<strong>Sink组件</strong>；有多个输入端口，一个输出端口的为<strong>Mux组件</strong>；有一个输入端口，多个输出端口的为<strong>DeMux组件</strong>；输入输出端口各一个组件的为<strong>中间处理环节</strong>，这是最常见的组件。</p>
+<p>&#160; &#160; &#160; &#160;端口具体支持的数据也有不同的类型。例如，对于一个输入、输出端口各一个组件，其输入端口使用MP3格式的数据，输出端口使用PCM格式的数据，那么这个组件就是一个MP3解码组件。</p>
+<p>&#160; &#160; &#160; &#160;隧道化（Tunneled）是一个关于组件连接方式的概念。通过隧道化可以将不同的组件的一个输入端口和一个输出端口连接到一起，在这种情况下，两个组件的处理过程合并，共同处理。尤其对于单输入和单输出的组件，两个组件将作为类似一个使用。</p>
+<h1 id="Android中的OpenMax"><a href="#Android中的OpenMax" class="headerlink" title="Android中的OpenMax"></a>Android中的OpenMax</h1><h2 id="OpenMax在Android中的使用情况"><a href="#OpenMax在Android中的使用情况" class="headerlink" title="OpenMax在Android中的使用情况"></a>OpenMax在Android中的使用情况</h2><p>&#160; &#160; &#160; &#160;在Android中，OpenMax IL层，通常可以用于<strong>多媒体引擎的插件</strong>，Android的多媒体引擎OpenCore和StageFright都可以使用OpenMax作为插件，主要用于<strong>编解码（Codec）</strong>处理。<br>&#160; &#160; &#160; &#160;在Android的框架层，也定义了由Android封装的OpenMax接口，和标准的接口概念基本相同，但是使用C++类型的接口，并且使用了Android的Binder IPC机制。Android封装OpenMax的接口被StageFright使用，OpenCore没有使用这个接口，而是使用其他形式对OpenMax IL层接口进行封装。Android OpenMax的基本层次结构如图：</p>
+<p><img src="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E5%A4%9A%E5%AA%92%E4%BD%93%E5%BC%80%E5%8F%91%28%E4%BA%94%29----OpenMax%E7%AE%80%E4%BB%8B/openmaxinandroid.jpg" alt="openmax in android"></p>
+<p>&#160; &#160; &#160; &#160;Android系统的一些部分对OpenMax IL层进行使用，基本使用的是标准OpenMax IL层的接口，只是进行了简单的封装。标准的OpenMax IL实现很容易以插件的形式加入到Android系统中。<br>&#160; &#160; &#160; &#160;Android的多媒体引擎OpenCore和StageFright都可以使用OpenMax作为多媒体编解码的插件，只是<strong>没有直接使用OpenMax IL层提供的纯C接口，而是对其进行了一定的封装(C++封装)</strong>。<br>&#160; &#160; &#160; &#160;在Android2.x版本之后，Android的框架层也对OpenMax IL层的接口进行了封装定义，甚至使用Android中的Binder IPC机制。Stagefright使用了这个层次的接口，OpenCore没有使用。<br>&#160; &#160; &#160; &#160;注：OpenCore使用OpenMax IL层作为编解码插件在前，Android框架层封装OpenMax接口在后面的版本中才引入。</p>
+<h2 id="Android-OpenMax实现的内容"><a href="#Android-OpenMax实现的内容" class="headerlink" title="Android OpenMax实现的内容"></a>Android OpenMax实现的内容</h2><p>&#160; &#160; &#160; &#160;android中的 AwesomePlayer就是用openmax来做(Codec)编解码,其实在openmax接口设计中，他不光能用来当编解码。通过他的组件可以组成一个完整的播放器，包括sourc、demux、decode、output。但是为什么android只用他来做code呢？应该有如下方面：</p>
+<ul>
+<li>1.在整个播放器中，解码器不得不说是最重要的一部分，而且也是最耗资源的一块。如果全靠软解，直接通过cpu来运算，特别是高清视频。别的事你就可以啥都不干了。所以解码器是最需要硬件提供加速的部分。现在的高清解码芯片都是主芯片+DSP结构，解码的工作都是通过DSP来做，不会在过多的占用主芯片。所有将芯片中DSP硬件编解码的能力通过openmax标准接口呈现出来，提供上层播放器来用。我认为这块是openmax最重要的意义。</li>
+<li>2.source 主要是和协议打交道，demux 分解容器部分，大多数的容器格式的分解是不需要通过硬件来支持。只是ts流这种格式最可能用到硬件的支持。因为ts格式比较特殊，单包的大小太小了，只有188字节。所以也是为什么现在常见的解码芯片都会提供硬件ts demux 的支持。</li>
+<li>3.音视频输出部分video\audio output 这块和操作系统关系十分紧密。可以看看著名开源播放器vlc。vlc 在mac、linux、Windows都有，功能上差别也不大。所以说他是跨平台的，他跨平台跨在哪？主要的工作量还是在音视频解码完之后的输出模块。因为各个系统的图像渲染和音频输出实现方法不同，所以vlc需要针对每个平台实现不同的output。这部分内容放在openmax来显然不合适。</li>
+</ul>
+<p>&#160; &#160; &#160; &#160;Android中使用的主要是OpenMax的编解码功能。虽然OpenMax也可以生成输入、输出、文件解析-构建等组件，但是在各个系统（不仅是Android）中使用的最多的还是编解码组件。<strong>媒体的输入、输出环节和系统的关系很大，引入OpenMax标准比较麻烦；文件解析-构建环节一般不需要使用硬件加速</strong>。编解码组件也是最能体现硬件加速的环节，因此最常使用。</p>
+<h1 id="初窥适配层接口"><a href="#初窥适配层接口" class="headerlink" title="初窥适配层接口"></a>初窥适配层接口</h1><p>&#160; &#160; &#160; &#160;在Android中实现OpenMax IL层和标准的OpenMax IL层的方式基本，一般需要实现以下两个环节：</p>
+<ul>
+<li>编解码驱动程序：位于Linux内核空间，需要通过Linux内核调用驱动程序，通常使用非标准的驱动程序。</li>
+<li>OpenMax IL层：根据OpenMax IL层的标准头文件实现不同功能的组件。</li>
+</ul>
+<p>&#160; &#160; &#160; &#160;<strong>Android中还提供了OpenMax的适配层接口（对OpenMax IL的标准组件进行封装适配）</strong>，它作为Android本地层的接口，可以被Android的多媒体引擎调用。<a href="http://windrunnerlihuan.com/2016/12/12/Android多媒体开发-四-AwesomePlayer数据源处理/">上一篇文章</a>末尾，初始化解码器核心调用的两个方法就是适配层的接口。</p>
+<p><img src="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E5%A4%9A%E5%AA%92%E4%BD%93%E5%BC%80%E5%8F%91%28%E4%BA%94%29----OpenMax%E7%AE%80%E4%BB%8B/openmaxsult.jpg" alt="适配层"></p>
+<ul>
+<li>1.上面已经说过了，android系统中只用openmax来做Codec，所以android向上抽象了一层OMXCodec，提供给上层播放器用。播放器中音视频解码器mVideosource、mAudiosource都是OMXCodec的实例。</li>
+<li>2.OMXCodec通过IOMX 依赖binder机制 获得 OMX服务，OMX服务 才是openmax 在android中 实现。</li>
+<li>3.OMX把软编解码和硬件编解码统一看作插件的形式管理起来。</li>
+</ul>
+<h1 id="结语"><a href="#结语" class="headerlink" title="结语"></a>结语</h1><p>&#160; &#160; &#160; &#160;本届基本上是对OpenMax的介绍，科普一下知识。下一节我们承接上一节末尾，详细分析适配层代码的调用流程。</p>
+<p><img src="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E5%A4%9A%E5%AA%92%E4%BD%93%E5%BC%80%E5%8F%91%28%E4%BA%94%29----OpenMax%E7%AE%80%E4%BB%8B/meizi.jpg" alt="妹子"></p>
+
+      
+    </div>
+    
+  </div>
+  
+    
+    <div class="copyright">
+        <p><span>Title:</span><a href="/2016/12/15/Android多媒体开发-五-OpenMax简介/">Android多媒体开发(五)----OpenMax简介</a></p>
+        <p><span>Author:</span><a href="/" title="Back to Homepage">windrunnerlihuan</a></p>
+        <p><span>Created:</span>2016-12-15, 18:45:12</p>
+        <p><span>Updated:</span>2016-12-16, 04:47:29</p>
+        <p>
+            <span>Full URL:</span><a class="post-url" href="/2016/12/15/Android多媒体开发-五-OpenMax简介/" title="Android多媒体开发(五)----OpenMax简介">http://windrunnerlihuan.com/2016/12/15/Android多媒体开发-五-OpenMax简介/</a>
+            <span class="copy-path" data-clipboard-text="From http://windrunnerlihuan.com/2016/12/15/Android多媒体开发-五-OpenMax简介/　　By windrunnerlihuan" title="Copy Article&#39;s Link &amp; Author"><i class="fa fa-clipboard"></i></span>
+            <script> var clipboard = new Clipboard('.copy-path'); </script>
+        </p>
+        <p>
+            <span>License:</span><i class="fa fa-creative-commons"></i> <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/" title="CC BY-NC-SA 4.0 International" target = "_blank">"CC BY-NC-SA 4.0"</a> Keep Link &amp; Author if Distribute.
+        </p>
+    </div>
+
+
+
+    <nav id="article-nav">
+        
+        
+            <div id="article-nav-older" class="article-nav-title">
+                <a href="/2016/12/12/Android多媒体开发-四-AwesomePlayer数据源处理/">
+                    Android多媒体开发(四)----AwesomePlayer数据源处理
+                </a>
+            </div>
+        
+    </nav>
+
+  
+</article>
+
+    <div id="toc" class="toc-article">
+    <strong class="toc-title">Contents</strong>
+    <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#OpenMax系统的结构"><span class="toc-number">1.</span> <span class="toc-text">OpenMax系统的结构</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#OpenMax总体层次结构"><span class="toc-number">1.1.</span> <span class="toc-text">OpenMax总体层次结构</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#OpenMax-IL简介"><span class="toc-number">1.2.</span> <span class="toc-text">OpenMax IL简介</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#OpenMax-IL结构"><span class="toc-number">1.3.</span> <span class="toc-text">OpenMax IL结构</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Android中的OpenMax"><span class="toc-number">2.</span> <span class="toc-text">Android中的OpenMax</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#OpenMax在Android中的使用情况"><span class="toc-number">2.1.</span> <span class="toc-text">OpenMax在Android中的使用情况</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Android-OpenMax实现的内容"><span class="toc-number">2.2.</span> <span class="toc-text">Android OpenMax实现的内容</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#初窥适配层接口"><span class="toc-number">3.</span> <span class="toc-text">初窥适配层接口</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#结语"><span class="toc-number">4.</span> <span class="toc-text">结语</span></a></li></ol>
+</div>
+<style>
+    .left-col .switch-btn {
+        display: none;
+    }
+    .left-col .switch-area {
+        display: none;
+    }
+</style>
+
+<input type="button" id="tocButton" value="Hide"  title="Show or Hide Table of Contents">
+<script>
+    var valueHide = "Hide";
+    var valueShow = "Show";
+
+    if ($(".left-col").is(":hidden")) {
+        $("#tocButton").attr("value", valueShow);
+    }
+
+    $("#tocButton").click(function() {
+        if ($("#toc").is(":hidden")) {
+            $("#tocButton").attr("value", valueHide);
+            $("#toc").slideDown(320);
+            $(".switch-btn, .switch-area").fadeOut(300);
+        }
+        else {
+            $("#tocButton").attr("value", valueShow);
+            $("#toc").slideUp(350);
+            $(".switch-btn, .switch-area").fadeIn(500);
+        }
+    })
+
+    if ($(".toc").length < 1) {
+        $("#toc, #tocButton").hide();
+        $(".switch-btn, .switch-area").show();
+    }
+</script>
+
+
+
+
+
+    
+<div class="share">
+    
+        <div class="bdsharebuttonbox">
+            <a href="#" class="fa fa-twitter bds_twi" data-cmd="twi" title="分享到推特"></a>
+            <a href="#" class="fa fa-weibo bds_tsina" data-cmd="tsina" title="分享到新浪微博"></a>
+            <a href="#" class="fa fa-qq bds_sqq" data-cmd="sqq" title="分享给 QQ 好友"></a>
+            <a href="#" class="fa fa-files-o bds_copy" data-cmd="copy" title="复制网址"></a>
+            <a href="#" class="fa fa fa-envelope-o bds_mail" data-cmd="mail" title="通过邮件分享"></a>
+            <a href="#" class="fa fa-weixin bds_weixin" data-cmd="weixin" title="生成文章二维码"></a>
+            <a href="#" class="fa fa-share-alt bds_more" data-cmd="more"></i></a>
+        </div>
+        <script>
+            window._bd_share_config={
+                "common":{"bdSnsKey":{},"bdText":"Android多媒体开发(五)----OpenMax简介　| April is your lie　","bdMini":"2","bdMiniList":false,"bdPic":"","bdStyle":"0","bdSize":"24"},"share":{}};with(document)0[(getElementsByTagName('head')[0]||body).appendChild(createElement('script')).src='http://bdimg.share.baidu.com/static/api/js/share.js?v=89860593.js?cdnversion='+~(-new Date()/36e5)];
+        </script>
+    
+
+    
+</div>
+
+
+
+
+
+
+
+    
+      <div class="duoshuo" id="comments">
+    <!-- ��˵���ۿ� start -->
+    <div class="ds-thread" data-thread-key="2016/12/15/Android多媒体开发-五-OpenMax简介/" data-title="Android多媒体开发(五)----OpenMax简介" data-url="http://windrunnerlihuan.com/2016/12/15/Android多媒体开发-五-OpenMax简介/"></div>
+    <!-- ��˵���ۿ� end -->
+    <!-- ��˵����JS���� start (һ����ҳֻ������һ��) -->
+    <script type="text/javascript">
+    var duoshuoQuery = {short_name:"windrunnerlihuan"};
+    (function() {
+        var ds = document.createElement('script');
+        ds.type = 'text/javascript';ds.async = true;
+        ds.src = 'http://windrunnerlihuan.com/js/embed.js';
+        ds.charset = 'UTF-8';
+        (document.getElementsByTagName('head')[0] 
+         || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+    </script>
+    <!-- ��˵����JS���� end -->
+</div>
+
+    
+
+
+
+
+    <div class="scroll" id="post-nav-button">
+        
+            <a href="/" title="Back to Homepage"><i class="fa fa-home"></i></a>
+        
+
+        <a title="Mini Archives"><i class="fa fa-bars"></i><i class="fa fa-times"></i></a>
+
+        
+            <a href="/2016/12/12/Android多媒体开发-四-AwesomePlayer数据源处理/" title="Next: Android多媒体开发(四)----AwesomePlayer数据源处理">
+                <i class="fa fa-angle-right"></i>
+            </a>
+        
+    </div>
+
+    <ul class="post-list"><li class="post-list-item"><a class="post-list-link" href="/2016/12/15/Android多媒体开发-五-OpenMax简介/">Android多媒体开发(五)----OpenMax简介</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/12/12/Android多媒体开发-四-AwesomePlayer数据源处理/">Android多媒体开发(四)----AwesomePlayer数据源处理</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/12/11/Android多媒体开发-三-从StageFright到AwesomePlayer/">Android多媒体开发(三)----从StageFright到AwesomePlayer</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/11/30/Android多媒体开发-二-MediaPlayer的C-S架构以及C-层调用步骤/">Android多媒体开发(二)----MediaPlayer的C/S架构以及C++层调用步骤</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/11/28/Android多媒体开发-一-MediaPlayer框架开始/">Android多媒体开发(一)----MediaPlayer框架开始</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/10/31/JAVA线程池简单分析/">JAVA线程池简单分析</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/10/08/Android壁纸开发流程分析/">Android壁纸开发流程分析</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/09/18/如何实现1080P延迟低于500ms的实时超清直播传输技术/">如何实现1080P延迟低于500ms的实时超清直播传输技术</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/09/05/插件开发中的资源问题分析及填坑处理/">插件开发中的资源问题分析及填坑处理</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/08/23/智能指针简单分析/">智能指针简单分析</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/07/31/Android消息机制零散分析/">Android消息处理零散分析</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/07/12/浅析Bitmap占据内存大小/">浅析Bitmap占据内存大小</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/07/02/DanmakuFlameMaster简单分析/">弹幕框架DanmakuFlameMaster简单分析</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/06/24/Android属性动画原理分析/">Android属性动画流程分析</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/06/12/Binder简要分析/">Android跨进程通信机制Binder简要分析</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/06/06/移动直播技术秒开优化经验/">移动直播技术秒开优化经验</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/05/27/博客搭建历程/">博客搭建历程————————Github和Hexo</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/05/27/新的开始/">新的开始</a></li></ul>
+
+
+
+
+    <script>
+        
+    </script>
+</div>
+      <footer id="footer">
+    <div class="outer">
+        <div id="footer-info">
+            <div class="footer-left">
+                <i class="fa fa-copyright"></i> 
+                2016 windrunnerlihuan
+            </div>
+            <div class="footer-right">
+                <a href="http://hexo.io/" target="_blank" title="A fast, simple &amp; powerful blog framework">Hexo</a>  Theme <a href="https://github.com/MOxFIVE/hexo-theme-yelee" target="_blank" title="Another simple and elegant theme for Hexo  v3.0">Yelee</a> by HuanLi & MOxFIVE <i class="fa fa-heart animated infinite pulse"></i>
+            </div>
+        </div>
+        
+            <div class="visit">
+                
+                    <span id="busuanzi_container_site_pv" style='display:none'>
+                        <span id="site-visit" >Site Visitors: 
+                            <span id="busuanzi_value_site_uv"></span>
+                        </span>
+                    </span>
+                
+                
+                    <span>, </span>
+                
+                
+                    <span id="busuanzi_container_page_pv" style='display:none'>
+                        <span id="page-visit">Page Hits: 
+                            <span id="busuanzi_value_page_pv"></span>
+                        </span>
+                    </span>
+                
+            </div>
+        
+    </div>
+</footer>
+    </div>
+    
+    <script src="/js/GithubRepoWidget.js"></script>
+
+<script data-main="/js/main.js" src="//cdn.bootcss.com/require.js/2.2.0/require.min.js"></script>
+
+
+
+
+    <script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+    tex2jax: {
+        inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+        processEscapes: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+    }
+});
+
+MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for(i=0; i < all.length; i += 1) {
+        all[i].SourceElement().parentNode.className += ' has-jax';                 
+    }       
+});
+</script>
+
+<script src="//cdn.bootcss.com/mathjax/2.6.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+<div class="scroll" id="scroll">
+    <a href="#" title="Back to Top"><i class="fa fa-arrow-up"></i></a>
+    <a href="#comments" title="Comments"><i class="fa fa-comments-o"></i></a>
+    <a href="#footer" title="Go to Bottom"><i class="fa fa-arrow-down"></i></a>
+</div>
+<script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js">
+</script>
+  </div>
+</body>
+</html>

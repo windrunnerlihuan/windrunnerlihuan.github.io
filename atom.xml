@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://windrunnerlihuan.com/"/>
-  <updated>2016-12-13T18:46:49.834Z</updated>
+  <updated>2016-12-15T20:47:29.400Z</updated>
   <id>http://windrunnerlihuan.com/</id>
   
   <author>
@@ -14,6 +14,85 @@
   </author>
   
   <generator uri="http://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>Android多媒体开发(五)----OpenMax简介</title>
+    <link href="http://windrunnerlihuan.com/2016/12/15/Android%E5%A4%9A%E5%AA%92%E4%BD%93%E5%BC%80%E5%8F%91-%E4%BA%94-OpenMax%E7%AE%80%E4%BB%8B/"/>
+    <id>http://windrunnerlihuan.com/2016/12/15/Android多媒体开发-五-OpenMax简介/</id>
+    <published>2016-12-15T10:45:12.000Z</published>
+    <updated>2016-12-15T20:47:29.400Z</updated>
+    
+    <content type="html">&lt;p&gt;&amp;#160; &amp;#160; &amp;#160; &amp;#160;android中的 AwesomePlayer就是用OpenMax来做(codec)编解码的，上一篇最后一步初始化解码器我们只是初窥了一下，以后会仔细分析。本节就主要科普一下OpenMax和它在Android系统中扮演的角色。&lt;br&gt;&lt;a id=&quot;more&quot;&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;h1 id=&quot;OpenMax系统的结构&quot;&gt;&lt;a href=&quot;#OpenMax系统的结构&quot; class=&quot;headerlink&quot; title=&quot;OpenMax系统的结构&quot;&gt;&lt;/a&gt;OpenMax系统的结构&lt;/h1&gt;&lt;h2 id=&quot;OpenMax总体层次结构&quot;&gt;&lt;a href=&quot;#OpenMax总体层次结构&quot; class=&quot;headerlink&quot; title=&quot;OpenMax总体层次结构&quot;&gt;&lt;/a&gt;OpenMax总体层次结构&lt;/h2&gt;&lt;p&gt;&amp;#160; &amp;#160; &amp;#160; &amp;#160;OpenMax是一个多媒体应用程序的框架标准，由&lt;strong&gt;NVIDIA&lt;/strong&gt;公司和&lt;strong&gt;Khronos&lt;/strong&gt;在2006年推出。&lt;br&gt;&amp;#160; &amp;#160; &amp;#160; &amp;#160;OpenMax是无授权费的，跨平台的应用程序接口API，&lt;strong&gt;通过使媒体加速组件能够在开发、集成和编程环节中实现跨多操作系统和处理器硬件平台，提供全面的流媒体编解码器和应用程序便携化&lt;/strong&gt;。&lt;br&gt;&amp;#160; &amp;#160; &amp;#160; &amp;#160;OpenMax的官方网站如下所示：&lt;br&gt;&amp;#160; &amp;#160; &amp;#160; &amp;#160;&lt;a href=&quot;http://www.khronos.org/openmax/&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;http://www.khronos.org/openmax/&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&amp;#160; &amp;#160; &amp;#160; &amp;#160;OpenMax实际上分成三个层次，自上而下分别是，OpenMax DL（开发层），OpenMax IL（集成层）和OpenMax AL（应用层）。三个层次的内容分别如下所示：&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;&amp;#160; &amp;#160; &amp;#160; &amp;#160;&lt;strong&gt;第一层：OpenMax DL（Development Layer，开发层）&lt;/strong&gt;&lt;br&gt;&amp;#160; &amp;#160; &amp;#160; &amp;#160; OpenMax DL定义了一个API，它是音频、视频和图像功能的集合。供应商能够在一个新的处理器上实现并优化，然后编解码供应商使用它来编写更广泛的编解码器功能。它包括音频信号的处理功能，如FFT和filter，图像原始处理，如颜色空间转换、视频原始处理，以实现例如MPEG-4、H.264、MP3、AAC和JPEG等编解码器的优化。&lt;/p&gt;
+&lt;p&gt;&amp;#160; &amp;#160; &amp;#160; &amp;#160;&lt;strong&gt;第二层：OpenMax IL（Integration Layer，集成层）&lt;/strong&gt;&lt;br&gt;&amp;#160; &amp;#160; &amp;#160; &amp;#160;&lt;em&gt;OpenMax IL作为音频、视频和图像编解码器能与多媒体编解码器交互，并以统一的行为支持组件（例如，资源和皮肤）。&lt;/em&gt;这些编解码器或许是软硬件的混合体，对用户是透明的底层接口应用于嵌入式、移动设备。它提供了应用程序和媒体框架，透明的。编解码器供应商必须写私有的或者封闭的接口，集成进移动设备。IL的主要目的是使用特征集合为编解码器提供一个系统抽象，为解决多个不同媒体系统之间轻便性的问题。&lt;/p&gt;
+&lt;p&gt;&amp;#160; &amp;#160; &amp;#160; &amp;#160;&lt;strong&gt;第三层：OpenMax AL（Appliction Layer，应用层）&lt;/strong&gt;&lt;br&gt;&amp;#160; &amp;#160; &amp;#160; &amp;#160;OpenMax AL API在应用程序和多媒体中间件之间提供了一个标准化接口，多媒体中间件提供服务以实现被期待的API功能。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;&lt;img src=&quot;http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E5%A4%9A%E5%AA%92%E4%BD%93%E5%BC%80%E5%8F%91%28%E4%BA%94%29----OpenMax%E7%AE%80%E4%BB%8B/openmaxsystem.png&quot; alt=&quot;OpenMax系统分层&quot;&gt;&lt;/p&gt;
+&lt;p&gt;&amp;#160; &amp;#160; &amp;#160; &amp;#160;OpenMax API将会与处理器一同提供，以&lt;strong&gt;使库和编解码器开发者能够高速有效地利用新器件的完整加速潜能，无须担心其底层的硬件结构&lt;/strong&gt;。该标准是针对嵌入式设备和移动设备的多媒体软件架构。在架构底层上为多媒体的编解码和数据处理定义了一套统一的编程接口，对多媒体数据的处理功能进行&lt;code&gt;系统级抽象&lt;/code&gt;，为用户屏蔽了底层的细节。因此，&lt;strong&gt;多媒体应用程序和多媒体框架通过OpenMax IL可以以一种统一的方式来使用编解码和其他多媒体数据处理功能，具有了&lt;/strong&gt;&lt;code&gt;跨越软硬件平台的移植性&lt;/code&gt;。&lt;/p&gt;
+&lt;p&gt;&amp;#160; &amp;#160; &amp;#160; &amp;#160;&lt;font color=&quot;red&quot;&gt;注：在实际的应用中，OpenMax的三个层次中使用较多的是OpenMax IL集成层，由于操作系统到硬件的差异和多媒体应用的差异，OpenMax的DL和AL层使用相对较少&lt;/font&gt;。 &lt;/p&gt;
+&lt;h2 id=&quot;OpenMax-IL简介&quot;&gt;&lt;a href=&quot;#OpenMax-IL简介&quot; class=&quot;headerlink&quot; title=&quot;OpenMax IL简介&quot;&gt;&lt;/a&gt;OpenMax IL简介&lt;/h2&gt;&lt;p&gt;&amp;#160; &amp;#160; &amp;#160; &amp;#160;OpenMax IL 处在中间层的位置，OpenMAX IL 作为音频，视频和图像编解码器 能与多媒体编解码器交互，并以统一的行为支持组件（例如资源和皮肤）。这些编解码器或许是软硬件的混合体，对用户是 的底层接口应用于嵌入式或 / 和移动设备。它提供了应用程序和媒体框架， 透明的。本质上不存在这种标准化的接口，编解码器供 应商必须写私有的或者封闭的接口，集成进移动设备。 IL 的主要目的 是使用特征集合为编解码器提供一个系统抽象，为解决多个不同媒体系统之间轻便性的问题。&lt;br&gt;&amp;#160; &amp;#160; &amp;#160; &amp;#160;OpenMax IL 的目的就是为硬件平台的图形及音视频提供一个抽象层，可以为上层的应用提供一个可跨平台的支撑。这一点对于跨平台的媒体应用来说十分重要。本人也接触过几家高清解码芯片，这些芯片底层的音视频接口虽然功能上大致相同，但是接口设计及用法上各有不同，而且相差很多。你要想让自己开发的媒体应用完美的运行在不同的硬件厂商平台上，就得适应不同芯片的底层解码接口。这个对于应用开发来说十分繁琐。所以就需要类似于OpenMax IL 这种接口规范。应用假如涉及到音视频相关功能时，只需调用这些标准的接口，而不需要关心接口下方硬件相关的实现。假如换了硬件平台时，只需要把接口层与硬件适配好了就行了。上层应用不需要频繁改动。&lt;br&gt;&amp;#160; &amp;#160; &amp;#160; &amp;#160;你可以把OpenMax IL 看作是中间件中的porting层接口，但是现在中间件大部分都是自家定义自己的。&lt;/p&gt;
+&lt;p&gt;&amp;#160; &amp;#160; &amp;#160; &amp;#160;OpenMax 想做的就是定义一个这样的行业标准，这样媒体应用、硬件厂商都遵循这种标准。硬件厂商将OpenMax 与处理器一并提供，上层的多媒体框架想要用到硬件音视频加速功能时，只需遵循openmax的接口就可以扩平台运行。&lt;br&gt;&amp;#160; &amp;#160; &amp;#160; &amp;#160;可喜的，现在越来越多的多媒体框架及多媒体应用正在遵循openmax标准，包括各种知名的媒体开源软件。越来越多的芯片厂商也在遵循openmax的标准。对于现在的音视频编解码来说，分辨率越来越高，需要芯片提供硬件加速功能是个大的趋势。我相信 接口的标准化是一定要走的。如下图所示， openmax IL在多媒体框架中的应用：&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E5%A4%9A%E5%AA%92%E4%BD%93%E5%BC%80%E5%8F%91%28%E4%BA%94%29----OpenMax%E7%AE%80%E4%BB%8B/openmaxuse.png&quot; alt=&quot;openmax use&quot;&gt;&lt;/p&gt;
+&lt;p&gt;&amp;#160; &amp;#160; &amp;#160; &amp;#160;&lt;strong&gt;OpenMax IL目前已经成为了事实上的多媒体框架标准&lt;/strong&gt;。嵌入式处理器或者多媒体编解码模块的硬件生产者，通常提供标准的OpenMax IL层的软件接口，这样软件的开发者就可以基于这个层次的标准化接口进行多媒体程序的开发。&lt;br&gt;&amp;#160; &amp;#160; &amp;#160; &amp;#160;OpenMax IL的接口层次结构适中，既不是硬件编解码的接口，也不是应用程序层的接口，因此比较容易实现标准化。OpenMax IL的层次结构如下：&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E5%A4%9A%E5%AA%92%E4%BD%93%E5%BC%80%E5%8F%91%28%E4%BA%94%29----OpenMax%E7%AE%80%E4%BB%8B/openmaxIL.png&quot; alt=&quot;openmax IL&quot;&gt;&lt;/p&gt;
+&lt;p&gt;&amp;#160; &amp;#160; &amp;#160; &amp;#160;图中的虚线中的内容是OpenMax IL层的内容，其主要实现了OpenMax IL中的各个组件（Component）。&lt;strong&gt;对下层，OpenMax IL可以调用OpenMax DL层的接口，也可以直接调用各种Codec实现。对上层，OpenMax IL可以给OpenMax AL 层等框架层（Middleware）调用，也可以给应用程序直接调用&lt;/strong&gt;。&lt;/p&gt;
+&lt;h2 id=&quot;OpenMax-IL结构&quot;&gt;&lt;a href=&quot;#OpenMax-IL结构&quot; class=&quot;headerlink&quot; title=&quot;OpenMax IL结构&quot;&gt;&lt;/a&gt;OpenMax IL结构&lt;/h2&gt;&lt;p&gt;&amp;#160; &amp;#160; &amp;#160; &amp;#160;OpenMax IL主要内容如下所示。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;客户端（Client）&lt;/strong&gt;：OpenMax IL的调用者&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;组件（Component）&lt;/strong&gt;：OpenMax IL的单元，每一个组件实现一种功能&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;端口（Port）&lt;/strong&gt;：组件的输入输出接口&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;隧道化（Tunneled）&lt;/strong&gt;：让两个组件直接连接的方式&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&amp;#160; &amp;#160; &amp;#160; &amp;#160;OpenMax IL的基本运作过程如图所示：&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E5%A4%9A%E5%AA%92%E4%BD%93%E5%BC%80%E5%8F%91%28%E4%BA%94%29----OpenMax%E7%AE%80%E4%BB%8B/openmaxilbase.png&quot; alt=&quot;基本运作&quot;&gt;&lt;/p&gt;
+&lt;p&gt;&amp;#160; &amp;#160; &amp;#160; &amp;#160;OpenMAL IL的客户端，通过调用四个OpenMAL IL组件，实现了一个功能。四个组件分别是Source组件、Host组件、Accelerator组件和Sink组件。Source组件只有一个输出端口；而Host组件有一个输入端口和一个输出端口；Accelerator组件具有一个输入端口，调用了硬件的编解码器，加速主要体现在这个环节上。Accelerator组件和Sink组件通过私有通讯方式在内部进行连接，没有经过明确的组件端口。&lt;br&gt;&amp;#160; &amp;#160; &amp;#160; &amp;#160;OpenMAL IL在使用的时候，其数据流也有不同的处理方式：既可以经由客户端，也可以不经由客户端。图中Source组件到Host组件的数据流就是经过客户端的；而Host组件到Accelerator组件的数据流就没有经过客户端，使用了隧道化的方式；Accelerator组件和Sink组件甚至可以使用私有的通讯方式。&lt;/p&gt;
+&lt;p&gt;&amp;#160; &amp;#160; &amp;#160; &amp;#160;OpenMax Core是辅助各个组件运行的部分，它通常需要完成各个组件的初始化等工作，在真正运行过程中，重点是各个OpenMax IL的组件，OpenMax Core不是重点，也不是标准。&lt;/p&gt;
+&lt;p&gt;&amp;#160; &amp;#160; &amp;#160; &amp;#160;OpenMAL IL的组件是OpenMax IL实现的核心内容，一个组件以输入、输出端口为接口，端口可以被连接到另一个组件上。外部对组件可以发送命令，还进行设置/获取参数、配置等内容。组件的端口可以包含缓冲区（Buffer）的队列。&lt;br&gt;&amp;#160; &amp;#160; &amp;#160; &amp;#160;组件的处理的核心内容是：通过输入端口消耗Buffer，通过输出端口填充Buffer，由此多组件相联接可以构成流式的处理。OpenMAL IL中一个组件的结构如下图所示：&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E5%A4%9A%E5%AA%92%E4%BD%93%E5%BC%80%E5%8F%91%28%E4%BA%94%29----OpenMax%E7%AE%80%E4%BB%8B/openilinternal.JPG&quot; alt=&quot;openmax IL组件&quot;&gt;&lt;/p&gt;
+&lt;p&gt;&amp;#160; &amp;#160; &amp;#160; &amp;#160;组件的功能和其定义的端口类型密切相关，通常情况下：只有一个输出端口的，为&lt;strong&gt;Source&lt;/strong&gt;组件；只有一个输入端口的，为&lt;strong&gt;Sink组件&lt;/strong&gt;；有多个输入端口，一个输出端口的为&lt;strong&gt;Mux组件&lt;/strong&gt;；有一个输入端口，多个输出端口的为&lt;strong&gt;DeMux组件&lt;/strong&gt;；输入输出端口各一个组件的为&lt;strong&gt;中间处理环节&lt;/strong&gt;，这是最常见的组件。&lt;/p&gt;
+&lt;p&gt;&amp;#160; &amp;#160; &amp;#160; &amp;#160;端口具体支持的数据也有不同的类型。例如，对于一个输入、输出端口各一个组件，其输入端口使用MP3格式的数据，输出端口使用PCM格式的数据，那么这个组件就是一个MP3解码组件。&lt;/p&gt;
+&lt;p&gt;&amp;#160; &amp;#160; &amp;#160; &amp;#160;隧道化（Tunneled）是一个关于组件连接方式的概念。通过隧道化可以将不同的组件的一个输入端口和一个输出端口连接到一起，在这种情况下，两个组件的处理过程合并，共同处理。尤其对于单输入和单输出的组件，两个组件将作为类似一个使用。&lt;/p&gt;
+&lt;h1 id=&quot;Android中的OpenMax&quot;&gt;&lt;a href=&quot;#Android中的OpenMax&quot; class=&quot;headerlink&quot; title=&quot;Android中的OpenMax&quot;&gt;&lt;/a&gt;Android中的OpenMax&lt;/h1&gt;&lt;h2 id=&quot;OpenMax在Android中的使用情况&quot;&gt;&lt;a href=&quot;#OpenMax在Android中的使用情况&quot; class=&quot;headerlink&quot; title=&quot;OpenMax在Android中的使用情况&quot;&gt;&lt;/a&gt;OpenMax在Android中的使用情况&lt;/h2&gt;&lt;p&gt;&amp;#160; &amp;#160; &amp;#160; &amp;#160;在Android中，OpenMax IL层，通常可以用于&lt;strong&gt;多媒体引擎的插件&lt;/strong&gt;，Android的多媒体引擎OpenCore和StageFright都可以使用OpenMax作为插件，主要用于&lt;strong&gt;编解码（Codec）&lt;/strong&gt;处理。&lt;br&gt;&amp;#160; &amp;#160; &amp;#160; &amp;#160;在Android的框架层，也定义了由Android封装的OpenMax接口，和标准的接口概念基本相同，但是使用C++类型的接口，并且使用了Android的Binder IPC机制。Android封装OpenMax的接口被StageFright使用，OpenCore没有使用这个接口，而是使用其他形式对OpenMax IL层接口进行封装。Android OpenMax的基本层次结构如图：&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E5%A4%9A%E5%AA%92%E4%BD%93%E5%BC%80%E5%8F%91%28%E4%BA%94%29----OpenMax%E7%AE%80%E4%BB%8B/openmaxinandroid.jpg&quot; alt=&quot;openmax in android&quot;&gt;&lt;/p&gt;
+&lt;p&gt;&amp;#160; &amp;#160; &amp;#160; &amp;#160;Android系统的一些部分对OpenMax IL层进行使用，基本使用的是标准OpenMax IL层的接口，只是进行了简单的封装。标准的OpenMax IL实现很容易以插件的形式加入到Android系统中。&lt;br&gt;&amp;#160; &amp;#160; &amp;#160; &amp;#160;Android的多媒体引擎OpenCore和StageFright都可以使用OpenMax作为多媒体编解码的插件，只是&lt;strong&gt;没有直接使用OpenMax IL层提供的纯C接口，而是对其进行了一定的封装(C++封装)&lt;/strong&gt;。&lt;br&gt;&amp;#160; &amp;#160; &amp;#160; &amp;#160;在Android2.x版本之后，Android的框架层也对OpenMax IL层的接口进行了封装定义，甚至使用Android中的Binder IPC机制。Stagefright使用了这个层次的接口，OpenCore没有使用。&lt;br&gt;&amp;#160; &amp;#160; &amp;#160; &amp;#160;注：OpenCore使用OpenMax IL层作为编解码插件在前，Android框架层封装OpenMax接口在后面的版本中才引入。&lt;/p&gt;
+&lt;h2 id=&quot;Android-OpenMax实现的内容&quot;&gt;&lt;a href=&quot;#Android-OpenMax实现的内容&quot; class=&quot;headerlink&quot; title=&quot;Android OpenMax实现的内容&quot;&gt;&lt;/a&gt;Android OpenMax实现的内容&lt;/h2&gt;&lt;p&gt;&amp;#160; &amp;#160; &amp;#160; &amp;#160;android中的 AwesomePlayer就是用openmax来做(Codec)编解码,其实在openmax接口设计中，他不光能用来当编解码。通过他的组件可以组成一个完整的播放器，包括sourc、demux、decode、output。但是为什么android只用他来做code呢？应该有如下方面：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;1.在整个播放器中，解码器不得不说是最重要的一部分，而且也是最耗资源的一块。如果全靠软解，直接通过cpu来运算，特别是高清视频。别的事你就可以啥都不干了。所以解码器是最需要硬件提供加速的部分。现在的高清解码芯片都是主芯片+DSP结构，解码的工作都是通过DSP来做，不会在过多的占用主芯片。所有将芯片中DSP硬件编解码的能力通过openmax标准接口呈现出来，提供上层播放器来用。我认为这块是openmax最重要的意义。&lt;/li&gt;
+&lt;li&gt;2.source 主要是和协议打交道，demux 分解容器部分，大多数的容器格式的分解是不需要通过硬件来支持。只是ts流这种格式最可能用到硬件的支持。因为ts格式比较特殊，单包的大小太小了，只有188字节。所以也是为什么现在常见的解码芯片都会提供硬件ts demux 的支持。&lt;/li&gt;
+&lt;li&gt;3.音视频输出部分video\audio output 这块和操作系统关系十分紧密。可以看看著名开源播放器vlc。vlc 在mac、linux、Windows都有，功能上差别也不大。所以说他是跨平台的，他跨平台跨在哪？主要的工作量还是在音视频解码完之后的输出模块。因为各个系统的图像渲染和音频输出实现方法不同，所以vlc需要针对每个平台实现不同的output。这部分内容放在openmax来显然不合适。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&amp;#160; &amp;#160; &amp;#160; &amp;#160;Android中使用的主要是OpenMax的编解码功能。虽然OpenMax也可以生成输入、输出、文件解析-构建等组件，但是在各个系统（不仅是Android）中使用的最多的还是编解码组件。&lt;strong&gt;媒体的输入、输出环节和系统的关系很大，引入OpenMax标准比较麻烦；文件解析-构建环节一般不需要使用硬件加速&lt;/strong&gt;。编解码组件也是最能体现硬件加速的环节，因此最常使用。&lt;/p&gt;
+&lt;h1 id=&quot;初窥适配层接口&quot;&gt;&lt;a href=&quot;#初窥适配层接口&quot; class=&quot;headerlink&quot; title=&quot;初窥适配层接口&quot;&gt;&lt;/a&gt;初窥适配层接口&lt;/h1&gt;&lt;p&gt;&amp;#160; &amp;#160; &amp;#160; &amp;#160;在Android中实现OpenMax IL层和标准的OpenMax IL层的方式基本，一般需要实现以下两个环节：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;编解码驱动程序：位于Linux内核空间，需要通过Linux内核调用驱动程序，通常使用非标准的驱动程序。&lt;/li&gt;
+&lt;li&gt;OpenMax IL层：根据OpenMax IL层的标准头文件实现不同功能的组件。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&amp;#160; &amp;#160; &amp;#160; &amp;#160;&lt;strong&gt;Android中还提供了OpenMax的适配层接口（对OpenMax IL的标准组件进行封装适配）&lt;/strong&gt;，它作为Android本地层的接口，可以被Android的多媒体引擎调用。&lt;a href=&quot;http://windrunnerlihuan.com/2016/12/12/Android多媒体开发-四-AwesomePlayer数据源处理/&quot;&gt;上一篇文章&lt;/a&gt;末尾，初始化解码器核心调用的两个方法就是适配层的接口。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E5%A4%9A%E5%AA%92%E4%BD%93%E5%BC%80%E5%8F%91%28%E4%BA%94%29----OpenMax%E7%AE%80%E4%BB%8B/openmaxsult.jpg&quot; alt=&quot;适配层&quot;&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;1.上面已经说过了，android系统中只用openmax来做Codec，所以android向上抽象了一层OMXCodec，提供给上层播放器用。播放器中音视频解码器mVideosource、mAudiosource都是OMXCodec的实例。&lt;/li&gt;
+&lt;li&gt;2.OMXCodec通过IOMX 依赖binder机制 获得 OMX服务，OMX服务 才是openmax 在android中 实现。&lt;/li&gt;
+&lt;li&gt;3.OMX把软编解码和硬件编解码统一看作插件的形式管理起来。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h1 id=&quot;结语&quot;&gt;&lt;a href=&quot;#结语&quot; class=&quot;headerlink&quot; title=&quot;结语&quot;&gt;&lt;/a&gt;结语&lt;/h1&gt;&lt;p&gt;&amp;#160; &amp;#160; &amp;#160; &amp;#160;本届基本上是对OpenMax的介绍，科普一下知识。下一节我们承接上一节末尾，详细分析适配层代码的调用流程。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E5%A4%9A%E5%AA%92%E4%BD%93%E5%BC%80%E5%8F%91%28%E4%BA%94%29----OpenMax%E7%AE%80%E4%BB%8B/meizi.jpg&quot; alt=&quot;妹子&quot;&gt;&lt;/p&gt;
+</content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;&amp;#160; &amp;#160; &amp;#160; &amp;#160;android中的 AwesomePlayer就是用OpenMax来做(codec)编解码的，上一篇最后一步初始化解码器我们只是初窥了一下，以后会仔细分析。本节就主要科普一下OpenMax和它在Android系统中扮演的角色。&lt;br&gt;
+    
+    </summary>
+    
+      <category term="Android技术点" scheme="http://windrunnerlihuan.com/categories/Android%E6%8A%80%E6%9C%AF%E7%82%B9/"/>
+    
+    
+      <category term="多媒体" scheme="http://windrunnerlihuan.com/tags/%E5%A4%9A%E5%AA%92%E4%BD%93/"/>
+    
+  </entry>
   
   <entry>
     <title>Android多媒体开发(四)----AwesomePlayer数据源处理</title>
