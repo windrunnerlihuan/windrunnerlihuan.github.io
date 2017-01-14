@@ -150,13 +150,13 @@
                 <div class="tips-box hide">
                     <div class="tips-arrow"></div>
                     <ul class="tips-inner">
-                        <li>菜單</li>
-                        <li>標籤</li>
+                        <li>菜单</li>
+                        <li>标签</li>
                         
-                        <li>友情鏈接</li>
+                        <li>友情链接</li>
                         
                         
-                        <li>關於我</li>
+                        <li>关于我</li>
                         
                     </ul>
                 </div>
@@ -270,7 +270,7 @@
             </nav>
         </header>                
     </div>
-    <link class="menu-list" tags="標籤" friends="友情鏈接" about="關於我"/>
+    <link class="menu-list" tags="标签" friends="友情链接" about="关于我"/>
 </nav>
       <div class="body-wrap"><article id="post-JAVA线程池简单分析" class="article article-type-post" itemscope itemprop="blogPost">
   
@@ -386,17 +386,17 @@
   
     
     <div class="copyright">
-        <p><span>本文標題:</span><a href="/2016/10/31/JAVA线程池简单分析/">JAVA线程池简单分析</a></p>
-        <p><span>文章作者:</span><a href="/" title="回到主頁">windrunnerlihuan</a></p>
-        <p><span>發布時間:</span>2016-10-31, 23:44:12</p>
-        <p><span>最後更新:</span>2016-11-01, 04:17:02</p>
+        <p><span>本文标题:</span><a href="/2016/10/31/JAVA线程池简单分析/">JAVA线程池简单分析</a></p>
+        <p><span>文章作者:</span><a href="/" title="回到主页">windrunnerlihuan</a></p>
+        <p><span>发布时间:</span>2016-10-31, 23:44:12</p>
+        <p><span>最后更新:</span>2016-11-01, 04:17:02</p>
         <p>
-            <span>原始鏈接:</span><a class="post-url" href="/2016/10/31/JAVA线程池简单分析/" title="JAVA线程池简单分析">http://windrunnerlihuan.com/2016/10/31/JAVA线程池简单分析/</a>
-            <span class="copy-path" data-clipboard-text="原文: http://windrunnerlihuan.com/2016/10/31/JAVA线程池简单分析/　　作者: windrunnerlihuan" title="點擊複製文章鏈接"><i class="fa fa-clipboard"></i></span>
+            <span>原始链接:</span><a class="post-url" href="/2016/10/31/JAVA线程池简单分析/" title="JAVA线程池简单分析">http://windrunnerlihuan.com/2016/10/31/JAVA线程池简单分析/</a>
+            <span class="copy-path" data-clipboard-text="原文: http://windrunnerlihuan.com/2016/10/31/JAVA线程池简单分析/　　作者: windrunnerlihuan" title="点击复制文章链接"><i class="fa fa-clipboard"></i></span>
             <script> var clipboard = new Clipboard('.copy-path'); </script>
         </p>
         <p>
-            <span>許可協議:</span><i class="fa fa-creative-commons"></i> <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/" title="CC BY-NC-SA 4.0 International" target = "_blank">"姓名標示-非商業性-相同方式分享 4.0 國際"</a> 轉載請保留原文鏈接及作者。
+            <span>许可协议:</span><i class="fa fa-creative-commons"></i> <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/" title="CC BY-NC-SA 4.0 International" target = "_blank">"署名-非商用-相同方式共享 4.0"</a> 转载请保留原文链接及作者。
         </p>
     </div>
 
@@ -423,7 +423,7 @@
 </article>
 
     <div id="toc" class="toc-article">
-    <strong class="toc-title">文章目錄</strong>
+    <strong class="toc-title">文章目录</strong>
     <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#核心类"><span class="toc-number">1.</span> <span class="toc-text">核心类</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#配置规则"><span class="toc-number">1.1.</span> <span class="toc-text">配置规则</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#状态转换"><span class="toc-number">1.2.</span> <span class="toc-text">状态转换</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#重要方法"><span class="toc-number">2.</span> <span class="toc-text">重要方法</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#execute"><span class="toc-number">2.1.</span> <span class="toc-text">execute</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#addWorker"><span class="toc-number">2.2.</span> <span class="toc-text">addWorker</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#runWorker"><span class="toc-number">2.3.</span> <span class="toc-text">runWorker</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#getTask"><span class="toc-number">2.4.</span> <span class="toc-text">getTask</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#processWorkerExit"><span class="toc-number">2.5.</span> <span class="toc-text">processWorkerExit</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#tryTerminate"><span class="toc-number">2.6.</span> <span class="toc-text">tryTerminate</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#shutdown和shutdownNow"><span class="toc-number">2.7.</span> <span class="toc-text">shutdown和shutdownNow</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#结语"><span class="toc-number">3.</span> <span class="toc-text">结语</span></a></li></ol>
 </div>
 <style>
@@ -435,10 +435,10 @@
     }
 </style>
 
-<input type="button" id="tocButton" value="隱藏目錄"  title="點擊按鈕隱藏或者顯示文章目錄">
+<input type="button" id="tocButton" value="隐藏目录"  title="点击按钮隐藏或者显示文章目录">
 <script>
-    var valueHide = "隱藏目錄";
-    var valueShow = "顯示目錄";
+    var valueHide = "隐藏目录";
+    var valueShow = "显示目录";
 
     if ($(".left-col").is(":hidden")) {
         $("#tocButton").attr("value", valueShow);
@@ -535,7 +535,7 @@
         
     </div>
 
-    <ul class="post-list"><li class="post-list-item"><a class="post-list-link" href="/2017/01/06/Android多媒体开发-八-播放流程/">Android多媒体开发(八)----播放流程</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/12/29/Android多媒体开发-七-Android中OpenMax的实现/">Android多媒体开发(七)----Android中OpenMax的实现</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/12/26/Android多媒体开发-六-Android中OpenMax的实现-preview/">Android多媒体开发(六)----Android中OpenMax的实现(preview)</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/12/15/Android多媒体开发-五-OpenMax简介/">Android多媒体开发(五)----OpenMax简介</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/12/12/Android多媒体开发-四-AwesomePlayer数据源处理/">Android多媒体开发(四)----AwesomePlayer数据源处理</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/12/11/Android多媒体开发-三-从StageFright到AwesomePlayer/">Android多媒体开发(三)----从StageFright到AwesomePlayer</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/11/30/Android多媒体开发-二-MediaPlayer的C-S架构以及C-层调用步骤/">Android多媒体开发(二)----MediaPlayer的C/S架构以及C++层调用步骤</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/11/28/Android多媒体开发-一-MediaPlayer框架开始/">Android多媒体开发(一)----MediaPlayer框架开始</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/10/31/JAVA线程池简单分析/">JAVA线程池简单分析</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/10/08/Android壁纸开发流程分析/">Android壁纸开发流程分析</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/09/18/如何实现1080P延迟低于500ms的实时超清直播传输技术/">如何实现1080P延迟低于500ms的实时超清直播传输技术</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/09/05/插件开发中的资源问题分析及填坑处理/">插件开发中的资源问题分析及填坑处理</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/08/23/智能指针简单分析/">智能指针简单分析</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/07/31/Android消息机制零散分析/">Android消息处理零散分析</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/07/12/浅析Bitmap占据内存大小/">浅析Bitmap占据内存大小</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/07/02/DanmakuFlameMaster简单分析/">弹幕框架DanmakuFlameMaster简单分析</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/06/24/Android属性动画原理分析/">Android属性动画流程分析</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/06/12/Binder简要分析/">Android跨进程通信机制Binder简要分析</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/06/06/移动直播技术秒开优化经验/">移动直播技术秒开优化经验</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/05/27/博客搭建历程/">博客搭建历程————————Github和Hexo</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/05/27/新的开始/">新的开始</a></li></ul>
+    <ul class="post-list"><li class="post-list-item"><a class="post-list-link" href="/2017/01/13/Android多媒体开发-九-Video-Buffer传输与Audio-Playback流程/">Android多媒体开发(九)----Video Buffer传输与Audio Playback流程</a></li><li class="post-list-item"><a class="post-list-link" href="/2017/01/06/Android多媒体开发-八-播放流程/">Android多媒体开发(八)----播放流程</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/12/29/Android多媒体开发-七-Android中OpenMax的实现/">Android多媒体开发(七)----Android中OpenMax的实现</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/12/26/Android多媒体开发-六-Android中OpenMax的实现-preview/">Android多媒体开发(六)----Android中OpenMax的实现(preview)</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/12/15/Android多媒体开发-五-OpenMax简介/">Android多媒体开发(五)----OpenMax简介</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/12/12/Android多媒体开发-四-AwesomePlayer数据源处理/">Android多媒体开发(四)----AwesomePlayer数据源处理</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/12/11/Android多媒体开发-三-从StageFright到AwesomePlayer/">Android多媒体开发(三)----从StageFright到AwesomePlayer</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/11/30/Android多媒体开发-二-MediaPlayer的C-S架构以及C-层调用步骤/">Android多媒体开发(二)----MediaPlayer的C/S架构以及C++层调用步骤</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/11/28/Android多媒体开发-一-MediaPlayer框架开始/">Android多媒体开发(一)----MediaPlayer框架开始</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/10/31/JAVA线程池简单分析/">JAVA线程池简单分析</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/10/08/Android壁纸开发流程分析/">Android壁纸开发流程分析</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/09/18/如何实现1080P延迟低于500ms的实时超清直播传输技术/">如何实现1080P延迟低于500ms的实时超清直播传输技术</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/09/05/插件开发中的资源问题分析及填坑处理/">插件开发中的资源问题分析及填坑处理</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/08/23/智能指针简单分析/">智能指针简单分析</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/07/31/Android消息机制零散分析/">Android消息处理零散分析</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/07/12/浅析Bitmap占据内存大小/">浅析Bitmap占据内存大小</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/07/02/DanmakuFlameMaster简单分析/">弹幕框架DanmakuFlameMaster简单分析</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/06/24/Android属性动画原理分析/">Android属性动画流程分析</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/06/12/Binder简要分析/">Android跨进程通信机制Binder简要分析</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/06/06/移动直播技术秒开优化经验/">移动直播技术秒开优化经验</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/05/27/博客搭建历程/">博客搭建历程————————Github和Hexo</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/05/27/新的开始/">新的开始</a></li></ul>
 
 
 
@@ -552,14 +552,14 @@
                 2016-2017 windrunnerlihuan
             </div>
             <div class="footer-right">
-                <a href="http://hexo.io/" target="_blank" title="快速、簡潔且高效的博客框架">Hexo</a>  Theme <a href="https://github.com/MOxFIVE/hexo-theme-yelee" target="_blank" title="簡而不減 Hexo 雙欄博客主題  v3.0">Yelee</a> by HuanLi & MOxFIVE <i class="fa fa-heart animated infinite pulse"></i>
+                <a href="http://hexo.io/" target="_blank" title="快速、简洁且高效的博客框架">Hexo</a>  Theme <a href="https://github.com/MOxFIVE/hexo-theme-yelee" target="_blank" title="简而不减 Hexo 双栏博客主题  v3.0">Yelee</a> by HuanLi & MOxFIVE <i class="fa fa-heart animated infinite pulse"></i>
             </div>
         </div>
         
             <div class="visit">
                 
                     <span id="busuanzi_container_site_pv" style='display:none'>
-                        <span id="site-visit" >本站到訪數: 
+                        <span id="site-visit" >本站到访数: 
                             <span id="busuanzi_value_site_uv"></span>
                         </span>
                     </span>
@@ -569,7 +569,7 @@
                 
                 
                     <span id="busuanzi_container_page_pv" style='display:none'>
-                        <span id="page-visit">本頁閱讀量: 
+                        <span id="page-visit">本页阅读量: 
                             <span id="busuanzi_value_page_pv"></span>
                         </span>
                     </span>
@@ -609,9 +609,9 @@ MathJax.Hub.Queue(function() {
 
 
 <div class="scroll" id="scroll">
-    <a href="#" title="返回頂部"><i class="fa fa-arrow-up"></i></a>
-    <a href="#comments" title="查看評論"><i class="fa fa-comments-o"></i></a>
-    <a href="#footer" title="轉到底部"><i class="fa fa-arrow-down"></i></a>
+    <a href="#" title="返回顶部"><i class="fa fa-arrow-up"></i></a>
+    <a href="#comments" title="查看评论"><i class="fa fa-comments-o"></i></a>
+    <a href="#footer" title="转到底部"><i class="fa fa-arrow-down"></i></a>
 </div>
 <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js">
 </script>
