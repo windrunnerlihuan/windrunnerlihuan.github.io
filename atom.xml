@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://windrunnerlihuan.com/"/>
-  <updated>2017-03-12T22:48:37.683Z</updated>
+  <updated>2017-03-12T22:54:59.837Z</updated>
   <id>http://windrunnerlihuan.com/</id>
   
   <author>
@@ -20,9 +20,9 @@
     <link href="http://windrunnerlihuan.com/2017/03/12/Android-SurfaceFlinger-%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF-%E4%B8%80-Android%E5%9B%BE%E5%BD%A2%E6%98%BE%E7%A4%BA%E4%B9%8BHAL%E5%B1%82Gralloc%E6%A8%A1%E5%9D%97%E5%AE%9E%E7%8E%B0/"/>
     <id>http://windrunnerlihuan.com/2017/03/12/Android-SurfaceFlinger-学习之路-一-Android图形显示之HAL层Gralloc模块实现/</id>
     <published>2017-03-12T12:10:11.000Z</published>
-    <updated>2017-03-12T22:48:37.683Z</updated>
+    <updated>2017-03-12T22:54:59.837Z</updated>
     
-    <content type="html">&lt;p&gt;&amp;#160; &amp;#160; &amp;#160; &amp;#160;好久没更新了，主要是因为年前和年后太忙了，尤其是年后这一段时间，忙得把身体都忙坏了。。。。。。终于在我GG之前，提交了离职，总算赢得了一些空闲时间，赶紧养养身体。。。现在处于即将待业状态，正好有时间研究一下年前就想了解的surfacelinger模块。。。不过最近我也看了下，surfaceflinger内容太多太复杂了，&lt;code&gt;也许这个系列我坚持不了多久&lt;/code&gt;，不能像上一个MediaPlayer系列那样。。。。。。&lt;code&gt;同时，因为目前我处于即将待业情况，所以求好心HR或者大牛带我入新坑，感激不尽(~ToT~)&lt;/code&gt;&lt;br&gt;&lt;a id=&quot;more&quot;&gt;&lt;/a&gt;&lt;/p&gt;
+    <content type="html">&lt;p&gt;&amp;#160; &amp;#160; &amp;#160; &amp;#160;好久没更新了，主要是因为年前和年后太忙了，尤其是年后这一段时间，忙得把身体都忙坏了。。。。。。终于在我GG之前，提交了离职，总算赢得了一些空闲时间，赶紧养养身体。。。现在处于即将待业状态，正好有时间研究一下年前就想了解的surfaceflinger模块。。。不过最近我也看了下，surfaceflinger内容太多太复杂了，&lt;code&gt;也许这个系列我坚持不了多久&lt;/code&gt;，不能像上一个MediaPlayer系列那样。。。。。。&lt;code&gt;同时，因为目前我处于即将待业情况，所以求好心HR或者大牛带我入新坑，感激不尽(~ToT~)&lt;/code&gt;&lt;br&gt;&lt;a id=&quot;more&quot;&gt;&lt;/a&gt;&lt;/p&gt;
 &lt;h1 id=&quot;下载内核代码-准备工作&quot;&gt;&lt;a href=&quot;#下载内核代码-准备工作&quot; class=&quot;headerlink&quot; title=&quot;下载内核代码(准备工作)&quot;&gt;&lt;/a&gt;下载内核代码(准备工作)&lt;/h1&gt;&lt;p&gt;&amp;#160; &amp;#160; &amp;#160; &amp;#160;因为接下来分析需要用到部分kernel代码，所有我们需要先把kernel代码下载下来。&lt;/p&gt;
 &lt;h2 id=&quot;更换hosts文件&quot;&gt;&lt;a href=&quot;#更换hosts文件&quot; class=&quot;headerlink&quot; title=&quot;更换hosts文件&quot;&gt;&lt;/a&gt;更换hosts文件&lt;/h2&gt;&lt;p&gt;&amp;#160; &amp;#160; &amp;#160; &amp;#160;因为天朝&lt;code&gt;GFW&lt;/code&gt;的原因，所以不能直接访问google放置android source code的网站 &lt;a href=&quot;https://source.android.com/&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;https://source.android.com/&lt;/a&gt; 。这个上面有很详细的教程，教大家下载、编译源码，和其他变动相关的知识。所以我们需要&lt;strong&gt;Fan Qiang&lt;/strong&gt;。&lt;/p&gt;
 &lt;p&gt;&amp;#160; &amp;#160; &amp;#160; &amp;#160;如果买了VPN的土豪；找到免费vpn（GreenVPN、FreeVPN、hideVPN、rssVPN等等，好多都失效了）；还有可以去&lt;strong&gt;亚马逊&lt;/strong&gt;申请一个免费服务器（一年），可以搭建自己的FQ服务器（这个需要绑定一张VISA信用卡，银联的不行），&lt;a href=&quot;http://o7xxrho8u.bkt.clouddn.com/file/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E4%B8%80%29----Android%E5%9B%BE%E5%BD%A2%E6%98%BE%E7%A4%BA%E4%B9%8BHAL%E5%B1%82Gralloc%E6%A8%A1%E5%9D%97%E5%AE%9E%E7%8E%B0/AWS%E8%AF%A6%E7%BB%86FQ%E6%9C%8D%E5%8A%A1%E5%99%A8%E6%90%AD%E5%BB%BA.doc&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;这里&lt;/a&gt; 有个教程，我上传到了自己博客服务器，大家可以下载下来；或者有稳定且流量大的FQ软件（比如赛风、自由门、蓝灯、畅游无限浏览器、影梭等）；或者有靠谱的hosts文件的，可以跳过这一步。&lt;/p&gt;
@@ -240,7 +240,7 @@
     
     <summary type="html">
     
-      &lt;p&gt;&amp;#160; &amp;#160; &amp;#160; &amp;#160;好久没更新了，主要是因为年前和年后太忙了，尤其是年后这一段时间，忙得把身体都忙坏了。。。。。。终于在我GG之前，提交了离职，总算赢得了一些空闲时间，赶紧养养身体。。。现在处于即将待业状态，正好有时间研究一下年前就想了解的surfacelinger模块。。。不过最近我也看了下，surfaceflinger内容太多太复杂了，&lt;code&gt;也许这个系列我坚持不了多久&lt;/code&gt;，不能像上一个MediaPlayer系列那样。。。。。。&lt;code&gt;同时，因为目前我处于即将待业情况，所以求好心HR或者大牛带我入新坑，感激不尽(~ToT~)&lt;/code&gt;&lt;br&gt;
+      &lt;p&gt;&amp;#160; &amp;#160; &amp;#160; &amp;#160;好久没更新了，主要是因为年前和年后太忙了，尤其是年后这一段时间，忙得把身体都忙坏了。。。。。。终于在我GG之前，提交了离职，总算赢得了一些空闲时间，赶紧养养身体。。。现在处于即将待业状态，正好有时间研究一下年前就想了解的surfaceflinger模块。。。不过最近我也看了下，surfaceflinger内容太多太复杂了，&lt;code&gt;也许这个系列我坚持不了多久&lt;/code&gt;，不能像上一个MediaPlayer系列那样。。。。。。&lt;code&gt;同时，因为目前我处于即将待业情况，所以求好心HR或者大牛带我入新坑，感激不尽(~ToT~)&lt;/code&gt;&lt;br&gt;
     
     </summary>
     
