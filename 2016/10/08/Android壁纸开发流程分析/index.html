@@ -150,13 +150,13 @@
                 <div class="tips-box hide">
                     <div class="tips-arrow"></div>
                     <ul class="tips-inner">
-                        <li>Menu</li>
-                        <li>Tags</li>
+                        <li>菜单</li>
+                        <li>标签</li>
                         
-                        <li>Friends</li>
+                        <li>友情链接</li>
                         
                         
-                        <li>About Me</li>
+                        <li>关于我</li>
                         
                     </ul>
                 </div>
@@ -270,7 +270,7 @@
             </nav>
         </header>                
     </div>
-    <link class="menu-list" tags="Tags" friends="Friends" about="About Me"/>
+    <link class="menu-list" tags="标签" friends="友情链接" about="关于我"/>
 </nav>
       <div class="body-wrap"><article id="post-Android壁纸开发流程分析" class="article article-type-post" itemscope itemprop="blogPost">
   
@@ -407,17 +407,17 @@
   
     
     <div class="copyright">
-        <p><span>Title:</span><a href="/2016/10/08/Android壁纸开发流程分析/">Android壁纸开发流程分析</a></p>
-        <p><span>Author:</span><a href="/" title="Back to Homepage">windrunnerlihuan</a></p>
-        <p><span>Created:</span>2016-10-08, 21:13:12</p>
-        <p><span>Updated:</span>2016-10-09, 05:08:32</p>
+        <p><span>本文标题:</span><a href="/2016/10/08/Android壁纸开发流程分析/">Android壁纸开发流程分析</a></p>
+        <p><span>文章作者:</span><a href="/" title="回到主页">windrunnerlihuan</a></p>
+        <p><span>发布时间:</span>2016-10-08, 21:13:12</p>
+        <p><span>最后更新:</span>2016-10-09, 05:08:32</p>
         <p>
-            <span>Full URL:</span><a class="post-url" href="/2016/10/08/Android壁纸开发流程分析/" title="Android壁纸开发流程分析">http://windrunnerlihuan.com/2016/10/08/Android壁纸开发流程分析/</a>
-            <span class="copy-path" data-clipboard-text="From http://windrunnerlihuan.com/2016/10/08/Android壁纸开发流程分析/　　By windrunnerlihuan" title="Copy Article&#39;s Link &amp; Author"><i class="fa fa-clipboard"></i></span>
+            <span>原始链接:</span><a class="post-url" href="/2016/10/08/Android壁纸开发流程分析/" title="Android壁纸开发流程分析">http://windrunnerlihuan.com/2016/10/08/Android壁纸开发流程分析/</a>
+            <span class="copy-path" data-clipboard-text="原文: http://windrunnerlihuan.com/2016/10/08/Android壁纸开发流程分析/　　作者: windrunnerlihuan" title="点击复制文章链接"><i class="fa fa-clipboard"></i></span>
             <script> var clipboard = new Clipboard('.copy-path'); </script>
         </p>
         <p>
-            <span>License:</span><i class="fa fa-creative-commons"></i> <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/" title="CC BY-NC-SA 4.0 International" target = "_blank">"CC BY-NC-SA 4.0"</a> Keep Link &amp; Author if Distribute.
+            <span>许可协议:</span><i class="fa fa-creative-commons"></i> <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/" title="CC BY-NC-SA 4.0 International" target = "_blank">"署名-非商用-相同方式共享 4.0"</a> 转载请保留原文链接及作者。
         </p>
     </div>
 
@@ -444,7 +444,7 @@
 </article>
 
     <div id="toc" class="toc-article">
-    <strong class="toc-title">Contents</strong>
+    <strong class="toc-title">文章目录</strong>
     <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#壁纸设置"><span class="toc-number">1.</span> <span class="toc-text">壁纸设置</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#静态壁纸"><span class="toc-number">1.1.</span> <span class="toc-text">静态壁纸</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#动态壁纸"><span class="toc-number">1.2.</span> <span class="toc-text">动态壁纸</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#流程分析"><span class="toc-number">2.</span> <span class="toc-text">流程分析</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#静态壁纸流程"><span class="toc-number">2.1.</span> <span class="toc-text">静态壁纸流程</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#绑定壁纸服务"><span class="toc-number">2.1.1.</span> <span class="toc-text">绑定壁纸服务</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#窗口管理"><span class="toc-number">2.1.2.</span> <span class="toc-text">窗口管理</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#动态壁纸流程分析"><span class="toc-number">2.2.</span> <span class="toc-text">动态壁纸流程分析</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#小结"><span class="toc-number">3.</span> <span class="toc-text">小结</span></a></li></ol>
 </div>
 <style>
@@ -456,10 +456,10 @@
     }
 </style>
 
-<input type="button" id="tocButton" value="Hide"  title="Show or Hide Table of Contents">
+<input type="button" id="tocButton" value="隐藏目录"  title="点击按钮隐藏或者显示文章目录">
 <script>
-    var valueHide = "Hide";
-    var valueShow = "Show";
+    var valueHide = "隐藏目录";
+    var valueShow = "显示目录";
 
     if ($(".left-col").is(":hidden")) {
         $("#tocButton").attr("value", valueShow);
@@ -542,21 +542,21 @@
 
     <div class="scroll" id="post-nav-button">
         
-            <a href="/2016/10/31/JAVA线程池简单分析/" title="Pre: JAVA线程池简单分析">
+            <a href="/2016/10/31/JAVA线程池简单分析/" title="上一篇: JAVA线程池简单分析">
                 <i class="fa fa-angle-left"></i>
             </a>
         
 
-        <a title="Mini Archives"><i class="fa fa-bars"></i><i class="fa fa-times"></i></a>
+        <a title="文章列表"><i class="fa fa-bars"></i><i class="fa fa-times"></i></a>
 
         
-            <a href="/2016/09/18/如何实现1080P延迟低于500ms的实时超清直播传输技术/" title="Next: 如何实现1080P延迟低于500ms的实时超清直播传输技术">
+            <a href="/2016/09/18/如何实现1080P延迟低于500ms的实时超清直播传输技术/" title="下一篇: 如何实现1080P延迟低于500ms的实时超清直播传输技术">
                 <i class="fa fa-angle-right"></i>
             </a>
         
     </div>
 
-    <ul class="post-list"><li class="post-list-item"><a class="post-list-link" href="/2017/04/07/Android性能优化之内存优化实战/">Android性能优化之内存优化实战</a></li><li class="post-list-item"><a class="post-list-link" href="/2017/03/12/Android-SurfaceFlinger-学习之路-一-Android图形显示之HAL层Gralloc模块实现/">Android SurfaceFlinger 学习之路(一)----Android图形显示之HAL层Gralloc模块实现</a></li><li class="post-list-item"><a class="post-list-link" href="/2017/01/13/Android多媒体开发-九-Video-Buffer传输与Audio-Playback流程/">Android多媒体开发(九)----Video Buffer传输与Audio Playback流程</a></li><li class="post-list-item"><a class="post-list-link" href="/2017/01/06/Android多媒体开发-八-播放流程/">Android多媒体开发(八)----播放流程</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/12/29/Android多媒体开发-七-Android中OpenMax的实现/">Android多媒体开发(七)----Android中OpenMax的实现</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/12/26/Android多媒体开发-六-Android中OpenMax的实现-preview/">Android多媒体开发(六)----Android中OpenMax的实现(preview)</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/12/15/Android多媒体开发-五-OpenMax简介/">Android多媒体开发(五)----OpenMax简介</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/12/12/Android多媒体开发-四-AwesomePlayer数据源处理/">Android多媒体开发(四)----AwesomePlayer数据源处理</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/12/11/Android多媒体开发-三-从StageFright到AwesomePlayer/">Android多媒体开发(三)----从StageFright到AwesomePlayer</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/11/30/Android多媒体开发-二-MediaPlayer的C-S架构以及C-层调用步骤/">Android多媒体开发(二)----MediaPlayer的C/S架构以及C++层调用步骤</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/11/28/Android多媒体开发-一-MediaPlayer框架开始/">Android多媒体开发(一)----MediaPlayer框架开始</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/10/31/JAVA线程池简单分析/">JAVA线程池简单分析</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/10/08/Android壁纸开发流程分析/">Android壁纸开发流程分析</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/09/18/如何实现1080P延迟低于500ms的实时超清直播传输技术/">如何实现1080P延迟低于500ms的实时超清直播传输技术</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/09/05/插件开发中的资源问题分析及填坑处理/">插件开发中的资源问题分析及填坑处理</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/08/23/智能指针简单分析/">智能指针简单分析</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/07/31/Android消息机制零散分析/">Android消息处理零散分析</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/07/12/浅析Bitmap占据内存大小/">浅析Bitmap占据内存大小</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/07/02/DanmakuFlameMaster简单分析/">弹幕框架DanmakuFlameMaster简单分析</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/06/24/Android属性动画原理分析/">Android属性动画流程分析</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/06/12/Binder简要分析/">Android跨进程通信机制Binder简要分析</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/06/06/移动直播技术秒开优化经验/">移动直播技术秒开优化经验</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/05/27/博客搭建历程/">博客搭建历程————————Github和Hexo</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/05/27/新的开始/">新的开始</a></li></ul>
+    <ul class="post-list"><li class="post-list-item"><a class="post-list-link" href="/2017/04/27/Android-SurfaceFlinger-学习之路-二-SurfaceFlinger概述/">Android SurfaceFlinger 学习之路(二)----SurfaceFlinger概述</a></li><li class="post-list-item"><a class="post-list-link" href="/2017/04/07/Android性能优化之内存优化实战/">Android性能优化之内存优化实战</a></li><li class="post-list-item"><a class="post-list-link" href="/2017/03/12/Android-SurfaceFlinger-学习之路-一-Android图形显示之HAL层Gralloc模块实现/">Android SurfaceFlinger 学习之路(一)----Android图形显示之HAL层Gralloc模块实现</a></li><li class="post-list-item"><a class="post-list-link" href="/2017/01/13/Android多媒体开发-九-Video-Buffer传输与Audio-Playback流程/">Android多媒体开发(九)----Video Buffer传输与Audio Playback流程</a></li><li class="post-list-item"><a class="post-list-link" href="/2017/01/06/Android多媒体开发-八-播放流程/">Android多媒体开发(八)----播放流程</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/12/29/Android多媒体开发-七-Android中OpenMax的实现/">Android多媒体开发(七)----Android中OpenMax的实现</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/12/26/Android多媒体开发-六-Android中OpenMax的实现-preview/">Android多媒体开发(六)----Android中OpenMax的实现(preview)</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/12/15/Android多媒体开发-五-OpenMax简介/">Android多媒体开发(五)----OpenMax简介</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/12/12/Android多媒体开发-四-AwesomePlayer数据源处理/">Android多媒体开发(四)----AwesomePlayer数据源处理</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/12/11/Android多媒体开发-三-从StageFright到AwesomePlayer/">Android多媒体开发(三)----从StageFright到AwesomePlayer</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/11/30/Android多媒体开发-二-MediaPlayer的C-S架构以及C-层调用步骤/">Android多媒体开发(二)----MediaPlayer的C/S架构以及C++层调用步骤</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/11/28/Android多媒体开发-一-MediaPlayer框架开始/">Android多媒体开发(一)----MediaPlayer框架开始</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/10/31/JAVA线程池简单分析/">JAVA线程池简单分析</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/10/08/Android壁纸开发流程分析/">Android壁纸开发流程分析</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/09/18/如何实现1080P延迟低于500ms的实时超清直播传输技术/">如何实现1080P延迟低于500ms的实时超清直播传输技术</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/09/05/插件开发中的资源问题分析及填坑处理/">插件开发中的资源问题分析及填坑处理</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/08/23/智能指针简单分析/">智能指针简单分析</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/07/31/Android消息机制零散分析/">Android消息处理零散分析</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/07/12/浅析Bitmap占据内存大小/">浅析Bitmap占据内存大小</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/07/02/DanmakuFlameMaster简单分析/">弹幕框架DanmakuFlameMaster简单分析</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/06/24/Android属性动画原理分析/">Android属性动画流程分析</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/06/12/Binder简要分析/">Android跨进程通信机制Binder简要分析</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/06/06/移动直播技术秒开优化经验/">移动直播技术秒开优化经验</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/05/27/博客搭建历程/">博客搭建历程————————Github和Hexo</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/05/27/新的开始/">新的开始</a></li></ul>
 
 
 
@@ -573,14 +573,14 @@
                 2016-2017 windrunnerlihuan
             </div>
             <div class="footer-right">
-                <a href="http://hexo.io/" target="_blank" title="A fast, simple &amp; powerful blog framework">Hexo</a>  Theme <a href="https://github.com/MOxFIVE/hexo-theme-yelee" target="_blank" title="Another simple and elegant theme for Hexo  v3.0">Yelee</a> by HuanLi & MOxFIVE <i class="fa fa-heart animated infinite pulse"></i>
+                <a href="http://hexo.io/" target="_blank" title="快速、简洁且高效的博客框架">Hexo</a>  Theme <a href="https://github.com/MOxFIVE/hexo-theme-yelee" target="_blank" title="简而不减 Hexo 双栏博客主题  v3.0">Yelee</a> by HuanLi & MOxFIVE <i class="fa fa-heart animated infinite pulse"></i>
             </div>
         </div>
         
             <div class="visit">
                 
                     <span id="busuanzi_container_site_pv" style='display:none'>
-                        <span id="site-visit" >Site Visitors: 
+                        <span id="site-visit" >本站到访数: 
                             <span id="busuanzi_value_site_uv"></span>
                         </span>
                     </span>
@@ -590,7 +590,7 @@
                 
                 
                     <span id="busuanzi_container_page_pv" style='display:none'>
-                        <span id="page-visit">Page Hits: 
+                        <span id="page-visit">本页阅读量: 
                             <span id="busuanzi_value_page_pv"></span>
                         </span>
                     </span>
@@ -630,9 +630,9 @@ MathJax.Hub.Queue(function() {
 
 
 <div class="scroll" id="scroll">
-    <a href="#" title="Back to Top"><i class="fa fa-arrow-up"></i></a>
-    <a href="#comments" title="Comments"><i class="fa fa-comments-o"></i></a>
-    <a href="#footer" title="Go to Bottom"><i class="fa fa-arrow-down"></i></a>
+    <a href="#" title="返回顶部"><i class="fa fa-arrow-up"></i></a>
+    <a href="#comments" title="查看评论"><i class="fa fa-comments-o"></i></a>
+    <a href="#footer" title="转到底部"><i class="fa fa-arrow-down"></i></a>
 </div>
 <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js">
 </script>
