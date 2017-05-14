@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html >
+<head>
+  
+    <!--[if lt IE 9]>
+        <style>body {display: none; background: none !important} </style>
+        <meta http-equiv="Refresh" Content="0; url=//outdatedbrowser.com/" />
+    <![endif]-->
+
+  <meta charset="utf-8">
+  <meta name="baidu-site-verification" content="zzKGwrFJYw" />
+  
+  <title>Android SurfaceFlinger 学习之路(四)----SurfaceFlinger服务的启动与连接过程 | April is your lie</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="&amp;#160; &amp;#160; &amp;#160; &amp;#160;上一篇我们分析了Android的开机动画启动流程，这一篇我们基于上一篇的基础，分析一下SurfaceFlinger的启动，还有连接它的过程。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android SurfaceFlinger 学习之路(四)----SurfaceFlinger服务的启动与连接过程">
+<meta property="og:url" content="http://windrunnerlihuan.com/2017/05/13/Android-SurfaceFlinger-学习之路-四-SurfaceFlinger服务的启动与连接过程/index.html">
+<meta property="og:site_name" content="April is your lie">
+<meta property="og:description" content="&amp;#160; &amp;#160; &amp;#160; &amp;#160;上一篇我们分析了Android的开机动画启动流程，这一篇我们基于上一篇的基础，分析一下SurfaceFlinger的启动，还有连接它的过程。">
+<meta property="og:image" content="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E5%9B%9B%29----SurfaceFlinger%E6%9C%8D%E5%8A%A1%E7%9A%84%E5%90%AF%E5%8A%A8%E4%B8%8E%E8%BF%9E%E6%8E%A5%E8%BF%87%E7%A8%8B/init.jpg">
+<meta property="og:image" content="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E5%9B%9B%29----SurfaceFlinger%E6%9C%8D%E5%8A%A1%E7%9A%84%E5%90%AF%E5%8A%A8%E4%B8%8E%E8%BF%9E%E6%8E%A5%E8%BF%87%E7%A8%8B/SurfaceComposerClient.jpg">
+<meta property="og:image" content="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E5%9B%9B%29----SurfaceFlinger%E6%9C%8D%E5%8A%A1%E7%9A%84%E5%90%AF%E5%8A%A8%E4%B8%8E%E8%BF%9E%E6%8E%A5%E8%BF%87%E7%A8%8B/Client.jpg">
+<meta property="og:image" content="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E5%9B%9B%29----SurfaceFlinger%E6%9C%8D%E5%8A%A1%E7%9A%84%E5%90%AF%E5%8A%A8%E4%B8%8E%E8%BF%9E%E6%8E%A5%E8%BF%87%E7%A8%8B/BpSurfaceComposerClient.jpg">
+<meta property="og:image" content="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E5%9B%9B%29----SurfaceFlinger%E6%9C%8D%E5%8A%A1%E7%9A%84%E5%90%AF%E5%8A%A8%E4%B8%8E%E8%BF%9E%E6%8E%A5%E8%BF%87%E7%A8%8B/connection.jpg">
+<meta property="og:image" content="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E5%9B%9B%29----SurfaceFlinger%E6%9C%8D%E5%8A%A1%E7%9A%84%E5%90%AF%E5%8A%A8%E4%B8%8E%E8%BF%9E%E6%8E%A5%E8%BF%87%E7%A8%8B/mezi.jpg">
+<meta property="og:updated_time" content="2017-05-14T15:14:15.249Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Android SurfaceFlinger 学习之路(四)----SurfaceFlinger服务的启动与连接过程">
+<meta name="twitter:description" content="&amp;#160; &amp;#160; &amp;#160; &amp;#160;上一篇我们分析了Android的开机动画启动流程，这一篇我们基于上一篇的基础，分析一下SurfaceFlinger的启动，还有连接它的过程。">
+<meta name="twitter:image" content="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E5%9B%9B%29----SurfaceFlinger%E6%9C%8D%E5%8A%A1%E7%9A%84%E5%90%AF%E5%8A%A8%E4%B8%8E%E8%BF%9E%E6%8E%A5%E8%BF%87%E7%A8%8B/init.jpg">
+  
+    <link rel="alternative" href="/atom.xml" title="April is your lie" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/img/favicon.png">
+  
+  
+      <link href="//cdn.bootcss.com/animate.css/3.5.1/animate.min.css" rel="stylesheet">
+  
+  
+      <script src="//cdn.bootcss.com/pace/1.0.2/pace.min.js"></script>
+      <link href="//cdn.bootcss.com/pace/1.0.2/themes/blue/pace-theme-minimal.css" rel="stylesheet">
+  
+  <link rel="stylesheet" href="/css/style.css">
+  
+  <link href="//cdn.bootcss.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet">
+  <link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
+  
+  
+      <link href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.min.css" rel="stylesheet">
+  
+  <script src="//cdn.bootcss.com/jquery/2.2.4/jquery.min.js"></script>
+  <script src="//cdn.bootcss.com/clipboard.js/1.5.10/clipboard.min.js"></script>
+  <script>
+      var yiliaConfig = {
+          fancybox: true,
+          animate: true,
+          isHome: false,
+          isPost: true,
+          isArchive: false,
+          isTag: false,
+          isCategory: false,
+          open_in_new: false,
+          fancybox_js: "//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.min.js",
+          scrollreveal: "//cdn.bootcss.com/scrollReveal.js/3.1.4/scrollreveal.min.js",
+          search: true
+      }
+  </script>
+
+  
+      <script>
+          yiliaConfig.jquery_ui = [true, "//cdn.bootcss.com/jqueryui/1.10.4/jquery-ui.min.js", "//cdn.bootcss.com/jqueryui/1.10.4/css/jquery-ui.min.css"];
+      </script>
+  
+
+  
+      <script>
+          yiliaConfig.rootUrl = "/";
+      </script>
+  
+
+  
+  
+  <!-- 自动推送工具代码 start -->
+  <script>
+(function(){
+    var bp = document.createElement('script');
+    var curProtocol = window.location.protocol.split(':')[0];
+    if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+    }
+    else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+    }
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(bp, s);
+})();
+</script>
+<!-- 自动推送工具代码 end -->
+</head>
+<body>
+  <div id="container">
+    <div class="left-col">
+    <div class="overlay"></div>
+<div class="intrude-less">
+    <header id="header" class="inner">
+        <a href="/" class="profilepic">
+            <img src="/img/avatar.jpg" class="animated zoomIn">
+        </a>
+        <hgroup>
+          <h1 class="header-author"><a href="/">windrunnerlihuan</a></h1>
+        </hgroup>
+
+        
+        <p class="header-subtitle">四月是你的谎言</p>
+        
+
+        
+            <form id="search-form">
+            <input type="text" id="local-search-input" name="q" results="0" placeholder="search..." class="search form-control" autocomplete="off" autocorrect="off" searchonload="undefined" />
+            <i class="fa fa-times" onclick="resetSearch()"></i>
+            </form>
+            <div id="local-search-result"></div>
+            <p class='no-result'>No results found <i class='fa fa-spinner fa-pulse'></i></p>
+        
+
+
+        
+            <div id="switch-btn" class="switch-btn">
+                <div class="icon">
+                    <div class="icon-ctn">
+                        <div class="icon-wrap icon-house" data-idx="0">
+                            <div class="birdhouse"></div>
+                            <div class="birdhouse_holes"></div>
+                        </div>
+                        <div class="icon-wrap icon-ribbon hide" data-idx="1">
+                            <div class="ribbon"></div>
+                        </div>
+                        
+                        <div class="icon-wrap icon-link hide" data-idx="2">
+                            <div class="loopback_l"></div>
+                            <div class="loopback_r"></div>
+                        </div>
+                        
+                        
+                        <div class="icon-wrap icon-me hide" data-idx="3">
+                            <div class="user"></div>
+                            <div class="shoulder"></div>
+                        </div>
+                        
+                    </div>
+                    
+                </div>
+                <div class="tips-box hide">
+                    <div class="tips-arrow"></div>
+                    <ul class="tips-inner">
+                        <li>菜单</li>
+                        <li>标签</li>
+                        
+                        <li>友情链接</li>
+                        
+                        
+                        <li>关于我</li>
+                        
+                    </ul>
+                </div>
+            </div>
+        
+
+        <div id="switch-area" class="switch-area">
+            <div class="switch-wrap">
+                <section class="switch-part switch-part1">
+                    <nav class="header-menu">
+                        <ul>
+                        
+                            <li><a href="/">主页</a></li>
+                        
+                            <li><a href="/archives/">时间轴</a></li>
+                        
+                            <li><a href="/tags/">标签云</a></li>
+                        
+                            <li><a href="/about/">关于我</a></li>
+                        
+                        </ul>
+                    </nav>
+                    <nav class="header-nav">
+                        <ul class="social">
+                            
+                                <a class="fa Email" target="_blank" href="mailto:937874128@qq.com" title="Email"></a>
+                            
+                                <a class="fa GitHub" target="_blank" href="https://github.com/windrunnerlihuan" title="GitHub"></a>
+                            
+                                <a class="fa RSS" target="_blank" href="/atom.xml" title="RSS"></a>
+                            
+                        </ul>
+                    </nav>
+                </section>
+                
+                
+                <section class="switch-part switch-part2">
+                    <div class="widget tagcloud" id="js-tagcloud">
+                        <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/Binder/">Binder</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Bitmap/">Bitmap</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/IPC/">IPC</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/SO库/">SO库</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/SurfaceFlinger/">SurfaceFlinger</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/博客搭建/">博客搭建</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/壁纸/">壁纸</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/多媒体/">多媒体</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/属性动画/">属性动画</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/开始/">开始</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/弹幕/">弹幕</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/性能优化/">性能优化</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/插件开发/">插件开发</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/智能指针/">智能指针</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/消息/">消息</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/移动直播/">移动直播</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/线程池/">线程池</a></li></ul>
+                    </div>
+                </section>
+                
+                
+                
+                <section class="switch-part switch-part3">
+                    <div id="js-friends">
+                    
+                      <a target="_blank" class="main-nav-link switch-friends-link" href="http://gank.io/">干货集中营</a>
+                    
+                      <a target="_blank" class="main-nav-link switch-friends-link" href="http://www.jcodecraeer.com/">泡在网上的日子</a>
+                    
+                      <a target="_blank" class="main-nav-link switch-friends-link" href="http://trinea.cn/">Trinea</a>
+                    
+                    </div>
+                </section>
+                
+
+                
+                
+                <section class="switch-part switch-part4">
+                
+                    <div id="js-aboutme">windrunnerlihuan，开发小菜一枚，坐标位于上海。</div>
+                </section>
+                
+            </div>
+        </div>
+    </header>                
+</div>
+    </div>
+    <div class="mid-col">
+      <nav id="mobile-nav">
+      <div class="overlay">
+          <div class="slider-trigger"></div>
+          <h1 class="header-author js-mobile-header hide"><a href="/" title="回到主页">windrunnerlihuan</a></h1>
+      </div>
+    <div class="intrude-less">
+        <header id="header" class="inner">
+            <a href="/" class="profilepic">
+                <img src="/img/avatar.jpg" class="animated zoomIn">
+            </a>
+            <hgroup>
+              <h1 class="header-author"><a href="/" title="回到主页">windrunnerlihuan</a></h1>
+            </hgroup>
+            
+            <p class="header-subtitle">四月是你的谎言</p>
+            
+            <nav class="header-menu">
+                <ul>
+                
+                    <li><a href="/">主页</a></li>
+                
+                    <li><a href="/archives/">时间轴</a></li>
+                
+                    <li><a href="/tags/">标签云</a></li>
+                
+                    <li><a href="/about/">关于我</a></li>
+                
+                <div class="clearfix"></div>
+                </ul>
+            </nav>
+            <nav class="header-nav">
+                        <ul class="social">
+                            
+                                <a class="fa Email" target="_blank" href="mailto:937874128@qq.com" title="Email"></a>
+                            
+                                <a class="fa GitHub" target="_blank" href="https://github.com/windrunnerlihuan" title="GitHub"></a>
+                            
+                                <a class="fa RSS" target="_blank" href="/atom.xml" title="RSS"></a>
+                            
+                        </ul>
+            </nav>
+        </header>                
+    </div>
+    <link class="menu-list" tags="标签" friends="友情链接" about="关于我"/>
+</nav>
+      <div class="body-wrap"><article id="post-Android-SurfaceFlinger-学习之路-四-SurfaceFlinger服务的启动与连接过程" class="article article-type-post" itemscope itemprop="blogPost">
+  
+    <div class="article-meta">
+      <a href="/2017/05/13/Android-SurfaceFlinger-学习之路-四-SurfaceFlinger服务的启动与连接过程/" class="article-date">
+      <time datetime="2017-05-13T06:45:23.000Z" itemprop="datePublished">2017-05-13</time>
+</a>
+    </div>
+  
+  <div class="article-inner">
+    
+      <input type="hidden" class="isFancy" />
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      Android SurfaceFlinger 学习之路(四)----SurfaceFlinger服务的启动与连接过程
+    </h1>
+  
+
+      </header>
+      
+      <div class="article-info article-info-post">
+        
+    <div class="article-category tagcloud">
+    <a class="article-category-link" href="/categories/Android技术点/">Android技术点</a>
+    </div>
+
+
+        
+    <div class="article-tag tagcloud">
+        <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/SurfaceFlinger/">SurfaceFlinger</a></li></ul>
+    </div>
+
+        <div class="clearfix"></div>
+      </div>
+      
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+          
+        <p>&#160; &#160; &#160; &#160;上一篇我们分析了Android的开机动画启动流程，这一篇我们基于上一篇的基础，分析一下SurfaceFlinger的启动，还有连接它的过程。<br><a id="more"></a></p>
+<h1 id="SurfaceFlinger的启动"><a href="#SurfaceFlinger的启动" class="headerlink" title="SurfaceFlinger的启动"></a>SurfaceFlinger的启动</h1><h2 id="启动概述"><a href="#启动概述" class="headerlink" title="启动概述"></a>启动概述</h2><p>&#160; &#160; &#160; &#160;SurfaceFlinger服务是一个独立进程，并且负责统一管理设备的帧缓冲区。通过上一篇开机动画流程分析，我们可以在init.rc中找到SurfaceFlinger服务配置的地方，位于system/core/rootdir/Init.rc中：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">service surfaceflinger /system/bin/surfaceflinger</span><br><span class="line">    <span class="keyword">class</span> core</span><br><span class="line">    user system</span><br><span class="line">    group graphics drmrpc</span><br><span class="line">    onrestart restart zygote</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;在硬件设备/system/bin/下，可以找到SurfaceFlinger的应用程序。我们查看源码frameworks/native/services/surfaceflinger/Android.mk文件：<br><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">###############################################################</span><br><span class="line"># build surfaceflinger's executable</span><br><span class="line">include $(CLEAR_VARS)</span><br><span class="line"></span><br><span class="line">LOCAL_CFLAGS:= -DLOG_TAG=\"SurfaceFlinger\"</span><br><span class="line"># SurfaceFlinger启动文件</span><br><span class="line">LOCAL_SRC_FILES:= \</span><br><span class="line">    main_surfaceflinger.cpp </span><br><span class="line"></span><br><span class="line">LOCAL_SHARED_LIBRARIES := \</span><br><span class="line">    libsurfaceflinger \</span><br><span class="line">    libcutils \</span><br><span class="line">    liblog \</span><br><span class="line">    libbinder \</span><br><span class="line">    libutils</span><br><span class="line">    </span><br><span class="line"># SurfaceFlinger是个动态库</span><br><span class="line">LOCAL_MODULE:= surfaceflinger</span><br><span class="line"></span><br><span class="line">ifdef TARGET_32_BIT_SURFACEFLINGER</span><br><span class="line">LOCAL_32_BIT_ONLY := true</span><br><span class="line">endif</span><br><span class="line"></span><br><span class="line">include $(BUILD_EXECUTABLE)</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;从Makefile文件可以看出，相关依赖和主文件会被编译成libsurfaceflinger.so，然后SurfaceFlinger是对库的一个“封装调用”，里面有个main_surfaceflinger.cpp，我们可以沿着它的main函数往下分析。</p>
+<p>&#160; &#160; &#160; &#160;启动流程大概如下图，我才刚刚学了时序图，不知道画的对不对。。。。</p>
+<p><img src="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E5%9B%9B%29----SurfaceFlinger%E6%9C%8D%E5%8A%A1%E7%9A%84%E5%90%AF%E5%8A%A8%E4%B8%8E%E8%BF%9E%E6%8E%A5%E8%BF%87%E7%A8%8B/init.jpg" alt="SurfaceFlinger服务的启动过程"></p>
+<h2 id="启动过程"><a href="#启动过程" class="headerlink" title="启动过程"></a>启动过程</h2><p>&#160; &#160; &#160; &#160;SurfaceFlinger的main函数在framework/native/services/surfaceflinger/main_surfaceflinger.cpp中：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">(<span class="keyword">int</span>, <span class="keyword">char</span>**)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// When SF is launched in its own process, limit the number of</span></span><br><span class="line">    <span class="comment">// binder threads to 4.</span></span><br><span class="line">    <span class="comment">//在该进程设置了binder线程池最大数为4</span></span><br><span class="line">    ProcessState::self()-&gt;setThreadPoolMaxThreadCount(<span class="number">4</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// start the thread pool</span></span><br><span class="line">    <span class="comment">//这里其实只是将当前线程加入到这个Binder线程池中去</span></span><br><span class="line">    sp&lt;ProcessState&gt; ps(ProcessState::self());</span><br><span class="line">    ps-&gt;startThreadPool();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// instantiate surfaceflinger</span></span><br><span class="line">    <span class="comment">//创建一个SurfaceFlinger强引用对象</span></span><br><span class="line">    sp&lt;SurfaceFlinger&gt; flinger = <span class="keyword">new</span> SurfaceFlinger();</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">if</span> defined(HAVE_PTHREADS)</span></span><br><span class="line">    setpriority(PRIO_PROCESS, <span class="number">0</span>, PRIORITY_URGENT_DISPLAY);</span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br><span class="line">    set_sched_policy(<span class="number">0</span>, SP_FOREGROUND);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// initialize before clients can connect</span></span><br><span class="line">    <span class="comment">//调用SurfaceFlinger的init函数</span></span><br><span class="line">    flinger-&gt;init();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// publish surface flinger</span></span><br><span class="line">    <span class="comment">//把SurfaceFlinger服务注册到ServiceManager中</span></span><br><span class="line">    sp&lt;IServiceManager&gt; sm(defaultServiceManager());</span><br><span class="line">    sm-&gt;addService(String16(SurfaceFlinger::getServiceName()), flinger, <span class="literal">false</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// run in this thread</span></span><br><span class="line">    <span class="comment">//运行这个UI渲染流程</span></span><br><span class="line">    flinger-&gt;run();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;main函数包含以下几件事情：</p>
+<ol>
+<li>调用当前进程中的ProcessState单例的成员函数startThreadPool来启动一个Binder线程池，将线程池最大数量设为4，并且调用当前线程中的IPCThreadState单例来将当前线程加入到前面所启动的Binder线程池中去；</li>
+<li>创建一个SurfaceFlinger的对象，并赋给他的强引用指针；</li>
+<li>执行SurfaceFlinger的init函数；</li>
+<li>将SurfaceFlinger服务注册到ServiceManager当中；</li>
+<li>运行SurfaceFlinger的UI渲染流程。</li>
+</ol>
+<p>&#160; &#160; &#160; &#160;比较重要的步骤就是创建SurfaceFlinger对象，执行init函数，和运行UI渲染流程。我们逐个分析。</p>
+<h3 id="创建SurfaceFlinger对象"><a href="#创建SurfaceFlinger对象" class="headerlink" title="创建SurfaceFlinger对象"></a>创建SurfaceFlinger对象</h3><p>&#160; &#160; &#160; &#160;new一个SurfaceFlinger对象，并赋给强引用指针。我们先看看它的构造函数，位于frameworks/native/services/surfaceflinger/SurfaceFlinger.cpp中：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line">SurfaceFlinger::SurfaceFlinger()</span><br><span class="line">    :   BnSurfaceComposer(),</span><br><span class="line">        mTransactionFlags(<span class="number">0</span>),</span><br><span class="line">        mTransactionPending(<span class="literal">false</span>),</span><br><span class="line">        mAnimTransactionPending(<span class="literal">false</span>),</span><br><span class="line">        mLayersRemoved(<span class="literal">false</span>),</span><br><span class="line">        mRepaintEverything(<span class="number">0</span>),</span><br><span class="line">        mRenderEngine(<span class="literal">NULL</span>),</span><br><span class="line">        mBootTime(systemTime()),</span><br><span class="line">        mVisibleRegionsDirty(<span class="literal">false</span>),</span><br><span class="line">        mHwWorkListDirty(<span class="literal">false</span>),</span><br><span class="line">        mAnimCompositionPending(<span class="literal">false</span>),</span><br><span class="line">        mDebugRegion(<span class="number">0</span>),</span><br><span class="line">        mDebugDDMS(<span class="number">0</span>),</span><br><span class="line">        mDebugDisableHWC(<span class="number">0</span>),</span><br><span class="line">        mDebugDisableTransformHint(<span class="number">0</span>),</span><br><span class="line">        mDebugInSwapBuffers(<span class="number">0</span>),</span><br><span class="line">        mLastSwapBufferTime(<span class="number">0</span>),</span><br><span class="line">        mDebugInTransaction(<span class="number">0</span>),</span><br><span class="line">        mLastTransactionTime(<span class="number">0</span>),</span><br><span class="line">        mBootFinished(<span class="literal">false</span>),</span><br><span class="line">        mPrimaryHWVsyncEnabled(<span class="literal">false</span>),<span class="comment">//主显屏硬件VSync信号关闭</span></span><br><span class="line">        mHWVsyncAvailable(<span class="literal">false</span>),</span><br><span class="line">        mDaltonize(<span class="literal">false</span>),</span><br><span class="line">        mHasColorMatrix(<span class="literal">false</span>)</span><br><span class="line">&#123;</span><br><span class="line">    ALOGI(<span class="string">"SurfaceFlinger is starting"</span>);</span><br><span class="line">    <span class="comment">//一些调试变量，忽略一下内容</span></span><br><span class="line">    <span class="comment">// debugging stuff...</span></span><br><span class="line">    <span class="keyword">char</span> value[PROPERTY_VALUE_MAX];</span><br><span class="line"></span><br><span class="line">    property_get(<span class="string">"ro.bq.gpu_to_cpu_unsupported"</span>, value, <span class="string">"0"</span>);</span><br><span class="line">    mGpuToCpuSupported = !atoi(value);</span><br><span class="line"></span><br><span class="line">    property_get(<span class="string">"debug.sf.showupdates"</span>, value, <span class="string">"0"</span>);</span><br><span class="line">    mDebugRegion = atoi(value);</span><br><span class="line"></span><br><span class="line">    property_get(<span class="string">"debug.sf.ddms"</span>, value, <span class="string">"0"</span>);</span><br><span class="line">    mDebugDDMS = atoi(value);</span><br><span class="line">    <span class="keyword">if</span> (mDebugDDMS) &#123;</span><br><span class="line">        <span class="keyword">if</span> (!startDdmConnection()) &#123;</span><br><span class="line">            <span class="comment">// start failed, and DDMS debugging not enabled</span></span><br><span class="line">            mDebugDDMS = <span class="number">0</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    ALOGI_IF(mDebugRegion, <span class="string">"showupdates enabled"</span>);</span><br><span class="line">    ALOGI_IF(mDebugDDMS, <span class="string">"DDMS debugging enabled"</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;构造函数中主要初始化一系列变量，没什么重要信息。SurfaceFlinger类继承了BnSurfaceComposer类，而后者是一个实现了ISurfaceComposer接口的Binder本地对象类。</p>
+<p>&#160; &#160; &#160; &#160;由于Service Manager的Binder代理对象的成员函数addService的第二个参数是一个类型为IBinder的强指针引用。当一个对象第一次被一个强指针引用时，那么这个对象的成员函数onFirstRef就会被调用。因此，接下来前面所创建的SurfaceFlinger实例的成员函数onFirstRef就会被调用，以便可以继续执行初始化操作。我们继续查看：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// mEventQueue在SurfaceFlinger.h中定义</span></span><br><span class="line"><span class="comment">// these are thread safe</span></span><br><span class="line"><span class="keyword">mutable</span> MessageQueue mEventQueue;</span><br><span class="line"></span><br><span class="line"><span class="keyword">void</span> SurfaceFlinger::onFirstRef()</span><br><span class="line">&#123;</span><br><span class="line">    mEventQueue.init(<span class="keyword">this</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;MessageQueue 类在frameworks/native/services/surfaceflinger/MessageQueue.h中定义，实现位于frameworks/native/services/surfaceflinger/MessageQueue.cpp中，init函数如下：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">void</span> MessageQueue::init(<span class="keyword">const</span> sp&lt;SurfaceFlinger&gt;&amp; flinger)</span><br><span class="line">&#123;</span><br><span class="line">    mFlinger = flinger;</span><br><span class="line">    mLooper = <span class="keyword">new</span> Looper(<span class="literal">true</span>);</span><br><span class="line">    mHandler = <span class="keyword">new</span> Handler(*<span class="keyword">this</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;调用MessageQueue的init，在MessageQueue中建了一个Looper和Handler，注意不是Java中的，native实现的。到后面就可以看到SF的核心就是接收消息，处理消息。对于消息处理，可以参考之前的一片文章<a href="http://windrunnerlihuan.com/2016/07/31/Android%E6%B6%88%E6%81%AF%E6%9C%BA%E5%88%B6%E9%9B%B6%E6%95%A3%E5%88%86%E6%9E%90/">Android消息处理零散分析</a>。</p>
+<h3 id="调用init函数"><a href="#调用init函数" class="headerlink" title="调用init函数"></a>调用init函数</h3><p>&#160; &#160; &#160; &#160;回到SurfaceFlinger.cpp中，继续分析init函数：<br><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br></pre></td><td class="code"><pre><span class="line">void SurfaceFlinger::init() &#123;</span><br><span class="line">    ALOGI(  "SurfaceFlinger's main thread ready to run. "</span><br><span class="line">            "Initializing graphics H/W...");</span><br><span class="line"></span><br><span class="line">    status_t err;</span><br><span class="line">    Mutex::Autolock _l(mStateLock);</span><br><span class="line">    </span><br><span class="line">    //初始化OpenGL 图形库相关配置</span><br><span class="line">    // initialize EGL for the default display 将EGL初始化成默认的显示，默认是主屏幕，编号为0</span><br><span class="line">    mEGLDisplay = eglGetDisplay(EGL_DEFAULT_DISPLAY);</span><br><span class="line">    eglInitialize(mEGLDisplay, NULL, NULL);</span><br><span class="line"></span><br><span class="line">    //创建显示设备的抽象代表，负责和显示设备打交道</span><br><span class="line">    // Initialize the H/W composer object.  There may or may not be an</span><br><span class="line">    // actual hardware composer underneath.</span><br><span class="line">    mHwc = new HWComposer(this,</span><br><span class="line">            *static_cast&lt;HWComposer::EventHandler *&gt;(this));</span><br><span class="line">            </span><br><span class="line">    // get a RenderEngine for the given display / config (can't fail)</span><br><span class="line">    mRenderEngine = RenderEngine::create(mEGLDisplay, mHwc-&gt;getVisualID());</span><br><span class="line"></span><br><span class="line">    // retrieve the EGL context that was selected/created</span><br><span class="line">    mEGLContext = mRenderEngine-&gt;getEGLContext();</span><br><span class="line"></span><br><span class="line">    LOG_ALWAYS_FATAL_IF(mEGLContext == EGL_NO_CONTEXT,</span><br><span class="line">            "couldn't create EGLContext");</span><br><span class="line"></span><br><span class="line">    // initialize our non-virtual displays</span><br><span class="line">    //创建显示设备对象</span><br><span class="line">    for (size_t i=0 ; i&lt;DisplayDevice::NUM_BUILTIN_DISPLAY_TYPES ; i++) &#123;</span><br><span class="line">        DisplayDevice::DisplayType type((DisplayDevice::DisplayType)i);</span><br><span class="line">        // set-up the displays that are already connected</span><br><span class="line">        if (mHwc-&gt;isConnected(i) || type==DisplayDevice::DISPLAY_PRIMARY) &#123;</span><br><span class="line">            // All non-virtual displays are currently considered secure.</span><br><span class="line">            bool isSecure = true;</span><br><span class="line">            createBuiltinDisplayLocked(type);</span><br><span class="line">            wp&lt;IBinder&gt; token = mBuiltinDisplays[i];</span><br><span class="line"></span><br><span class="line">            sp&lt;IGraphicBufferProducer&gt; producer;</span><br><span class="line">            sp&lt;IGraphicBufferConsumer&gt; consumer;</span><br><span class="line">            BufferQueue::createBufferQueue(&amp;producer, &amp;consumer,</span><br><span class="line">                    new GraphicBufferAlloc());</span><br><span class="line"></span><br><span class="line">            sp&lt;FramebufferSurface&gt; fbs = new FramebufferSurface(*mHwc, i,</span><br><span class="line">                    consumer);</span><br><span class="line">            int32_t hwcId = allocateHwcDisplayId(type);</span><br><span class="line">            sp&lt;DisplayDevice&gt; hw = new DisplayDevice(this,</span><br><span class="line">                    type, hwcId, mHwc-&gt;getFormat(hwcId), isSecure, token,</span><br><span class="line">                    fbs, producer,</span><br><span class="line">                    mRenderEngine-&gt;getEGLConfig());</span><br><span class="line">            if (i &gt; DisplayDevice::DISPLAY_PRIMARY) &#123;</span><br><span class="line">                // FIXME: currently we don't get blank/unblank requests</span><br><span class="line">                // for displays other than the main display, so we always</span><br><span class="line">                // assume a connected display is unblanked.</span><br><span class="line">                ALOGD("marking display %zu as acquired/unblanked", i);</span><br><span class="line">                hw-&gt;setPowerMode(HWC_POWER_MODE_NORMAL);</span><br><span class="line">            &#125;</span><br><span class="line">            mDisplays.add(token, hw);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    // make the GLContext current so that we can create textures when creating Layers</span><br><span class="line">    // (which may happens before we render something)</span><br><span class="line">    getDefaultDisplayDevice()-&gt;makeCurrent(mEGLDisplay, mEGLContext);</span><br><span class="line"></span><br><span class="line">    // start the EventThread</span><br><span class="line">    //启动EventThread。监听和处理SurfaceFlinger中的事件</span><br><span class="line">    //app的VSync信号</span><br><span class="line">    sp&lt;VSyncSource&gt; vsyncSrc = new DispSyncSource(&amp;mPrimaryDispSync,</span><br><span class="line">            vsyncPhaseOffsetNs, true, "app");</span><br><span class="line">    mEventThread = new EventThread(vsyncSrc);</span><br><span class="line">    //SF的VSync信号</span><br><span class="line">    sp&lt;VSyncSource&gt; sfVsyncSrc = new DispSyncSource(&amp;mPrimaryDispSync,</span><br><span class="line">            sfVsyncPhaseOffsetNs, true, "sf");</span><br><span class="line">    mSFEventThread = new EventThread(sfVsyncSrc);</span><br><span class="line">    //SF的VSync信号控制逻辑也要放入mEventQueue消息队列</span><br><span class="line">    mEventQueue.setEventThread(mSFEventThread);</span><br><span class="line">    //VSync信号闸刀控制线程</span><br><span class="line">    mEventControlThread = new EventControlThread(this);</span><br><span class="line">    mEventControlThread-&gt;run("EventControl", PRIORITY_URGENT_DISPLAY);</span><br><span class="line"></span><br><span class="line">    // set a fake vsync period if there is no HWComposer</span><br><span class="line">    //如果硬件设备检测有问题，或者没有硬件设备驱动提供Vsync信号，则设置软件VSync信号</span><br><span class="line">    if (mHwc-&gt;initCheck() != NO_ERROR) &#123;</span><br><span class="line">        mPrimaryDispSync.setPeriod(16666667);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    // initialize our drawing state</span><br><span class="line">    mDrawingState = mCurrentState;</span><br><span class="line"></span><br><span class="line">    // set initial conditions (e.g. unblank default device)</span><br><span class="line">    //初始化显示设备，调用initializeDisplays完成</span><br><span class="line">    initializeDisplays();</span><br><span class="line"></span><br><span class="line">    // start boot animation</span><br><span class="line">    //启动开机动画，调用了startBootAnim函数，只是设置了两个属性，其中一个ctl.start是启动了bootanim进程</span><br><span class="line">    startBootAnim();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;init函数主要做了以下事情：</p>
+<ol>
+<li>初始化OpenGL ES图形库；</li>
+<li>创建显示设备的抽象代表，负责和显示设备打交道；</li>
+<li>创建显示设备对象；</li>
+<li>启动EventThread。监听和处理SurfaceFlinger中的事件；</li>
+<li>设置软件VSync信号周期；</li>
+<li>初始化显示设备，调用initializeDisplays完成；</li>
+<li>启动开机动画，调用了startBootAnim函数，只是设置了两个属性，其中一个ctl.start是启动了bootanim进程。</li>
+</ol>
+<p>&#160; &#160; &#160; &#160;其中初始化OpenGL ES可以参考<a href="http://windrunnerlihuan.com/2017/04/27/Android-SurfaceFlinger-%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF-%E4%BA%8C-SurfaceFlinger%E6%A6%82%E8%BF%B0/">Android SurfaceFlinger 学习之路(二)—-SurfaceFlinger概述</a>，后期如果有机会再次会细讲。创建显示设备我们后面分析管理图形缓冲区时候会细讲。还有VSync信号，后面会单独开章节分析。这里我们大概过一个流程。</p>
+<h3 id="执行run函数"><a href="#执行run函数" class="headerlink" title="执行run函数"></a>执行run函数</h3><p>&#160; &#160; &#160; &#160;然后继续往下看，执行SurfaceFlinger的run函数：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">void</span> SurfaceFlinger::run() &#123;</span><br><span class="line">    <span class="keyword">do</span> &#123;</span><br><span class="line">        waitForEvent();</span><br><span class="line">    &#125; <span class="keyword">while</span> (<span class="literal">true</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">void</span> SurfaceFlinger::waitForEvent() &#123;</span><br><span class="line">    mEventQueue.waitMessage();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;run函数非常简单，但却是SF的核心，是个while循环，循环处理消息等。<br>&#160; &#160; &#160; &#160;然后又调用了EventQueue的waitMessage方法，记住这里是在主线程中循环调用的。<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">void</span> MessageQueue::waitMessage() &#123;</span><br><span class="line">    <span class="keyword">do</span> &#123;</span><br><span class="line">        <span class="comment">//flushCommands主要是清理工作的</span></span><br><span class="line">        IPCThreadState::self()-&gt;flushCommands();</span><br><span class="line">        <span class="comment">//pollOnce是消息机制，主要调用了epoll_wait函数，会阻塞，阻塞完了会分发消息队列中的消息</span></span><br><span class="line">        <span class="keyword">int32_t</span> ret = mLooper-&gt;pollOnce(<span class="number">-1</span>);</span><br><span class="line">        <span class="keyword">switch</span> (ret) &#123;</span><br><span class="line">            <span class="keyword">case</span> Looper::POLL_WAKE:</span><br><span class="line">            <span class="keyword">case</span> Looper::POLL_CALLBACK:</span><br><span class="line">                <span class="keyword">continue</span>;</span><br><span class="line">            <span class="keyword">case</span> Looper::POLL_ERROR:</span><br><span class="line">                ALOGE(<span class="string">"Looper::POLL_ERROR"</span>);</span><br><span class="line">            <span class="keyword">case</span> Looper::POLL_TIMEOUT:</span><br><span class="line">                <span class="comment">// timeout (should not happen)</span></span><br><span class="line">                <span class="keyword">continue</span>;</span><br><span class="line">            <span class="keyword">default</span>:</span><br><span class="line">                <span class="comment">// should not happen</span></span><br><span class="line">                ALOGE(<span class="string">"Looper::pollOnce() returned unknown status %d"</span>, ret);</span><br><span class="line">                <span class="keyword">continue</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">while</span> (<span class="literal">true</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;我们来看下waitMessage方法，flushCommands主要是清理工作的，和Binder驱动的交互关了。而pollOnce是消息机制，主要调用了epoll_wait函数，会阻塞，阻塞完了会分发消息队列中的消息。这里的消息只有自己在Handler中发的消息，还有在setEventThread中自己添加的fd。</p>
+<h2 id="消息处理"><a href="#消息处理" class="headerlink" title="消息处理"></a>消息处理</h2><h3 id="给SurfaceFlinger发送消息"><a href="#给SurfaceFlinger发送消息" class="headerlink" title="给SurfaceFlinger发送消息"></a>给SurfaceFlinger发送消息</h3><p>&#160; &#160; &#160; &#160;我们以SurfaceFlinger与客户端通信创建Surface为例，看看如何给SurfaceFlinger发送消息。这个我们下面会讲到，这里先举个栗子。</p>
+<p>&#160; &#160; &#160; &#160;从上一篇开机动画的简述流程可以得知，BootAnimation的readyToRun函数中有一句：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// create the native surface</span></span><br><span class="line"><span class="comment">//调用SurfaceComposerClient对象mSession的成员函数createSurface可以获得一个SurfaceControl对象control</span></span><br><span class="line">sp&lt;SurfaceControl&gt; control = session()-&gt;createSurface(String8(<span class="string">"BootAnimation"</span>),</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;BootAnimation类的成员函数session用来返回BootAnimation类的成员变量mSession所描述的一个SurfaceComposerClient对象。通过调用SurfaceComposerClient对象mSession的成员函数createSurface可以获得一个SurfaceControl对象control。<br>&#160; &#160; &#160; &#160;SurfaceComposerClient类的成员函数createSurface首先调用内部的Binder代理对象mClient(frameworks/native/services/surfaceflinger/Client.cpp)来请求SurfaceFlinger返回一个类型为(class Handle : public BBinder, public LayerCleaner)Binder代理对象（封装了SurfaceFlinger的sp指针和Layer对象）handle，和一个IGraphicBufferProducer的sp指针（封装了SurfaceFlinger的sp指针）gbp，接着再使用这两个对象来创建一个SurfaceControl对象。创建出来的SurfaceControl对象的成员变量handle就指向了从SurfaceFlinger返回来的类型为Handle 的Binder代理对象。有了这个Binder代理对象之后，SurfaceControl对象就可以和SurfaceFlinger服务通信了。</p>
+<p>&#160; &#160; &#160; &#160;我们关注的就是Client的createSurface函数，frameworks/native/services/surfaceflinger/Client.cpp：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">status_t</span> Client::createSurface(</span><br><span class="line">        <span class="keyword">const</span> String8&amp; name,</span><br><span class="line">        <span class="keyword">uint32_t</span> w, <span class="keyword">uint32_t</span> h, PixelFormat format, <span class="keyword">uint32_t</span> flags,</span><br><span class="line">        sp&lt;IBinder&gt;* handle,</span><br><span class="line">        sp&lt;IGraphicBufferProducer&gt;* gbp)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">/*</span><br><span class="line">     * createSurface must be called from the GL thread so that it can</span><br><span class="line">     * have access to the GL context.</span><br><span class="line">     */</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">class</span> MessageCreateLayer : <span class="keyword">public</span> MessageBase &#123;</span><br><span class="line">        SurfaceFlinger* flinger;</span><br><span class="line">        Client* client;</span><br><span class="line">        sp&lt;IBinder&gt;* handle;</span><br><span class="line">        sp&lt;IGraphicBufferProducer&gt;* gbp;</span><br><span class="line">        <span class="keyword">status_t</span> result;</span><br><span class="line">        <span class="keyword">const</span> String8&amp; name;</span><br><span class="line">        <span class="keyword">uint32_t</span> w, h;</span><br><span class="line">        PixelFormat format;</span><br><span class="line">        <span class="keyword">uint32_t</span> flags;</span><br><span class="line">    <span class="keyword">public</span>:</span><br><span class="line">        MessageCreateLayer(SurfaceFlinger* flinger,</span><br><span class="line">                <span class="keyword">const</span> String8&amp; name, Client* client,</span><br><span class="line">                <span class="keyword">uint32_t</span> w, <span class="keyword">uint32_t</span> h, PixelFormat format, <span class="keyword">uint32_t</span> flags,</span><br><span class="line">                sp&lt;IBinder&gt;* handle,</span><br><span class="line">                sp&lt;IGraphicBufferProducer&gt;* gbp)</span><br><span class="line">            : flinger(flinger), client(client),</span><br><span class="line">              handle(handle), gbp(gbp),</span><br><span class="line">              name(name), w(w), h(h), format(format), flags(flags) &#123;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">status_t</span> getResult() <span class="keyword">const</span> &#123; <span class="keyword">return</span> result; &#125;</span><br><span class="line">        <span class="comment">//handler是执行消息动作的地方</span></span><br><span class="line">        <span class="function"><span class="keyword">virtual</span> <span class="keyword">bool</span> <span class="title">handler</span><span class="params">()</span> </span>&#123;</span><br><span class="line">            result = flinger-&gt;createLayer(name, client, w, h, format, flags,</span><br><span class="line">                    handle, gbp);</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;;</span><br><span class="line">    <span class="comment">//首先封装消息</span></span><br><span class="line">    sp&lt;MessageBase&gt; msg = <span class="keyword">new</span> MessageCreateLayer(mFlinger.get(),</span><br><span class="line">            name, <span class="keyword">this</span>, w, h, format, flags, handle, gbp);</span><br><span class="line">    <span class="comment">//调用SF的postMessageSync发送同步消息</span></span><br><span class="line">    mFlinger-&gt;postMessageSync(msg);</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">static_cast</span>&lt;MessageCreateLayer*&gt;( msg.get() )-&gt;getResult();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;类MessageBase就是封装了类似于一个Handler，里面有个Barrier，我们能够猜到，这个Barrier 肯定是用来进行同步发送消息的，利用Barrier 去等待”wait”。位于framework/native/services/surfaceflinger/MessageQueue.h中:<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> MessageBase : <span class="keyword">public</span> MessageHandler</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    MessageBase();</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// return true if message has a handler</span></span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> <span class="keyword">bool</span> <span class="title">handler</span><span class="params">()</span> </span>= <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// waits for the handler to be processed</span></span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">wait</span><span class="params">()</span> <span class="keyword">const</span> </span>&#123; barrier.wait(); &#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">protected</span>:</span><br><span class="line">    <span class="keyword">virtual</span> ~MessageBase();</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> <span class="keyword">void</span> <span class="title">handleMessage</span><span class="params">(<span class="keyword">const</span> Message&amp; message)</span></span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">mutable</span> Barrier barrier;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;MessageBase的handleMessage函数，可以看到MessageBase的handler()函数是真正消息处理的地方，执行完成后，调用barrier.open();，打开barrier，这样调用barrier.wait()的地方就能退出了。实现位于framework/native/services/surfaceflinger/MessageQueue.cpp中：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">void</span> MessageBase::handleMessage(<span class="keyword">const</span> Message&amp;) &#123;</span><br><span class="line">    <span class="keyword">this</span>-&gt;handler();</span><br><span class="line">    barrier.open();</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;接着分析mFlinger-&gt;postMessageSync(msg);，这是给SF发同步消息的入口，当然也可以发异步消息，实现是类似的:<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">status_t</span> SurfaceFlinger::postMessageSync(<span class="keyword">const</span> sp&lt;MessageBase&gt;&amp; msg,</span><br><span class="line">        <span class="keyword">nsecs_t</span> reltime, <span class="keyword">uint32_t</span> <span class="comment">/* flags */</span>) &#123;</span><br><span class="line">    <span class="comment">//向mEventQueue，即MessageQueue中发送消息</span></span><br><span class="line">    <span class="keyword">status_t</span> res = mEventQueue.postMessage(msg, reltime);</span><br><span class="line">    <span class="comment">//这里等着，同步就在同步函数中等着</span></span><br><span class="line">    <span class="keyword">if</span> (res == NO_ERROR) &#123;</span><br><span class="line">        msg-&gt;wait();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> res;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;可以看到在同步发送消息中，barrier在postMessageSync函数中一直等着呢（wait），等待SF调用handleMessage()函数去将barrier这个栅栏打开(open)。</p>
+<h3 id="SurfaceFlinger处理消息"><a href="#SurfaceFlinger处理消息" class="headerlink" title="SurfaceFlinger处理消息"></a>SurfaceFlinger处理消息</h3><p>&#160; &#160; &#160; &#160;从上面waitMessage得知，消息处理都位于里面无限循环处的的int32_t ret = mLooper-&gt;pollOnce(-1);我们追寻到Looper中的pollOnce函数，位于system/core/libutils/Looper.cpp中：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">int</span> Looper::pollOnce(<span class="keyword">int</span> timeoutMillis, <span class="keyword">int</span>* outFd, <span class="keyword">int</span>* outEvents, <span class="keyword">void</span>** outData) &#123;</span><br><span class="line">    <span class="keyword">int</span> result = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">for</span> (;;) &#123;</span><br><span class="line">        </span><br><span class="line">        ......</span><br><span class="line"></span><br><span class="line">        result = pollInner(timeoutMillis);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;函数中，而pollOnce又会调用pollInner：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">int</span> Looper::pollInner(<span class="keyword">int</span> timeoutMillis) &#123;</span><br><span class="line">  <span class="comment">// Invoke pending message callbacks.</span></span><br><span class="line">    mNextMessageUptime = LLONG_MAX;</span><br><span class="line">    <span class="keyword">while</span> (mMessageEnvelopes.size() != <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="keyword">nsecs_t</span> now = systemTime(SYSTEM_TIME_MONOTONIC);</span><br><span class="line">        <span class="keyword">const</span> MessageEnvelope&amp; messageEnvelope = mMessageEnvelopes.itemAt(<span class="number">0</span>);</span><br><span class="line">        <span class="keyword">if</span> (messageEnvelope.uptime &lt;= now) &#123;</span><br><span class="line">            <span class="comment">// Remove the envelope from the list.</span></span><br><span class="line">            <span class="comment">// We keep a strong reference to the handler until the call to handleMessage</span></span><br><span class="line">            <span class="comment">// finishes.  Then we drop it so that the handler can be deleted *before*</span></span><br><span class="line">            <span class="comment">// we reacquire our lock.</span></span><br><span class="line">            &#123; <span class="comment">// obtain handler</span></span><br><span class="line">                sp&lt;MessageHandler&gt; handler = messageEnvelope.handler;</span><br><span class="line">                Message message = messageEnvelope.message;</span><br><span class="line">                <span class="comment">//把头删除啊</span></span><br><span class="line">                mMessageEnvelopes.removeAt(<span class="number">0</span>);</span><br><span class="line">                mSendingMessage = <span class="literal">true</span>;</span><br><span class="line">                mLock.unlock();</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">if</span> DEBUG_POLL_AND_WAKE || DEBUG_CALLBACKS</span></span><br><span class="line">                ALOGD(<span class="string">"%p ~ pollOnce - sending message: handler=%p, what=%d"</span>,</span><br><span class="line">                        <span class="keyword">this</span>, handler.get(), message.what);</span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span>          </span></span><br><span class="line">                <span class="comment">//处理消息啊</span></span><br><span class="line">                handler-&gt;handleMessage(message);</span><br><span class="line">            &#125; <span class="comment">// release handler</span></span><br><span class="line"></span><br><span class="line">            mLock.lock();</span><br><span class="line">            mSendingMessage = <span class="literal">false</span>;</span><br><span class="line">            result = ALOOPER_POLL_CALLBACK;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="comment">// The last message left at the head of the queue determines the next wakeup time.</span></span><br><span class="line">            mNextMessageUptime = messageEnvelope.uptime;</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;从上面代码可以看到，发给SF的消息被封装在MessageEnvelope结构中，SF一直在mMessageEnvelopes队列中从头部取出消息，然后执行，即handler-&gt;handleMessage(message)，这个即是我们上面提到的framework/native/services/surfaceflinger/MessageQueue.cpp中：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">void</span> MessageBase::handleMessage(<span class="keyword">const</span> Message&amp;) &#123;</span><br><span class="line">    <span class="keyword">this</span>-&gt;handler();</span><br><span class="line">    <span class="comment">//打开栅栏</span></span><br><span class="line">    barrier.open();</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;调用handleMessage执行handler()，所以SurfaceFlinger创建Surface的核心代码就是SurfaceFlinger的createLayer函数，回到刚才的createSurface函数中的片段：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">result = flinger-&gt;createLayer(name, client, w, h, format, flags,</span><br><span class="line">                    handle, gbp);</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;执行完成后，打开barrier。</p>
+<p>&#160; &#160; &#160; &#160;这个只是个简单例子，我们后续会详细讲解它的消息处理流程。</p>
+<h1 id="SurfaceFlinger服务连接过程"><a href="#SurfaceFlinger服务连接过程" class="headerlink" title="SurfaceFlinger服务连接过程"></a>SurfaceFlinger服务连接过程</h1><h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>&#160; &#160; &#160; &#160;第一篇文章描述Android应用程序和SurfaceFlinger服务的关系时提到，每一个有UI的Android应用程序都需要与SurfaceFlinger服务建立一个连接，以便可以通过这个连接来请求SurfaceFlinger服务为它创建和渲染Surface。我们将以Android系统的开机动画应用程序为例，详细描述Android应用程序是如何与SurfaceFlinger服务建立连接的。</p>
+<p>&#160; &#160; &#160; &#160;从从上一篇文章可以知道，Android系统的开机动画是主要一个BootAnimation对象来实现，这个BootAnimation对象在构造的时候，会在内部创建一个SurfaceComposerClient对象来负责创建一个到SurfaceFlinger服务的连接。</p>
+<p>&#160; &#160; &#160; &#160;BootAnimation类的构造函数实现在文件frameworks/base/cmds/bootanimation/BootAnimation.cpp中：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">BootAnimation::BootAnimation() : Thread(<span class="literal">false</span>), mZip(<span class="literal">NULL</span>)</span><br><span class="line">&#123;</span><br><span class="line">    mSession = <span class="keyword">new</span> SurfaceComposerClient();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;mSession是BootAnimation类的成员变量，它是一个类型为SurfaceComposerClient的强指针，即sp &lt; SurfaceComposerClient &gt; 。在SurfaceComposerClient类内部，有一个类型为sp&lt; ISurfaceComposerClient &gt;的成员变量mClient，如下图：</p>
+<p><img src="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E5%9B%9B%29----SurfaceFlinger%E6%9C%8D%E5%8A%A1%E7%9A%84%E5%90%AF%E5%8A%A8%E4%B8%8E%E8%BF%9E%E6%8E%A5%E8%BF%87%E7%A8%8B/SurfaceComposerClient.jpg" alt="SurfaceComposerClient"></p>
+<p>&#160; &#160; &#160; &#160;SurfaceComposerClient类的成员变量mClient指向的实际上是一个类型为BpSurfaceComposerClient的Binder代理对象，而这个类型为BpSurfaceComposerClient的Binder代理对象引用的是一个类型为Client的Binder本地对象，位于frameworks/native/services/surfaceflinger/Client.cpp。<strong>类型为Client的Binder本地对象是由SurfaceFlinger服务来负责创建的，并且运行在SurfaceFlinger服务中，用来代表使用SurfaceFlinger服务的一个客户端，即一个与UI相关的Android应用程序</strong>。</p>
+<p>&#160; &#160; &#160; &#160;由于Client类和BpSurfaceComposerClient类分别是一个Binder本地对象类和一个Binder代理对象类，它们都是根据Android系统在应用程序框架层提供的Binder进程间通信库来实现的。类图如下：</p>
+<p><img src="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E5%9B%9B%29----SurfaceFlinger%E6%9C%8D%E5%8A%A1%E7%9A%84%E5%90%AF%E5%8A%A8%E4%B8%8E%E8%BF%9E%E6%8E%A5%E8%BF%87%E7%A8%8B/Client.jpg" alt="Client"></p>
+<p>&#160; &#160; &#160; &#160;Client类的实现结构图</p>
+<p><img src="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E5%9B%9B%29----SurfaceFlinger%E6%9C%8D%E5%8A%A1%E7%9A%84%E5%90%AF%E5%8A%A8%E4%B8%8E%E8%BF%9E%E6%8E%A5%E8%BF%87%E7%A8%8B/BpSurfaceComposerClient.jpg" alt="BpSurfaceComposerClient"></p>
+<p>&#160; &#160; &#160; &#160;BpSurfaceComposerClient类的实现结构图</p>
+<p>&#160; &#160; &#160; &#160;Client类和BpSurfaceComposerClient类均实现了类型为ISurfaceComposerClient的Binder接口。ISurfaceComposerClient接口有个createSurface接口，它们定义在文件frameworks/base/include/surfaceflinger/ISurfaceComposerClient.h中，如下所示：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> ISurfaceComposerClient : <span class="keyword">public</span> IInterface</span><br><span class="line">&#123;</span><br><span class="line"><span class="comment">/*</span><br><span class="line">     * Requires ACCESS_SURFACE_FLINGER permission</span><br><span class="line">     */</span></span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> status_t <span class="title">createSurface</span><span class="params">(</span><br><span class="line">            <span class="keyword">const</span> String8&amp; name, <span class="keyword">uint32_t</span> w, <span class="keyword">uint32_t</span> h,</span><br><span class="line">            PixelFormat format, <span class="keyword">uint32_t</span> flags,</span><br><span class="line">            sp&lt;IBinder&gt;* handle,</span><br><span class="line">            sp&lt;IGraphicBufferProducer&gt;* gbp)</span> </span>= <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;在接下来的文章中，我们再详细分析ISurfaceComposerClient接口的成员函数createSurface的实现。</p>
+<p>理解了SurfaceComposerClient、Client以及BpSurfaceComposerClient这三个类的关系之后，接下来我们就可以分析Android系统的开机动画应用程序bootanimation是如何与SurfaceFlinger服务建立连接的。</p>
+<p>&#160; &#160; &#160; &#160;SurfaceComposerClient类继承了RefBase类，因此，当BootAnimation类在构造函数创建了一个SurfaceComposerClient对象，并且将这个对象赋值给类型为sp&lt; SurfaceComposerClient &gt;的智能指针mSession时，就会导致SurfaceComposerClient类的成员函数onFirstRef被调用，而SurfaceComposerClient类的成员函数onFirstRef在调用的过程中，就会在应用程序bootanimation与SurfaceFlinger服务建立一个连接。这个流程如下：</p>
+<p><img src="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E5%9B%9B%29----SurfaceFlinger%E6%9C%8D%E5%8A%A1%E7%9A%84%E5%90%AF%E5%8A%A8%E4%B8%8E%E8%BF%9E%E6%8E%A5%E8%BF%87%E7%A8%8B/connection.jpg" alt="Android应用程序与SurfaceFlinger服务的连接过程"></p>
+<p>&#160; &#160; &#160; &#160;接下来，我们就详细分析每一个步骤。</p>
+<h2 id="获取SurfaceFlinger服务代理接口"><a href="#获取SurfaceFlinger服务代理接口" class="headerlink" title="获取SurfaceFlinger服务代理接口"></a>获取SurfaceFlinger服务代理接口</h2><p>&#160; &#160; &#160; &#160;进入frameworks/native/libs/gui/SurfaceComposerClient.cpp中，找到onFristRef函数：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">void</span> SurfaceComposerClient::onFirstRef() &#123;</span><br><span class="line">    sp&lt;ISurfaceComposer&gt; sm(ComposerService::getComposerService());</span><br><span class="line">    <span class="keyword">if</span> (sm != <span class="number">0</span>) &#123;</span><br><span class="line">        sp&lt;ISurfaceComposerClient&gt; conn = sm-&gt;createConnection();</span><br><span class="line">        <span class="keyword">if</span> (conn != <span class="number">0</span>) &#123;</span><br><span class="line">            mClient = conn;</span><br><span class="line">            mStatus = NO_ERROR;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;SurfaceComposerClient类的成员函数getComposerService用来获得SurfaceFlinger服务的一个代理接口，它的实现同样位于frameworks/native/libs/gui/SurfaceComposerClient.cpp中：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*static*/</span> sp&lt;ISurfaceComposer&gt; ComposerService::getComposerService() &#123;</span><br><span class="line">    ComposerService&amp; instance = ComposerService::getInstance();</span><br><span class="line">    Mutex::Autolock _l(instance.mLock);</span><br><span class="line">    <span class="keyword">if</span> (instance.mComposerService == <span class="literal">NULL</span>) &#123;</span><br><span class="line">        ComposerService::getInstance().connectLocked();</span><br><span class="line">        assert(instance.mComposerService != <span class="literal">NULL</span>);</span><br><span class="line">        ALOGD(<span class="string">"ComposerService reconnected"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> instance.mComposerService;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;ComposerService类是单例模式，当我们第一次调用它的静态函数getInstance的时候，它就会在构造函数中获得SurfaceFlinger服务的一个代理接口，并且保存在它的成员变量mComposerService中，如下所示：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line">ComposerService::ComposerService()</span><br><span class="line">: Singleton&lt;ComposerService&gt;() &#123;</span><br><span class="line">    Mutex::Autolock _l(mLock);</span><br><span class="line">    connectLocked();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">void</span> ComposerService::connectLocked() &#123;</span><br><span class="line">    <span class="function"><span class="keyword">const</span> String16 <span class="title">name</span><span class="params">(<span class="string">"SurfaceFlinger"</span>)</span></span>;</span><br><span class="line">    <span class="keyword">while</span> (getService(name, &amp;mComposerService) != NO_ERROR) &#123;</span><br><span class="line">        usleep(<span class="number">250000</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    assert(mComposerService != <span class="literal">NULL</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Create the death listener.</span></span><br><span class="line">    <span class="keyword">class</span> DeathObserver : <span class="keyword">public</span> IBinder::DeathRecipient &#123;</span><br><span class="line">        ComposerService&amp; mComposerService;</span><br><span class="line">        <span class="function"><span class="keyword">virtual</span> <span class="keyword">void</span> <span class="title">binderDied</span><span class="params">(<span class="keyword">const</span> wp&lt;IBinder&gt;&amp; who)</span> </span>&#123;</span><br><span class="line">            ALOGW(<span class="string">"ComposerService remote (surfaceflinger) died [%p]"</span>,</span><br><span class="line">                  who.unsafe_get());</span><br><span class="line">            mComposerService.composerServiceDied();</span><br><span class="line">        &#125;</span><br><span class="line">     <span class="keyword">public</span>:</span><br><span class="line">        DeathObserver(ComposerService&amp; mgr) : mComposerService(mgr) &#123; &#125;</span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line">    mDeathObserver = <span class="keyword">new</span> DeathObserver(*<span class="keyword">const_cast</span>&lt;ComposerService*&gt;(<span class="keyword">this</span>));</span><br><span class="line">    mComposerService-&gt;asBinder()-&gt;linkToDeath(mDeathObserver);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;在ComposerService类的构造函数中，会获得SurfaceFlinger服务的代理接口。</p>
+<h2 id="连接SurfaceFlinger服务"><a href="#连接SurfaceFlinger服务" class="headerlink" title="连接SurfaceFlinger服务"></a>连接SurfaceFlinger服务</h2><p>&#160; &#160; &#160; &#160;回到SurfaceComposerClient类的成员函数onFirstRef中，由于SurfaceFlinger服务实现了ISurfaceComposer接口，因此，我们可以将前面获得的SurfaceFlinger服务的代理接口赋值给一个类型为ISurfaceComposer的强指针sm，并且调用它的成员函数createConnection来请求SurfaceFlinger服务创建一个连接，即创建一个类型为Client的Binder对象，并且将这个Binder对象的一个代理接口conn返回来。SurfaceComposerClient类获得了SurfaceFlinger服务返回来的Client代理接口conn之后，就将它保存自己的成员变量mClient中，这样开机动画应用程序bootanimation后续就可以通过它来请求SurfaceFlinger创建和渲染Surface了。</p>
+<p>&#160; &#160; &#160; &#160;接下来，我们就继续分析SurfaceFlinger服务的成员函数createConnection的实现，以便可以了解它是如何为Android应用程序创建一个连接的。</p>
+<p>&#160; &#160; &#160; &#160;进入SurfaceFlinger.cpp中查看createConnection函数：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">sp&lt;ISurfaceComposerClient&gt; SurfaceFlinger::createConnection()</span><br><span class="line">&#123;</span><br><span class="line">    sp&lt;ISurfaceComposerClient&gt; bclient;</span><br><span class="line">    sp&lt;Client&gt; client(<span class="keyword">new</span> Client(<span class="keyword">this</span>));</span><br><span class="line">    <span class="keyword">status_t</span> err = client-&gt;initCheck();</span><br><span class="line">    <span class="keyword">if</span> (err == NO_ERROR) &#123;</span><br><span class="line">        bclient = client;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> bclient;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;它的实现很简单，只是创建了一个类型为Client的Binder对象client，并且获得它的一个ISurfaceComposerClient接口，最后将这个ISurfaceComposerClient接口，即一个Client代理对象，返回给开机动画应用程序bootanimation。</p>
+<p>&#160; &#160; &#160; &#160;接下来，我们再继续分析Client对象的创建过程,，即Client类的构造函数的实现：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">Client::Client(<span class="keyword">const</span> sp&lt;SurfaceFlinger&gt;&amp; flinger)</span><br><span class="line">    : mFlinger(flinger)</span><br><span class="line">&#123;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;这个很简单，就是保存了SurfaceFlinger的强引用对象。<br>&#160; &#160; &#160; &#160;回到SurfaceFlinger类的成员函数createConnection中，它将一个指向了一个Client对象的ISurfaceComposerClient接口返回到开机动画应用程序bootanimation之后，开机动画应用程序bootanimation就可以将它封装成一个类型为BpSurfaceComposerClient的Binder代理对象。</p>
+<p>&#160; &#160; &#160; &#160;类型为BpSurfaceComposerClient的Binder代理对象的封装过程实现在SurfaceFlinger服务的Binder代理对象类BpSurfaceComposer的成员函数createConnection中，位于frameworks/native/libs/gui/ISurfaceCompose.cpp中：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> BpSurfaceComposer : <span class="keyword">public</span> BpInterface&lt;ISurfaceComposer&gt;</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line"></span><br><span class="line"> ......</span><br><span class="line"> <span class="keyword">virtual</span> sp&lt;ISurfaceComposerClient&gt; createConnection()</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">uint32_t</span> n;</span><br><span class="line">        Parcel data, reply;</span><br><span class="line">        data.writeInterfaceToken(ISurfaceComposer::getInterfaceDescriptor());</span><br><span class="line">        remote()-&gt;transact(BnSurfaceComposer::CREATE_CONNECTION, data, &amp;reply);</span><br><span class="line">        <span class="keyword">return</span> interface_cast&lt;ISurfaceComposerClient&gt;(reply.readStrongBinder());</span><br><span class="line">    &#125;</span><br><span class="line">......</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;interface_cast是一个模板函数，它定义在framework/native/include/binder/IInterface.h文件中：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> INTERFACE&gt;</span><br><span class="line"><span class="keyword">inline</span> sp&lt;INTERFACE&gt; interface_cast(<span class="keyword">const</span> sp&lt;IBinder&gt;&amp; obj)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">return</span> INTERFACE::asInterface(obj);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;从这里就可以看出，当模板参数为ISurfaceComposerClient的时候，模板函数interface_cast实际就是通过调用ISurfaceComposerClient类的静态成员函数asInterface来将参数obj所描述的一个Binder代理对象，即一个BpBinder对象，封装成一个BpSurfaceComposerClient对象。</p>
+<p>&#160; &#160; &#160; &#160;ISurfaceComposerClient类的静态成员函数asInterface是由frameworks/native/libs/gui/ISurfaceComposerClient.cpp文件中的IMPLEMENT_META_INTERFACE宏来定义的，如下所示：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">IMPLEMENT_META_INTERFACE(SurfaceComposerClient, <span class="string">"android.ui.ISurfaceComposerClient"</span>);</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;IMPLEMENT_META_INTERFACE宏展开后，得到ISurfaceComposerClient类的静态成员函数asInterface的实现如下所示：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">android::sp&lt;ISurfaceComposerClient&gt; ISurfaceComposerClient::asInterface(<span class="keyword">const</span> android::sp&lt;android::IBinder&gt;&amp; obj)       &#123;                                                                                         </span><br><span class="line">    android::sp&lt;ISurfaceComposerClient&gt; intr;                                                        </span><br><span class="line">        </span><br><span class="line">    <span class="keyword">if</span> (obj != <span class="literal">NULL</span>) &#123;                                                                         </span><br><span class="line">        intr = <span class="keyword">static_cast</span>&lt;ISurfaceComposerClient*&gt;(                                                      </span><br><span class="line">                    obj-&gt;queryLocalInterface(ISurfaceComposerClient::descriptor).get());    </span><br><span class="line">            </span><br><span class="line">        <span class="keyword">if</span> (intr == <span class="literal">NULL</span>) &#123;                    </span><br><span class="line">            intr = <span class="keyword">new</span> BpSurfaceComposerClient(obj);                                            </span><br><span class="line">        &#125;                                              </span><br><span class="line">    ｝    </span><br><span class="line">    <span class="keyword">return</span> intr;                                      </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;参数obj是从BpSurfaceComposer类的成员函数createConnection传进来的，它指向的实际上是一个BpBinder对象。当我们调用一个BpBinder对象的成员函数queryLocalInterface时，获得的是一个NULL指针，因此，ISurfaceComposerClient类的静态成员函数asInterface最后就会将参数obj所指向的一个BpBinder对象封装成一个BpSurfaceComposerClient对象，并且返回给调用者。</p>
+<p>&#160; &#160; &#160; &#160;至此，开机动画应用程序bootanimation就通过SurfaceComposerClient类来与SurfaceFlinger服务建立一个连接了。</p>
+<h1 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h1><p>&#160; &#160; &#160; &#160;本篇主要学习了SurfaceFlinger的启动和连接过程，应该算不太难的部分。下几节我们将逐步分析消息处理、创建surface、管理GraphicBuffer、VSync信号、Fence机制等等内容。</p>
+<p><img src="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E5%9B%9B%29----SurfaceFlinger%E6%9C%8D%E5%8A%A1%E7%9A%84%E5%90%AF%E5%8A%A8%E4%B8%8E%E8%BF%9E%E6%8E%A5%E8%BF%87%E7%A8%8B/mezi.jpg" alt="妹子"></p>
+
+      
+    </div>
+    
+  </div>
+  
+    
+    <div class="copyright">
+        <p><span>本文标题:</span><a href="/2017/05/13/Android-SurfaceFlinger-学习之路-四-SurfaceFlinger服务的启动与连接过程/">Android SurfaceFlinger 学习之路(四)----SurfaceFlinger服务的启动与连接过程</a></p>
+        <p><span>文章作者:</span><a href="/" title="回到主页">windrunnerlihuan</a></p>
+        <p><span>发布时间:</span>2017-05-13, 14:45:23</p>
+        <p><span>最后更新:</span>2017-05-14, 23:14:15</p>
+        <p>
+            <span>原始链接:</span><a class="post-url" href="/2017/05/13/Android-SurfaceFlinger-学习之路-四-SurfaceFlinger服务的启动与连接过程/" title="Android SurfaceFlinger 学习之路(四)----SurfaceFlinger服务的启动与连接过程">http://windrunnerlihuan.com/2017/05/13/Android-SurfaceFlinger-学习之路-四-SurfaceFlinger服务的启动与连接过程/</a>
+            <span class="copy-path" data-clipboard-text="原文: http://windrunnerlihuan.com/2017/05/13/Android-SurfaceFlinger-学习之路-四-SurfaceFlinger服务的启动与连接过程/　　作者: windrunnerlihuan" title="点击复制文章链接"><i class="fa fa-clipboard"></i></span>
+            <script> var clipboard = new Clipboard('.copy-path'); </script>
+        </p>
+        <p>
+            <span>许可协议:</span><i class="fa fa-creative-commons"></i> <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/" title="CC BY-NC-SA 4.0 International" target = "_blank">"署名-非商用-相同方式共享 4.0"</a> 转载请保留原文链接及作者。
+        </p>
+    </div>
+
+
+
+    <nav id="article-nav">
+        
+        
+            <div id="article-nav-older" class="article-nav-title">
+                <a href="/2017/05/02/Android-SurfaceFlinger-学习之路-三-Android开机动画流程简述/">
+                    Android SurfaceFlinger 学习之路(三)----Android开机动画流程简述
+                </a>
+            </div>
+        
+    </nav>
+
+  
+</article>
+
+    <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#SurfaceFlinger的启动"><span class="toc-number">1.</span> <span class="toc-text">SurfaceFlinger的启动</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#启动概述"><span class="toc-number">1.1.</span> <span class="toc-text">启动概述</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#启动过程"><span class="toc-number">1.2.</span> <span class="toc-text">启动过程</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#创建SurfaceFlinger对象"><span class="toc-number">1.2.1.</span> <span class="toc-text">创建SurfaceFlinger对象</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#调用init函数"><span class="toc-number">1.2.2.</span> <span class="toc-text">调用init函数</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#执行run函数"><span class="toc-number">1.2.3.</span> <span class="toc-text">执行run函数</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#消息处理"><span class="toc-number">1.3.</span> <span class="toc-text">消息处理</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#给SurfaceFlinger发送消息"><span class="toc-number">1.3.1.</span> <span class="toc-text">给SurfaceFlinger发送消息</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#SurfaceFlinger处理消息"><span class="toc-number">1.3.2.</span> <span class="toc-text">SurfaceFlinger处理消息</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#SurfaceFlinger服务连接过程"><span class="toc-number">2.</span> <span class="toc-text">SurfaceFlinger服务连接过程</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#概述"><span class="toc-number">2.1.</span> <span class="toc-text">概述</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#获取SurfaceFlinger服务代理接口"><span class="toc-number">2.2.</span> <span class="toc-text">获取SurfaceFlinger服务代理接口</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#连接SurfaceFlinger服务"><span class="toc-number">2.3.</span> <span class="toc-text">连接SurfaceFlinger服务</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#小结"><span class="toc-number">3.</span> <span class="toc-text">小结</span></a></li></ol>
+</div>
+<style>
+    .left-col .switch-btn {
+        display: none;
+    }
+    .left-col .switch-area {
+        display: none;
+    }
+</style>
+
+<input type="button" id="tocButton" value="隐藏目录"  title="点击按钮隐藏或者显示文章目录">
+<script>
+    var valueHide = "隐藏目录";
+    var valueShow = "显示目录";
+
+    if ($(".left-col").is(":hidden")) {
+        $("#tocButton").attr("value", valueShow);
+    }
+
+    $("#tocButton").click(function() {
+        if ($("#toc").is(":hidden")) {
+            $("#tocButton").attr("value", valueHide);
+            $("#toc").slideDown(320);
+            $(".switch-btn, .switch-area").fadeOut(300);
+        }
+        else {
+            $("#tocButton").attr("value", valueShow);
+            $("#toc").slideUp(350);
+            $(".switch-btn, .switch-area").fadeIn(500);
+        }
+    })
+
+    if ($(".toc").length < 1) {
+        $("#toc, #tocButton").hide();
+        $(".switch-btn, .switch-area").show();
+    }
+</script>
+
+
+
+
+
+    
+<div class="share">
+    
+        <div class="bdsharebuttonbox">
+            <a href="#" class="fa fa-twitter bds_twi" data-cmd="twi" title="分享到推特"></a>
+            <a href="#" class="fa fa-weibo bds_tsina" data-cmd="tsina" title="分享到新浪微博"></a>
+            <a href="#" class="fa fa-qq bds_sqq" data-cmd="sqq" title="分享给 QQ 好友"></a>
+            <a href="#" class="fa fa-files-o bds_copy" data-cmd="copy" title="复制网址"></a>
+            <a href="#" class="fa fa fa-envelope-o bds_mail" data-cmd="mail" title="通过邮件分享"></a>
+            <a href="#" class="fa fa-weixin bds_weixin" data-cmd="weixin" title="生成文章二维码"></a>
+            <a href="#" class="fa fa-share-alt bds_more" data-cmd="more"></i></a>
+        </div>
+        <script>
+            window._bd_share_config={
+                "common":{"bdSnsKey":{},"bdText":"Android SurfaceFlinger 学习之路(四)----SurfaceFlinger服务的启动与连接过程　| April is your lie　","bdMini":"2","bdMiniList":false,"bdPic":"","bdStyle":"0","bdSize":"24"},"share":{}};with(document)0[(getElementsByTagName('head')[0]||body).appendChild(createElement('script')).src='http://bdimg.share.baidu.com/static/api/js/share.js?v=89860593.js?cdnversion='+~(-new Date()/36e5)];
+        </script>
+    
+
+    
+</div>
+
+
+
+
+
+
+
+    
+      <div class="duoshuo" id="comments">
+    <!-- ��˵���ۿ� start -->
+    <div class="ds-thread" data-thread-key="2017/05/13/Android-SurfaceFlinger-学习之路-四-SurfaceFlinger服务的启动与连接过程/" data-title="Android SurfaceFlinger 学习之路(四)----SurfaceFlinger服务的启动与连接过程" data-url="http://windrunnerlihuan.com/2017/05/13/Android-SurfaceFlinger-学习之路-四-SurfaceFlinger服务的启动与连接过程/"></div>
+    <!-- ��˵���ۿ� end -->
+    <!-- ��˵����JS���� start (һ����ҳֻ������һ��) -->
+    <script type="text/javascript">
+    var duoshuoQuery = {short_name:"windrunnerlihuan"};
+    (function() {
+        var ds = document.createElement('script');
+        ds.type = 'text/javascript';ds.async = true;
+        ds.src = 'http://windrunnerlihuan.com/js/embed.js';
+        ds.charset = 'UTF-8';
+        (document.getElementsByTagName('head')[0] 
+         || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+    </script>
+    <!-- ��˵����JS���� end -->
+</div>
+
+    
+
+
+
+
+    <div class="scroll" id="post-nav-button">
+        
+            <a href="/" title="回到主页"><i class="fa fa-home"></i></a>
+        
+
+        <a title="文章列表"><i class="fa fa-bars"></i><i class="fa fa-times"></i></a>
+
+        
+            <a href="/2017/05/02/Android-SurfaceFlinger-学习之路-三-Android开机动画流程简述/" title="下一篇: Android SurfaceFlinger 学习之路(三)----Android开机动画流程简述">
+                <i class="fa fa-angle-right"></i>
+            </a>
+        
+    </div>
+
+    <ul class="post-list"><li class="post-list-item"><a class="post-list-link" href="/2017/05/13/Android-SurfaceFlinger-学习之路-四-SurfaceFlinger服务的启动与连接过程/">Android SurfaceFlinger 学习之路(四)----SurfaceFlinger服务的启动与连接过程</a></li><li class="post-list-item"><a class="post-list-link" href="/2017/05/02/Android-SurfaceFlinger-学习之路-三-Android开机动画流程简述/">Android SurfaceFlinger 学习之路(三)----Android开机动画流程简述</a></li><li class="post-list-item"><a class="post-list-link" href="/2017/04/27/Android-SurfaceFlinger-学习之路-二-SurfaceFlinger概述/">Android SurfaceFlinger 学习之路(二)----SurfaceFlinger概述</a></li><li class="post-list-item"><a class="post-list-link" href="/2017/04/07/Android性能优化之内存优化实战/">Android性能优化之内存优化实战</a></li><li class="post-list-item"><a class="post-list-link" href="/2017/03/12/Android-SurfaceFlinger-学习之路-一-Android图形显示之HAL层Gralloc模块实现/">Android SurfaceFlinger 学习之路(一)----Android图形显示之HAL层Gralloc模块实现</a></li><li class="post-list-item"><a class="post-list-link" href="/2017/01/13/Android多媒体开发-九-Video-Buffer传输与Audio-Playback流程/">Android多媒体开发(九)----Video Buffer传输与Audio Playback流程</a></li><li class="post-list-item"><a class="post-list-link" href="/2017/01/06/Android多媒体开发-八-播放流程/">Android多媒体开发(八)----播放流程</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/12/29/Android多媒体开发-七-Android中OpenMax的实现/">Android多媒体开发(七)----Android中OpenMax的实现</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/12/26/Android多媒体开发-六-Android中OpenMax的实现-preview/">Android多媒体开发(六)----Android中OpenMax的实现(preview)</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/12/15/Android多媒体开发-五-OpenMax简介/">Android多媒体开发(五)----OpenMax简介</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/12/12/Android多媒体开发-四-AwesomePlayer数据源处理/">Android多媒体开发(四)----AwesomePlayer数据源处理</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/12/11/Android多媒体开发-三-从StageFright到AwesomePlayer/">Android多媒体开发(三)----从StageFright到AwesomePlayer</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/11/30/Android多媒体开发-二-MediaPlayer的C-S架构以及C-层调用步骤/">Android多媒体开发(二)----MediaPlayer的C/S架构以及C++层调用步骤</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/11/28/Android多媒体开发-一-MediaPlayer框架开始/">Android多媒体开发(一)----MediaPlayer框架开始</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/10/31/JAVA线程池简单分析/">JAVA线程池简单分析</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/10/08/Android壁纸开发流程分析/">Android壁纸开发流程分析</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/09/18/如何实现1080P延迟低于500ms的实时超清直播传输技术/">如何实现1080P延迟低于500ms的实时超清直播传输技术</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/09/05/插件开发中的资源问题分析及填坑处理/">插件开发中的资源问题分析及填坑处理</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/08/23/智能指针简单分析/">智能指针简单分析</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/07/31/Android消息机制零散分析/">Android消息处理零散分析</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/07/12/浅析Bitmap占据内存大小/">浅析Bitmap占据内存大小</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/07/02/DanmakuFlameMaster简单分析/">弹幕框架DanmakuFlameMaster简单分析</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/06/24/Android属性动画原理分析/">Android属性动画流程分析</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/06/12/Binder简要分析/">Android跨进程通信机制Binder简要分析</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/06/06/移动直播技术秒开优化经验/">移动直播技术秒开优化经验</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/05/27/博客搭建历程/">博客搭建历程————————Github和Hexo</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/05/27/新的开始/">新的开始</a></li></ul>
+
+
+
+
+    <script>
+        
+    </script>
+</div>
+      <footer id="footer">
+    <div class="outer">
+        <div id="footer-info">
+            <div class="footer-left">
+                <i class="fa fa-copyright"></i> 
+                2016-2017 windrunnerlihuan
+            </div>
+            <div class="footer-right">
+                <a href="http://hexo.io/" target="_blank" title="快速、简洁且高效的博客框架">Hexo</a>  Theme <a href="https://github.com/MOxFIVE/hexo-theme-yelee" target="_blank" title="简而不减 Hexo 双栏博客主题  v3.0">Yelee</a> by HuanLi & MOxFIVE <i class="fa fa-heart animated infinite pulse"></i>
+            </div>
+        </div>
+        
+            <div class="visit">
+                
+                    <span id="busuanzi_container_site_pv" style='display:none'>
+                        <span id="site-visit" >本站到访数: 
+                            <span id="busuanzi_value_site_uv"></span>
+                        </span>
+                    </span>
+                
+                
+                    <span>, </span>
+                
+                
+                    <span id="busuanzi_container_page_pv" style='display:none'>
+                        <span id="page-visit">本页阅读量: 
+                            <span id="busuanzi_value_page_pv"></span>
+                        </span>
+                    </span>
+                
+            </div>
+        
+    </div>
+</footer>
+    </div>
+    
+    <script src="/js/GithubRepoWidget.js"></script>
+
+<script data-main="/js/main.js" src="//cdn.bootcss.com/require.js/2.2.0/require.min.js"></script>
+
+
+
+
+    <script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+    tex2jax: {
+        inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+        processEscapes: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+    }
+});
+
+MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for(i=0; i < all.length; i += 1) {
+        all[i].SourceElement().parentNode.className += ' has-jax';                 
+    }       
+});
+</script>
+
+<script src="//cdn.bootcss.com/mathjax/2.6.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+<div class="scroll" id="scroll">
+    <a href="#" title="返回顶部"><i class="fa fa-arrow-up"></i></a>
+    <a href="#comments" title="查看评论"><i class="fa fa-comments-o"></i></a>
+    <a href="#footer" title="转到底部"><i class="fa fa-arrow-down"></i></a>
+</div>
+<script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js">
+</script>
+  </div>
+</body>
+</html>
