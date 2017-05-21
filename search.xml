@@ -4,6 +4,121 @@
   
     
     <entry>
+      <title><![CDATA[VSync信号]]></title>
+      <url>http://windrunnerlihuan.com/2017/05/21/VSync%E4%BF%A1%E5%8F%B7/</url>
+      <content type="html"><![CDATA[<p>&#160; &#160; &#160; &#160;在我们详细分析SurfaceFlinger之前要了解一下VSync信号，为下一节分析Vsync工作原理打下基础。<br><a id="more"></a></p>
+<h1 id="VSync信号相关"><a href="#VSync信号相关" class="headerlink" title="VSync信号相关"></a>VSync信号相关</h1><p>&#160; &#160; &#160; &#160;首先我们要了解以下几个概念：</p>
+<h2 id="屏幕刷新率"><a href="#屏幕刷新率" class="headerlink" title="屏幕刷新率"></a>屏幕刷新率</h2><p>&#160; &#160; &#160; &#160;即 Refresh Rate 或 Scanning Frequency，单位赫兹/Hz，是指设备刷新屏幕的频率，该值对于特定的设备来说是个常量，如 60hz。</p>
+<p>&#160; &#160; &#160; &#160;每一台CRT显示器都有自己的刷新率，其单位是Hz，其数值是显示器每秒钟更新画面的次数。不同的显示器支持再不同分辨率下的不同刷新率。它的范围可以从低到60高到100。<strong>注意它不是你游戏中所提到的那个FPS</strong>。如果你设置了一个特定的刷新率，显示器将一直按照这个速率刷新画面。甚至画面没有任何的改变。<br>&#160; &#160; &#160; &#160;液晶显示器就不同了。LCD的每个像素在被告知改变的时候将一直是亮着的。他们不需要刷新。但是因为VGA(或是DVI)的工作原理，LCD不得不从显示卡那里按一定的速率得到新的新画面。这就是虽然LCD不必要更新，但是他还是有自己的刷新率。</p>
+<p>&#160; &#160; &#160; &#160;如下图，屏幕的刷新过程是每一行从左到右（行刷新，水平刷新，Horizontal Scanning），从上到下（屏幕刷新，垂直刷新，Vertical Scanning）。当整个屏幕刷新完毕，即一个垂直刷新周期完成，会有短暂的空白期，此时发出 VSync 信号。所以，VSync 中的 V 指的是垂直刷新中的垂直/Vertical。<br>&#160; &#160; &#160; &#160;(显示器的扫描方式分为“<strong>逐行扫描</strong>”和“<strong>隔行扫描</strong>”两种。逐行扫描比隔行扫描拥有列稳定显示效果。早期的显示器因为成本所限，使用逐行扫描方式的产品要比隔行扫描的贵许多，但随着技术进步，隔行扫描显示器现在已经被淘汰。我们可以翻一翻《<code>电视原理</code>》)</p>
+<p><img src="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/VSync%E4%BF%A1%E5%8F%B7/shuaxin.png" alt="屏幕刷新过程"></p>
+<p>&#160; &#160; &#160; &#160;对于一个特定的设备，帧率和刷新频率没有必然的大小关系。</p>
+<h2 id="帧率"><a href="#帧率" class="headerlink" title="帧率"></a>帧率</h2><p>&#160; &#160; &#160; &#160;即 Frame Rate，单位 fps，是指 gpu 生成帧的速率，如 33 fps，60fps，越高越好。</p>
+<p>&#160; &#160; &#160; &#160;我想这里的每一人都明白FPS。它显示显示卡在每秒钟可以描画多少画面。这显然是越高越好。<strong>但是对于快速变化的游戏而言，你的FPS很难一直保持同样的数值，他会随着你所看到的显示卡所要描画的画面的复杂程度而变化</strong>。</p>
+<h2 id="VSync"><a href="#VSync" class="headerlink" title="VSync"></a>VSync</h2><p>&#160; &#160; &#160; &#160;安卓系统中有 2 种 VSync 信号：屏幕产生的硬件 VSync 和由 SurfaceFlinger 将其转成的软件 Vsync 信号。后者经由 Binder 传递给 Choreographer。<br>&#160; &#160; &#160; &#160;硬件 VSync 是一个脉冲信号，起到开关或触发某种操作的作用。 </p>
+<h3 id="显示器参数"><a href="#显示器参数" class="headerlink" title="显示器参数"></a>显示器参数</h3><p>&#160; &#160; &#160; &#160;<strong>TFT LCD 有 vsync,hsync,hspw,hbpd,hfpd, vspw,vbpd, vfpd 等参数，这些参数都是由以前的 CRT(阴极射线显像管)带过来的, 而 TFT 液晶跟 CRT 显示方法根本不同, 至于为什么这些参数也会引入到 TFT 中,大概是因为VGA(或是DVI)工作原理，上文提到过</strong>。<br>&#160; &#160; &#160; &#160;这网站有更权威的描述 <a href="http://www.linux-fbdev.org/HOWTO/2.html" target="_blank" rel="external">http://www.linux-fbdev.org/HOWTO/2.html</a> ，然后是英文。。。</p>
+<p>&#160; &#160; &#160; &#160;CRT 侧面看是个漏斗状的真空的东东, 根部就是电子枪, 打出的电子撞击前面的玻璃面上的荧光物质, 荧光物发光. 控制电子枪按规律射出电子, 逐行的打到荧光物质上, 打完一行(也即扫描完一行), 就回头扫描下一行….. 扫描完一个显示屏所有的行后, 就是一幅完整的画面了, 称为一帧(frame), 扫描过程如果非常快, 人眼看到是一幅完整画面, 但实际是一个个点发不同光组成的. 扫描得慢时, 就会觉得闪烁了(以前听老师讲课, 说在他们的年代, 能明显看到一行一行刷过的壮观场景)。<br>&#160; &#160; &#160; &#160;一帧扫描完, 再回头从第一行开始继续扫描, 重复过程. 看到的就是持续在显示的画面了(实际上, 电子的运动轨迹是由磁场控制的, 电子枪没有机械的运动, 为好理解, 就当是电子枪做了机械运动吧)。</p>
+<p>&#160; &#160; &#160; &#160;描述方式多数显示器选择从左上角开始, 从左至右, 到了右边界, 再偏转到左边界的下一行, 这是所谓的”Z”型扫描。类似地扫描完最后一帧时, 要偏转回左上角起始处, 准备扫描下一帧。这个上面那一幅图描述过了。</p>
+<p>&#160; &#160; &#160; &#160;<code>(科普一下，ignore it。start------)</code></p>
+<ul>
+<li>HSYNC 信号用于告诉电子枪该扫描下一行了, 即要转到下一行起始处了；</li>
+<li>VSYNC 信号告诉电子枪该显示下一帧了, 即该转回左上角起始处了；</li>
+</ul>
+<p>&#160; &#160; &#160; &#160;H for Horizontal, V for vertical。在这里 Hsync, Vsync 两者各表示一种信号, 分别由 HSPW 及 VSPW 两个参数确定信号持续时间, 也就是脉冲的宽度.</p>
+<p>&#160; &#160; &#160; &#160;在扫描一行中, 首先</p>
+<ol>
+<li>HSYNC 脉冲信号为高电平, 一发出此信号, 电子枪迅速移回左边界, 期间电子枪不发射电子.</li>
+<li>在 HSYNC 信号持续时间上的某点, 电子枪开始再次向右扫描了, 等 HSYNC 信号结束, 表示该开始显示下一行的数据了, 电子枪又要开始发射电子. </li>
+<li>在HSYNC 信号结束与开始显示数据之间, 可以插入一段延时(由 HBPD 参数控制)让显示屏仍然不显示有效数据(效果就是黑色), 是为显示屏左边框. </li>
+<li>到 HFPD 结束, 电子枪才可以发射电子, 显示该行的有效数据.</li>
+<li>显示完毕. 又该开始发出 HSYNC 信号了. 在一行中有效数据扫描完毕与 HSYNC 信号发出之间也插入一段延时 HFPD, 是为显示屏右边框,之后, 就是重复过程了.</li>
+</ol>
+<p>&#160; &#160; &#160; &#160;因此, 显示一行时序为： HSPW -&gt; HBPD -&gt; 扫描数据 -&gt; HFPD .</p>
+<p>&#160; &#160; &#160; &#160;类似地, 垂直扫描一帧的时序：VSPW -&gt; VBPD -&gt; 扫描有效行 -&gt; VFPD .</p>
+<p>&#160; &#160; &#160; &#160;为什么要有边框(vbpd, vfpd, hbpd, hfpd)? 按上边贴出网页的说法:<br>&#160; &#160; &#160; &#160;Usually, one doesn’t use that feature nowadays, as we have tunable monitors that allow stretching the mode to the physical limits of the monitor.<br>&#160; &#160; &#160; &#160;我的理解是:确实是以前的显示器调整显示屏边界用的,而新的显示有调整能力了, 所以不再需要刻意关注了,但术语被保留了下来.</p>
+<h3 id="举个栗子"><a href="#举个栗子" class="headerlink" title="举个栗子"></a>举个栗子</h3><p>&#160; &#160; &#160; &#160;对于 TFT LCD, 但这些参数作用是同样的. 但如何确定 ?  TFT 的 LCD 的 datasheet 中一定得标有。<br>&#160; &#160; &#160; &#160;如型号 WXCAT35-TG3  3.5 寸的液晶中有表如下:</p>
+<p><img src="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/VSync%E4%BF%A1%E5%8F%B7/sheet.png" alt="LCD参数表"></p>
+<p>&#160; &#160; &#160; &#160;对照下边的时序图(注: <font color="#FF0000">时序图的 Vsync, Hsync 信号(红框圈出的)跟上边讲的有点出入, 信号都是低电平, 而非高电平, 因此编程时要设置信号反相</font>, 如s3c244a 的 LCDCON5的INVLINE 及 INVFRAME 即是干这活的):</p>
+<p><img src="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/VSync%E4%BF%A1%E5%8F%B7/sheetpng.png" alt="同步信号时序"></p>
+<ul>
+<li>tvp 即 VSPW</li>
+<li>tvb 即 VBPD</li>
+<li>tvf 即 VFPD</li>
+<li>thp 即 HSPW</li>
+<li>thb 即 HBPD</li>
+<li>thf 即 HFPD</li>
+</ul>
+<p>&#160; &#160; &#160; &#160;参考的时钟就是 CLK, 一个 CLK 时钟, 完成一个像素点的显示。</p>
+<p>&#160; &#160; &#160; &#160;计算帧频率(刷新频率)的方法就是所有的像素点跟边沿(边框,hbpd 之类),同步脉冲的时间相加, 结果就是显示完整一帧所需时间, 其倒数即是帧频率。</p>
+<h3 id="Linux-的-LCD-驱动"><a href="#Linux-的-LCD-驱动" class="headerlink" title="Linux 的 LCD 驱动"></a>Linux 的 LCD 驱动</h3><p>&#160; &#160; &#160; &#160;LCD 驱动主要得完成两部分, 一是跟 framebuffer 注册驱动； 二是设置 LCD 控制器的寄存器, 以适配 LCD。<br>&#160; &#160; &#160; &#160;struct fb_info  是关键, 有显示驱动的所有信息, 要拿此结构跟 framebuffer 注册, 代表着本驱动,  该结构定义在 ,在驱动程序中, 主体部分就是实现 struct fb_info .<br>&#160; &#160; &#160; &#160;在<a href="http://windrunnerlihuan.com/2017/03/12/Android-SurfaceFlinger-%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF-%E4%B8%80-Android%E5%9B%BE%E5%BD%A2%E6%98%BE%E7%A4%BA%E4%B9%8BHAL%E5%B1%82Gralloc%E6%A8%A1%E5%9D%97%E5%AE%9E%E7%8E%B0/">Android SurfaceFlinger 学习之路(一)—-Android图形显示之HAL层Gralloc模块实现</a>中提到过这一部分。<br>&#160; &#160; &#160; &#160;在该结构中, 以下定义的三个字段也是比较重要的, 要填一些数据入去:<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> fb_var_screeninfo var;   <span class="comment">/* Current var */</span></span><br><span class="line"><span class="keyword">struct</span> fb_fix_screeninfo fix;   <span class="comment">/* Current fix */</span></span><br><span class="line"><span class="keyword">struct</span> fb_ops *fbops;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;struct fb_fix_screeninfo 里定义的 pixclock 是像素点的周期, 单位是皮秒, 数值等于像素点显示频率的倒数. 如上图贴出的表格中, Dclk 那行中, 6.4 Mhz 就是频率, 频率倒数即为周期, 换算出来为 156250 ps, 约为表中给出的 156 ns.</p>
+<p>&#160; &#160; &#160; &#160;驱动具体的实现, 要看开发板对应的驱动源码文件, 一般位于 kernel_src/drivers/video/ 下,我们以前下的Android源码，找到对应设备分支下的，应为位于kernel/{branch}/drivers/video/吧。</p>
+<h3 id="简单描述"><a href="#简单描述" class="headerlink" title="简单描述"></a>简单描述</h3><p>&#160; &#160; &#160; &#160;在手机平台，LCD,Camera，TV的接线上，都会用到PCLK，VSYNC和HSYNC这三个信号。可见这三个信号和显示关系非常大。首先我们先看这三个信号的作用：</p>
+<ul>
+<li>PCLK：有些方案给他起名字叫：DotCLK。是像素点同步时钟信号。也就是每个PCLK对应一个像素点。</li>
+<li>VSYNC：是场同步信号。以高电平有效为例，VSYNC置高直到被拉低，这个区段所输出的所有影像数据组成一个frame。</li>
+<li>HSYNC：是行同步信号。就是在告诉接收端：“HSYNC”有效时段内接收端接收到的所有的信号输出属同一行。</li>
+</ul>
+<p>&#160; &#160; &#160; &#160;若要显示一个640x480的画面，显示不正确的时候，若量PCLK，VSYNC和HSYNC这三个信号，就可以知道这三个信号配置是否有问题，一般来讲，这种情况是有公式的：</p>
+<ul>
+<li>VSync = HSYNC x 320；</li>
+<li>Hsync = PCLK x 640；</li>
+</ul>
+<p>&#160; &#160; &#160; &#160;sensor的同步信号可以简单的理解为sensor向其信号接收端所发送的宣告信号。比如HSYNC，就是sensor这告诉接收端：“HSYNC”有效时段内sensor所有的信号输出属同一行。VSYNC同理，以高电平有效为例，VSYNC置高直到被拉低，这个区段sensor所输出的所有影像数据组成一个frame。同步信号的频率决定于pixel clock，比如一行有640个pixel，那么HSYNC的频率为：PCLK/(640+dummy);Vsync同理。</p>
+<p>&#160; &#160; &#160; &#160;<code>(科普结束，ignore it，too。end------)</code></p>
+<h1 id="VSync-信号的作用"><a href="#VSync-信号的作用" class="headerlink" title="VSync 信号的作用"></a>VSync 信号的作用</h1><h2 id="tearing-画面撕裂"><a href="#tearing-画面撕裂" class="headerlink" title="tearing 画面撕裂"></a>tearing 画面撕裂</h2><p>&#160; &#160; &#160; &#160;首先，我们来看下，没有引入 VSync 时，屏幕显示图像的工作流程。</p>
+<p><img src="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/VSync%E4%BF%A1%E5%8F%B7/single.png" alt="单缓冲"></p>
+<p>&#160; &#160; &#160; &#160;如上图，CPU/GPU 向 Buffer 中生成图像，屏幕从 Buffer 中取图像、刷新后显示。这是一个典型的生产者——消费者模型。理想的情况是帧率和刷新频率相等，每绘制一帧，屏幕显示一帧。而实际情况是，二者之间没有必然的大小关系，如果没有锁来控制同步，很容易出现问题。</p>
+<p>&#160; &#160; &#160; &#160;所谓”撕裂”就是一种画面分离的现象，就象你照一张照片，在旋转哪怕一度再照一张照片，然后把两张照片的从中间裁开，用一张照片的上半部与另一张的下半部对接起来。这样得到的画像虽然相似但是上半部和下半部确实明显的不同。这就被称之为视觉现实上的撕裂。它不会一直从中间分开，它可能靠近上面也可能下面，分离点可能在屏幕上下移动，也可能在两点间前后移动。（<strong>译者：原文的作者实在是啰嗦，其实就是画面移动较快的时候，画面看上去是两截</strong>。这种现象恐怕打游戏的都看到过，最好玩过PS2游戏的，用模拟器，在比较差的显卡和CPU上面，撕裂现象更为明显）。</p>
+<p><img src="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/VSync%E4%BF%A1%E5%8F%B7/tearing.png" alt="画面撕裂"></p>
+<p>&#160; &#160; &#160; &#160;为什么会发生这种现象呢？让我们举一个特定的例子。让我们假定你的显示器的刷新率是75Hz, 你真在玩你最喜欢的游戏，而且你现在有100的FPS.这就意味着你的显示器每秒更新75次画面，而你的显示卡每秒更新100次，比你的显示器快33%。这就意味着在你的显示器更新画面的时间里，显示卡描画了1+1/3的画面。这样在画面显示的时候，那个1/3的画面就会覆盖那个完整画面上部的1/3。在下次的图像刷新的时候，显示卡会描画剩下来得2/3和新的2/3的画面。这样，因为屏幕的更新只能跟上画面更新的2/3，这样图像的上部的1/3或是下部的1/3就会和剩下的画面合不上。如果画面的变化不大可能不太会注意到这一点，但是如果你快速的环顾四周那就会非常的明显。</p>
+<h2 id="Double-Buffer-双缓冲"><a href="#Double-Buffer-双缓冲" class="headerlink" title="Double Buffer 双缓冲"></a>Double Buffer 双缓冲</h2><p>&#160; &#160; &#160; &#160;现在，一个很普遍的误解就产生了。一些人认为解决这个问题的方法就是简单设置一个FPS的限制让FPS不超过显示器的刷新率，这样显示卡就不会超过75FPS,这样就可以了。真的吗？错！</p>
+<p>&#160; &#160; &#160; &#160;在我解释为什么之前，让我来讲一下双倍缓冲。双倍缓冲一种用来减轻撕裂问题，虽然不是很完全。基本上来说你有一个显示缓冲和一个后备缓冲。当显示器要显示画面的时候，就会从显示缓冲里“推出”显示画面。显示卡则在后备缓冲里描画另外一个新画面，当描画完成后则将新画面考入显示缓冲里。但是这个过程需要时间，如果显示器的刷新在拷贝过程中进行的话，显示器上显示的仍然是个”撕裂”的画面。</p>
+<p>&#160; &#160; &#160; &#160;VSync 通过建立一个不让在显示器刷新前将后备缓冲中的画面拷贝到显示缓冲中的规定来解决这个问题。如果FPS高于刷新率的话，没有问题。后备缓冲的更新完成后，系统处于等待状态。当显示器刷新后，后备缓存考入显示缓存，显示卡则可以在后备缓存里描画新的画面，这样就很有效的将你的FPS限制在显示器的刷新率的范围内。</p>
+<p>&#160; &#160; &#160; &#160;为了解决单缓存的“tearing”问题，双缓存和 VSync 应运而生。双重缓存模型如下图： </p>
+<p><img src="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/VSync%E4%BF%A1%E5%8F%B7/double.png" alt="双缓冲"></p>
+<p>&#160; &#160; &#160; &#160;两个缓存区分别为 Back Buffer 和 Frame Buffer。GPU 向 Back Buffer 中写数据，屏幕从 Frame Buffer 中读数据。VSync 信号负责调度从 Back Buffer 到 Frame Buffer 的复制操作，可认为该复制操作在瞬间完成。其实，该复制操作是等价后的效果，实际上双缓冲的实现方式是<strong>交换</strong> Back Buffer 和 Frame Buffer 的名字，更具体的说是交换内存地址（有没有联想到那道经典的笔试题目：“有两个整型数，如何用最优的方法交换二者的值？”），通过二进制运算“异或”即可完成，所以可认为是瞬间完成。(《数字电路技术》当中有一章节应该讲过运算器还是控制器来着，可以设计一个异或电路。忘了，回去翻一翻~)</p>
+<blockquote>
+<p>&#160; &#160; &#160; &#160;附加小福利：<br>&#160; &#160; &#160; &#160;假设两个数x和y，则有：<br>方法1，算术运算（加减）：<br>x=x+y;  //x暂存两数之和<br>y=x-y;  //y为两数之和减去y，即原来的x<br>x=x-y;  //x为两数之和减去现在的y（原来的x），变成原来的y<br>方法2，逻辑运算（异或）：<br>x^=y; //x先存x和y两者的信息<br>y^=x; //保持x不变，利用x异或反转y的原始值使其等于x的原始值<br>x^=y; //保持y不变，利用x异或反转y的原始值使其等于y的原始值</p>
+</blockquote>
+<p>&#160; &#160; &#160; &#160;双缓冲的模型下，工作流程这样的：<br>&#160; &#160; &#160; &#160;在某个时间点，一个屏幕刷新周期完成，进入短暂的刷新空白期。此时，VSync 信号产生，先完成复制操作，然后通知 CPU/GPU 绘制下一帧图像。复制操作完成后屏幕开始下一个刷新周期，即将刚复制到 Frame Buffer 的数据显示到屏幕上。</p>
+<p>&#160; &#160; &#160; &#160;在这种模型下，只有当 VSync 信号产生时，CPU/GPU 才会开始绘制。这样，当帧率大于刷新频率时，帧率就会被迫跟刷新频率保持同步，从而避免“tearing”现象。</p>
+<h2 id="Jank-掉帧"><a href="#Jank-掉帧" class="headerlink" title="Jank 掉帧"></a>Jank 掉帧</h2><p>&#160; &#160; &#160; &#160;注意，当 VSync 信号发出时，如果 GPU/CPU 正在生产帧数据，此时不会发生复制操作。屏幕进入下一个刷新周期时，从 Frame Buffer 中取出的是“老”数据，而非正在产生的帧数据，即两个刷新周期显示的是同一帧数据。这是我们称发生了“掉帧”（Dropped Frame，Skipped Frame，Jank）现象。</p>
+<p>&#160; &#160; &#160; &#160;让我们来看一个另外一个不同的例子。让我们假定你已经玩到了你最喜欢的游戏的最后一关，这个游戏有很好的图像.你显示器的刷新率还是在75。但是你的FPS现在只有50了，比刷新率要低33%.这就意味着每次显示器刷新图像，你的显示卡只能画出下一桢画面的2/3。让我们看看它是如何工作的。</p>
+<ol>
+<li>显示器刚刚更新，第一桢的画面已经拷贝到显示缓冲，第二桢的画面的2/3被写入后备缓冲。</li>
+<li>这时显示器重新刷新，它会第一次从显示缓冲里提取第一桢的画面。然后显示卡开始完成的第二桢剩下的部分。但是它必须等待，应为再下一次刷新之前它是不会上传的。</li>
+<li>显示器再次刷新，显示器不得不第二次从显示缓冲里提取第一桢的画面，然后第二桢的画面被写入显示缓冲。显示卡在后备缓冲中写入第三桢的2/3。</li>
+<li>等到显示器刷新，第一次从显示缓冲里提取第二桢的画面，显示卡开始完成的第三桢剩下的部分。然后又是第二次从显示缓冲里提取第二桢的画面，然后第三桢的画面被写入显示缓冲。</li>
+</ol>
+<p>&#160; &#160; &#160; &#160;如此类推。这样4次显示器刷新，我们只能的到2桢的画面。如果刷新率是75的话，我们只能得到35的FPS.很明显这个数值要低于显示卡可以带到的50FPS.这主要就是应为显示卡不得不在描画后备缓冲上浪费时间。而在此过程中，后备缓冲上的画面是不能被拷贝到显示缓冲。理论上讲，双缓冲的VSync,FPS将是一组不连续的整数，其等于刷新率/n,n是正整数。也就是说，如果你的刷新率是60hz,你能得到的FPS只能是 60，30，20，15，12，10 等等。你可以注意到60到30是一个相当大的差距。只要的显示卡的FPS在60到30之间，你说得到的真实FPS都将只能等于30！</p>
+<p>&#160; &#160; &#160; &#160;如下图，A、B 和 C 都是 Buffer。蓝色代表 CPU 生成 Display List，绿色代表 GPU 执行 Display List 中的命令从而生成帧，黄色代表生成帧完成。 </p>
+<p><img src="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/VSync%E4%BF%A1%E5%8F%B7/jank.png" alt="Jank"></p>
+<p>&#160; &#160; &#160; &#160;现在，你明白为什么有人不喜欢它了。让我们回到一开始的那个例子。你在玩你最喜欢的游戏，刷新率是75HZ,100FPS。你打开VSync.游戏就被限制在75FPS,没有问题，没有撕裂图像，看起来不错。你到了一个图像特别复杂的地方，在不用VSync的时候，你的FPS下降到了60左右。但是你打开了VSync，你的FPS实际就只有37.5。这样你的游戏突然从75FPS变成了37.5FPS,不管37.5仍然很流畅但是你一定会注意到刷新率突然减少了一半。当让如果以下变到25FPS的话，实际的现实率可能就只有17.5。本来还可以玩的游戏，就变成了幻灯片。这就是大家不喜欢它的原因。</p>
+<p>&#160; &#160; &#160; &#160;如果你的游戏的FPS可以一直稳定的大于显示器的刷新率，VSync是个不错的东西。但是如果FPS忽大忽小。VSync就是让人烦的东西。如果你的游戏FPS一直都小于刷新率的话，实际的FPS要远远小于显示卡可以显示的FPS.看上去就象是VSync降低了你的FPS,但是从技术角度讲，不是应为图像太复杂，而是因为VSync就是这样工作的。</p>
+<h2 id="Triple-Buffer-三缓冲"><a href="#Triple-Buffer-三缓冲" class="headerlink" title="Triple Buffer 三缓冲"></a>Triple Buffer 三缓冲</h2><p>&#160; &#160; &#160; &#160;双重缓存的缺陷在于：当 CPU/GPU 绘制一帧的时间超过 16 ms 时，会产生 Jank。更要命的是，产生 Jank 的那一帧的显示期间，GPU/CPU 都是在闲置的。 </p>
+<p>&#160; &#160; &#160; &#160;也不是说所有的希望都没有了。现在的triple-buffering技术可以用来解决这个问题。让我们再来看刷新率75。FPS50的例子。</p>
+<ol>
+<li>第一桢在显示缓冲，第二桢的2/3在后备缓冲。</li>
+<li>显示器刷新第一桢第一次被显示，在后备缓冲里描画第二桢的剩下的1/3，在第二后备缓冲里描画第三桢的1/3(因为我们有三级缓冲了)。</li>
+<li>显示器再次刷新第一桢第二次被显示，第二桢放入在显示缓冲，第三桢的的1/3放入后备缓冲，第二后备缓冲里描画第三桢剩下的2/3。</li>
+<li>接下来显示器再次刷新的时候，第二桢被显示，第三桢就可以放入显示缓冲，这样我们就可以在3次刷新中得到2桢的画面。</li>
+</ol>
+<p>&#160; &#160; &#160; &#160;也就是刷新率的2/3,也就是50FPS.triple-buffering理论上讲可以避免缓冲写入是带来的延迟现象，这样就不会浪费时间。但是triple-buffering并不是适用于所有的游戏。实际上它并不是普及(这个文章可能写的太早，现在triple-buffering已经很普及了)，而且它也会影响显示卡的性能，应为它需要更多的显示内存，需要更多时间在内存之间降数据拷贝来拷贝去。但是triple-buffering确实是一个很好的方法，既可以消除撕裂画面又可以不像普通VSync一样影响你的FPS.</p>
+<p>&#160; &#160; &#160; &#160;如果有第三个 Buffer 能让 CPU/GPU 在这个时候继续工作，那就完全可以避免第二个 Jank 的发生了！</p>
+<p><img src="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/VSync%E4%BF%A1%E5%8F%B7/triple.png" alt="三缓冲"></p>
+<p>&#160; &#160; &#160; &#160;于是就有了三缓存：</p>
+<p><img src="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/VSync%E4%BF%A1%E5%8F%B7/swap.png" alt="三缓冲交换"></p>
+<p>&#160; &#160; &#160; &#160;工作原理同双缓冲类似，只是多了一个 Back Buffer。<br>&#160; &#160; &#160; &#160;需要注意的是，第三个缓存并不是总是存在的，只要当需要的时候才会创建。之所以这样，是因为三缓存会显著增加用户输入到显示的延迟时间。如上图，帧 C 是在第 2 个刷新周期产生的，但却是在第 4 个周期显示的。最坏的情况下，你会同时遇到输入延迟和卡顿现象。</p>
+<h2 id="三缓冲局限"><a href="#三缓冲局限" class="headerlink" title="三缓冲局限"></a>三缓冲局限</h2><p>&#160; &#160; &#160; &#160;我希望这篇文章是有用的，可以帮出你理解VSync的工作原理。（特别是不再犹豫是否打开VSync）总之，如果没有triple-buffering的情况下，如何权衡Vsync的FPS限制和消除撕裂画面带来的视觉感受，那将完全取决于你个人的喜好。<br>&#160; &#160; &#160; &#160;译者按：如果这篇文章的机理是正确的。triple-buffering也不是万能的，实际上就是把减少1/2变成了减少1/3而已，如果是FPS恰好卡到了一定的数值的时候没有问题，一旦没有，那就绝对要损失FPS.所以对于那种FPS刚刚超过24的游戏，不管有没有triple-buffering，都应该关.</p>
+<p>&#160; &#160; &#160; &#160;所以一定会有人问：液晶显示器的刷新频率为何不能调高？<br>&#160; &#160; &#160; &#160;这里有一个误解。<br>&#160; &#160; &#160; &#160;原来我们使用的是CRT技术的显示器,为保证长时间地注视屏幕而眼睛不疲劳,我们一般都会把刷新率调到75H甚至是85Hz,这是由于CRT技术的特性决定的,刷新率越高也就意味着图像越清楚、越稳定。但是对于LCD来说,由于液晶板本身并不发光,只是液晶分子控制光线的偏转或通过,发光的是背光源,即荧光灯管,在使用的时候即使把刷新率调到60Hz你也不会感到屏幕在闪烁,“刷新率”对LCD来说已经没有多大意义了,所以在使用液晶显示器的时候,我们是不必过于苛求刷新率的高低的。</p>
+<h1 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h1><p>Getting To Know Android 4.1, Part 3: Project Butter - How It Works And What It Added<br><a href="http://www.androidpolice.com/2012/07/12/getting-to-know-android-4-1-part-3-project-butter-how-it-works-and-what-it-added/" target="_blank" rel="external">http://www.androidpolice.com/2012/07/12/getting-to-know-android-4-1-part-3-project-butter-how-it-works-and-what-it-added/</a></p>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>&#160; &#160; &#160; &#160;本篇科普一下VSync，下一节开始分析它在SurfaceFlinger中的工作流程。</p>
+<p><img src="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/VSync%E4%BF%A1%E5%8F%B7/meizi.jpg" alt="妹子"></p>
+]]></content>
+    </entry>
+    
+    <entry>
       <title><![CDATA[Android SurfaceFlinger 学习之路(四)----SurfaceFlinger服务的启动与连接过程]]></title>
       <url>http://windrunnerlihuan.com/2017/05/13/Android-SurfaceFlinger-%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF-%E5%9B%9B-SurfaceFlinger%E6%9C%8D%E5%8A%A1%E7%9A%84%E5%90%AF%E5%8A%A8%E4%B8%8E%E8%BF%9E%E6%8E%A5%E8%BF%87%E7%A8%8B/</url>
       <content type="html"><![CDATA[<p>&#160; &#160; &#160; &#160;上一篇我们分析了Android的开机动画启动流程，这一篇我们基于上一篇的基础，分析一下SurfaceFlinger的启动，还有连接它的过程。<br><a id="more"></a></p>

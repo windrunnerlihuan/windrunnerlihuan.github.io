@@ -197,7 +197,7 @@
                 
                 <section class="switch-part switch-part2">
                     <div class="widget tagcloud" id="js-tagcloud">
-                        <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/Binder/">Binder</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Bitmap/">Bitmap</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/IPC/">IPC</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/SO库/">SO库</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/SurfaceFlinger/">SurfaceFlinger</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/博客搭建/">博客搭建</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/壁纸/">壁纸</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/多媒体/">多媒体</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/属性动画/">属性动画</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/开始/">开始</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/弹幕/">弹幕</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/性能优化/">性能优化</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/插件开发/">插件开发</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/智能指针/">智能指针</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/消息/">消息</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/移动直播/">移动直播</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/线程池/">线程池</a></li></ul>
+                        <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/Binder/">Binder</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Bitmap/">Bitmap</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/IPC/">IPC</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/SO库/">SO库</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/SurfaceFlinger/">SurfaceFlinger</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/VSync/">VSync</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/博客搭建/">博客搭建</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/壁纸/">壁纸</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/多媒体/">多媒体</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/属性动画/">属性动画</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/开始/">开始</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/弹幕/">弹幕</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/性能优化/">性能优化</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/插件开发/">插件开发</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/智能指针/">智能指针</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/消息/">消息</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/移动直播/">移动直播</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/线程池/">线程池</a></li></ul>
                     </div>
                 </section>
                 
@@ -276,6 +276,73 @@
 </nav>
       <div class="body-wrap">
   
+    <article id="post-Android消息机制零散分析" class="article article-type-post" itemscope itemprop="blogPost">
+  
+    <div class="article-meta">
+      <a href="/2016/07/31/Android消息机制零散分析/" class="article-date">
+      <time datetime="2016-07-31T12:13:04.000Z" itemprop="datePublished">2016-07-31</time>
+</a>
+    </div>
+  
+  <div class="article-inner">
+    
+      <input type="hidden" class="isFancy" />
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2016/07/31/Android消息机制零散分析/">Android消息处理零散分析</a>
+    </h1>
+  
+
+      </header>
+      
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+          
+              <hr>
+<p>&#160; &#160; &#160; &#160;Android消息机制是开发人员用滥的内容，不过内部原理比较复杂，因此今天抽空从头到位彻底分析一下。<br>
+          
+      
+    </div>
+    
+    <div class="article-info article-info-index">
+      
+      
+    <div class="article-category tagcloud">
+    <a class="article-category-link" href="/categories/Android技术点/">Android技术点</a>
+    </div>
+
+
+      
+    <div class="article-tag tagcloud">
+        <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/消息/">消息</a></li></ul>
+    </div>
+
+      
+        <p class="article-more-link">
+          <a href="/2016/07/31/Android消息机制零散分析/#more">阅读全文 >></a>
+        </p>
+      
+      <div class="clearfix"></div>
+    </div>
+    
+  </div>
+  
+</article>
+
+
+
+
+
+
+
+
+
+  
     <article id="post-浅析Bitmap占据内存大小" class="article article-type-post" itemscope itemprop="blogPost">
   
     <div class="article-meta">
@@ -324,7 +391,7 @@
 
       
         <p class="article-more-link">
-          <a href="/2016/07/12/浅析Bitmap占据内存大小/#more">more >></a>
+          <a href="/2016/07/12/浅析Bitmap占据内存大小/#more">阅读全文 >></a>
         </p>
       
       <div class="clearfix"></div>
@@ -391,7 +458,7 @@
 
       
         <p class="article-more-link">
-          <a href="/2016/07/02/DanmakuFlameMaster简单分析/#more">more >></a>
+          <a href="/2016/07/02/DanmakuFlameMaster简单分析/#more">阅读全文 >></a>
         </p>
       
       <div class="clearfix"></div>
@@ -460,7 +527,7 @@
 
       
         <p class="article-more-link">
-          <a href="/2016/06/24/Android属性动画原理分析/#more">more >></a>
+          <a href="/2016/06/24/Android属性动画原理分析/#more">阅读全文 >></a>
         </p>
       
       <div class="clearfix"></div>
@@ -531,7 +598,7 @@
 
       
         <p class="article-more-link">
-          <a href="/2016/06/12/Binder简要分析/#more">more >></a>
+          <a href="/2016/06/12/Binder简要分析/#more">阅读全文 >></a>
         </p>
       
       <div class="clearfix"></div>
@@ -597,7 +664,7 @@
 
       
         <p class="article-more-link">
-          <a href="/2016/06/06/移动直播技术秒开优化经验/#more">more >></a>
+          <a href="/2016/06/06/移动直播技术秒开优化经验/#more">阅读全文 >></a>
         </p>
       
       <div class="clearfix"></div>
@@ -663,7 +730,7 @@
 
       
         <p class="article-more-link">
-          <a href="/2016/05/27/博客搭建历程/#more">more >></a>
+          <a href="/2016/05/27/博客搭建历程/#more">阅读全文 >></a>
         </p>
       
       <div class="clearfix"></div>
@@ -729,7 +796,7 @@
 
       
         <p class="article-more-link">
-          <a href="/2016/05/27/新的开始/#more">more >></a>
+          <a href="/2016/05/27/新的开始/#more">阅读全文 >></a>
         </p>
       
       <div class="clearfix"></div>
