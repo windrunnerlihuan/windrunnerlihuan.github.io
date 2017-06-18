@@ -1,0 +1,1478 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+  <meta name="google-site-verification" content="3Gndr5oonivG3ajghQU1MgL0IHoMHT4esMsPKjnbeis" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+    
+    
+    <link href="//fonts.lug.ustc.edu.cn/css?family=Monda:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Lobster Two:300,300italic,400,400italic,700,700italic|PT Mono:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="SurfaceFlinger," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="April is your lie" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/images/favicon.ico?v=5.1.1" />
+
+
+
+
+
+
+<meta name="description" content="&amp;#160; &amp;#160; &amp;#160; &amp;#160;这次需要了解一下SurfaceFlinger创建Surface的流程，可能比较短，因为后面GraphicBuffer管理可能会比较多。另外，应用层创建Surface以后会继续学习，并且流畅会比较长，因为设计到了WMS等等。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android SurfaceFlinger 学习之路(六)----SurfaceFlinger创建Surface">
+<meta property="og:url" content="http://windrunnerlihuan.com/2017/06/17/Android-SurfaceFlinger-学习之路-六-SurfaceFlinger创建Surface/index.html">
+<meta property="og:site_name" content="April is your lie">
+<meta property="og:description" content="&amp;#160; &amp;#160; &amp;#160; &amp;#160;这次需要了解一下SurfaceFlinger创建Surface的流程，可能比较短，因为后面GraphicBuffer管理可能会比较多。另外，应用层创建Surface以后会继续学习，并且流畅会比较长，因为设计到了WMS等等。">
+<meta property="og:image" content="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E5%85%AD%29----SurfaceFlinger%E5%88%9B%E5%BB%BASurface/life.jpg">
+<meta property="og:image" content="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E5%85%AD%29----SurfaceFlinger%E5%88%9B%E5%BB%BASurface/surface.jpg">
+<meta property="og:image" content="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E5%85%AD%29----SurfaceFlinger%E5%88%9B%E5%BB%BASurface/composition.png">
+<meta property="og:image" content="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E5%85%AD%29----SurfaceFlinger%E5%88%9B%E5%BB%BASurface/layeruml.jpg">
+<meta property="og:image" content="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E5%85%AD%29----SurfaceFlinger%E5%88%9B%E5%BB%BASurface/SurfaceControl.jpg">
+<meta property="og:image" content="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E5%85%AD%29----SurfaceFlinger%E5%88%9B%E5%BB%BASurface/meizi.jpg">
+<meta property="og:updated_time" content="2017-06-18T15:57:27.668Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Android SurfaceFlinger 学习之路(六)----SurfaceFlinger创建Surface">
+<meta name="twitter:description" content="&amp;#160; &amp;#160; &amp;#160; &amp;#160;这次需要了解一下SurfaceFlinger创建Surface的流程，可能比较短，因为后面GraphicBuffer管理可能会比较多。另外，应用层创建Surface以后会继续学习，并且流畅会比较长，因为设计到了WMS等等。">
+<meta name="twitter:image" content="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E5%85%AD%29----SurfaceFlinger%E5%88%9B%E5%BB%BASurface/life.jpg">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    sidebar: {"position":"right","display":"post","offset":12,"offset_float":0,"b2t":false,"scrollpercent":false},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://windrunnerlihuan.com/2017/06/17/Android-SurfaceFlinger-学习之路-六-SurfaceFlinger创建Surface/"/>
+
+
+
+
+
+  <title>Android SurfaceFlinger 学习之路(六)----SurfaceFlinger创建Surface | April is your lie</title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-100464707-1', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?bb4df6db80a16ce54c1fb2c6e1767e18";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+  <script type="text/javascript">
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//tajs.qq.com/stats?sId=62459705";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+<script>
+  	var _mtac = {};
+  	(function() {
+  		var mta = document.createElement("script");
+  		mta.src = "https://pingjs.qq.com/h5/stats.js?v2.0.4";
+  		mta.setAttribute("name", "MTAH5");
+  		mta.setAttribute("sid", "500465801");
+
+  		var s = document.getElementsByTagName("script")[0];
+  		s.parentNode.insertBefore(mta, s);
+  	})();
+</script>
+
+
+
+
+  <div style="display: none;">
+    <script src="//s95.cnzz.com/z_stat.php?id=1262111741&web_id=1262111741" language="JavaScript"></script>
+  </div>
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-right page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">April is your lie</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <h1 class="site-subtitle" itemprop="description">四月是你的谎言</h1>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off"
+             placeholder="搜索..." spellcheck="false"
+             type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://windrunnerlihuan.com/2017/06/17/Android-SurfaceFlinger-学习之路-六-SurfaceFlinger创建Surface/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="windrunnerlihuan">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="April is your lie">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">Android SurfaceFlinger 学习之路(六)----SurfaceFlinger创建Surface</h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-06-17T19:57:29+08:00">
+                2017-06-17
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Android技术点/" itemprop="url" rel="index">
+                    <span itemprop="name">Android技术点</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a class="cloud-tie-join-count" href="/2017/06/17/Android-SurfaceFlinger-学习之路-六-SurfaceFlinger创建Surface/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count join-count" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+             <span id="/2017/06/17/Android-SurfaceFlinger-学习之路-六-SurfaceFlinger创建Surface/" class="leancloud_visitors" data-flag-title="Android SurfaceFlinger 学习之路(六)----SurfaceFlinger创建Surface">
+               <span class="post-meta-divider">|</span>
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               
+                 <span class="post-meta-item-text">阅读次数 </span>
+               
+                 <span class="leancloud-visitors-count"></span>
+             </span>
+          
+
+          
+            <span class="post-meta-divider">|</span>
+            <span class="page-pv"><i class="fa fa-file-o"></i>
+            <span class="busuanzi-value" id="busuanzi_value_page_pv" ></span>
+            </span>
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>&#160; &#160; &#160; &#160;这次需要了解一下SurfaceFlinger创建Surface的流程，可能比较短，因为后面GraphicBuffer管理<strong>可能</strong>会比较多。另外，应用层创建Surface以后会继续学习，并且流畅会比较长，因为设计到了WMS等等。<br><a id="more"></a></p>
+<p><img src="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E5%85%AD%29----SurfaceFlinger%E5%88%9B%E5%BB%BASurface/life.jpg" alt="life"></p>
+<h1 id="图层分析"><a href="#图层分析" class="headerlink" title="图层分析"></a>图层分析</h1><p>&#160; &#160; &#160; &#160;在分析Android应用程序请求SurfaceFlinger创建Surface之前，我们首先了解一下Surface是由什么组成的。<strong>我们可以将Surface理解为一个绘图表面，Android应用程序负责往这个绘图表面上填内容，而SurfaceFlinger服务负责将这个绘图表面的内容取出来，并且渲染在显示屏上</strong>。</p>
+<h2 id="猜测"><a href="#猜测" class="headerlink" title="猜测"></a>猜测</h2><p>&#160; &#160; &#160; &#160;每个应用程序对应着一个或者多个图形界面，而每一个界面我们称之为surface，或者说是window，如下图：</p>
+<p><img src="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E5%85%AD%29----SurfaceFlinger%E5%88%9B%E5%BB%BASurface/surface.jpg" alt="surface"></p>
+<p>&#160; &#160; &#160; &#160;上图我们可以看到三个surface，在这里我们需要弄明白的问题是：</p>
+<ol>
+<li>每个surface在屏幕上有它的位置、大小，然后每个surface 里面还有要显示的内容，内容、大小、位置 这些元素，在我们改变应用程序的时候都可能会改变，改变时应该如何处理？</li>
+<li>然后就各个surface 之间可能有重叠，比如说在上面的简略图中，灰色覆盖了橙色，绿色覆盖了橙色 ，而且还具有一定透明度。这种层之间的关系应该如何描述？</li>
+</ol>
+<p>&#160; &#160; &#160; &#160;对于第一个问题，我们需要一个结构来记录应用程序界面的位置，大小，以及一个buffer 来记录需要显示的内容，所以这就是我们surface 的概念，surface 实际我们可以把它理解成一个容器，这个容器记录着应用程序界面的控制信息，比如说大小啊，位置啊，而它还有buffer 来专门存储需要显示的内容。<br>&#160; &#160; &#160; &#160;对于第二个问题，我们可以想象在屏幕平面的垂直方向还有一个Z 轴，所有的surface 根据在Z 轴上的坐标来确定前后，这样就可以描述各个surface 之间的上下覆盖关系了，而这个在Z 轴上的顺序，图形上有个专业术语叫<strong>Z-order</strong> 。</p>
+<p>&#160; &#160; &#160; &#160;在这里还存在一个问题，那就是当存在图形重合的时候应该如何处理呢，而且可能有些surface 还带有透明信息，这里就是我们SurfaceFlinger 需要解决问题，它要把各个surface 组合(compose/merge) 成一个main Surface ，最后将Main Surface 的内容发送给FB，这样屏幕上就能看到我们想要的效果。</p>
+<p><img src="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E5%85%AD%29----SurfaceFlinger%E5%88%9B%E5%BB%BASurface/composition.png" alt="compositon"></p>
+<h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>&#160; &#160; &#160; &#160;在Android中，Window与<strong>Surface</strong>一一对应。 如果说Window关心的是层次和布局，是从设计者角度定义的类，Surface则从实现角度出发，是工程师关系和考虑的类。Window的内容是变化 的，Surface需要有空间来记录每个时刻Window的内容。在Android的SurfaceFlinger实现里，通常一个Surface有两块 Buffer, 一块用于绘画，一块用于显示，两个Buffer按照固定的频率进行交换，从而实现Window的动态刷新。</p>
+<p>&#160; &#160; &#160; &#160;但是，<strong>在SurfaceFlinger服务这一侧，绘图表面使用Layer类来描述</strong>。<strong>Layer</strong>是SurfaceFlinger 进行合成的基本操作单元。Layer在应用请求创建Surface的时候在SurfaceFlinger内部创建，因此一个Surface对应一个 Layer, 但注意，Surface不一定对应于Window，Android中有些Surface并不跟某个Window相关，而是有程序直接创建，比如说 StrictMode， 一块红色的背景，用于提示示Java代码中的一些异常, 还有SurfaceView, 用于显示有硬件输出的视频内容等。</p>
+<p>&#160; &#160; &#160; &#160;Each Layer has：</p>
+<ul>
+<li>Z order</li>
+<li>Alpha value from 0 to 255</li>
+<li>visibleRegion</li>
+<li>crop region</li>
+<li>transformation: rotate 0, 90, 180, 270: flip H, V: scale</li>
+</ul>
+<p>&#160; &#160; &#160; &#160;当多个Layer进行合成的时候，并不是整个Layer的空间都会被完全显示，根据这个Layer最终的显示效果，一个Layer可以被划分成很多的Region, Android SurfaceFlinger 定义了以下一些Region类型：</p>
+<ul>
+<li>TransparantRegion： 完全透明的区域，在它之下的区域将被显示出来。</li>
+<li>OpaqueRegion: 完全不透明的区域，是否显示取决于它上面是否有遮挡或是否透明。</li>
+<li>VisibleRegion: 可见区域，包括完全不透明无遮挡区域或半透明区域。 visibleRegion = Region - above OpaqueRegion.</li>
+<li>CoveredRegion: 被遮挡区域，在它之上，有不透明或半透明区域。</li>
+<li>DirtyRegion: 可见部分改变区域，包括新的被遮挡区域，和新的露出区域。</li>
+</ul>
+<p>&#160; &#160; &#160; &#160;Android 系统支持多种显示设备，比如说，输出到手机屏幕，或者通过WiFi 投射到电视屏幕。Android用DisplayDevice类来表示这样的设备。不是所有的Layer都会输出到所有的Display, 比如说，我们可以只将Video Layer投射到电视， 而非整个屏幕。<strong>LayerStack</strong> 就是为此设计，LayerStack 是一个Display 对象的一个数值， 而类Layer里成员State结构体也有成员变量mLayerStack， 只有两者的mLayerStack 值相同，Layer才会被输出到给该Display设备。所以LayerStack 决定了每个Display设备上可以显示的Layer数目。</p>
+<p>&#160; &#160; &#160; &#160;SurfaceFlinger的工作内容，就是定期检查所有Layer的参数更新（LayerStack等），计算新的DirtyRegion， 然后将结果推送给底层显示驱动进行显示。这里面有很多的细节，我们将在后续会专门研究。</p>
+<p>&#160; &#160; &#160; &#160;上面描述的几个概念，均是针对于显示这个层面，更多是涉及到中下层模块，应用层并不参与也无需关心。对于应用而言，它关心的是如何将内容画出来。Canvas 是Java层定义的一个类，它对应与Surface上的某个区域并提供了很多的2D绘制函数（借助于底层的Skia或OpenGL)。应用只需通过 LockCanvas() 来获取一个Canvas对象，并调用它的绘画方法，然后 unLockCanvasAndPost（）来通知底层将更新内容进行显示。当然，并不是所有应用程序都需要直接操作Canva， 事实上只有少量应用需要直接操作Canvas, Android提供了很多封装好的控件 Widget，应用只需提供素材，如文字，图片，属性等等，这些控件会调用Canvas提供的接口帮用户完成绘制工作。</p>
+<p>&#160; &#160; &#160; &#160;SurfaceFlinger 是一个独立的Service， 它接收所有Window的Surface作为输入，根据Z-Order， 透明度，大小，位置等参数，计算出每个Surface在最终合成图像中的位置，然后交由HWComposer或OpenGL生成最终的显示Buffer, 然后显示到特定的显示设备上。</p>
+<h1 id="Surface创建流程"><a href="#Surface创建流程" class="headerlink" title="Surface创建流程"></a>Surface创建流程</h1><h2 id="SurfaceFlinger服务侧Layer创建"><a href="#SurfaceFlinger服务侧Layer创建" class="headerlink" title="SurfaceFlinger服务侧Layer创建"></a>SurfaceFlinger服务侧Layer创建</h2><p>&#160; &#160; &#160; &#160;上面我们提，<strong>到在SurfaceFlinger服务这一侧，绘图表面使用Layer类来描述</strong>。</p>
+<p><img src="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E5%85%AD%29----SurfaceFlinger%E5%88%9B%E5%BB%BASurface/layeruml.jpg" alt="Layer"></p>
+<p>&#160; &#160; &#160; &#160;Layer类内部定义了两个结构体Geometry、State，位于frameworks/native/services/surfaceflinger/Layer.h中：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> Geometry &#123;</span><br><span class="line">    <span class="keyword">uint32_t</span> w;</span><br><span class="line">    <span class="keyword">uint32_t</span> h;</span><br><span class="line">    Rect crop;</span><br><span class="line">    <span class="keyword">inline</span> <span class="keyword">bool</span> <span class="keyword">operator</span> ==(<span class="keyword">const</span> Geometry&amp; rhs) <span class="keyword">const</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> (w == rhs.w &amp;&amp; h == rhs.h &amp;&amp; crop == rhs.crop);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">inline</span> <span class="keyword">bool</span> <span class="keyword">operator</span> !=(<span class="keyword">const</span> Geometry&amp; rhs) <span class="keyword">const</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> !<span class="keyword">operator</span> ==(rhs);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">struct</span> State &#123;</span><br><span class="line">    Geometry active;</span><br><span class="line">    Geometry requested;</span><br><span class="line">    <span class="keyword">uint32_t</span> z;</span><br><span class="line">    <span class="keyword">uint32_t</span> layerStack;</span><br><span class="line">    <span class="keyword">uint8_t</span> alpha;</span><br><span class="line">    <span class="keyword">uint8_t</span> flags;</span><br><span class="line">    <span class="keyword">uint8_t</span> reserved[<span class="number">2</span>];</span><br><span class="line">    <span class="keyword">int32_t</span> sequence; <span class="comment">// changes when visible regions can change</span></span><br><span class="line">    Transform transform;</span><br><span class="line">    <span class="comment">// the transparentRegion hint is a bit special, it's latched only</span></span><br><span class="line">    <span class="comment">// when we receive a buffer -- this is because it's "content"</span></span><br><span class="line">    <span class="comment">// dependent.</span></span><br><span class="line">    Region activeTransparentRegion;</span><br><span class="line">    Region requestedTransparentRegion;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;用变量mCurrentState和mDrawingState连个类型为State的成员变量保存当前和上一次的绘制状态，记录大小、可视区域、透明度、标志位、z-order等信息。</p>
+<p>&#160; &#160; &#160; &#160;我们可以回顾一下以前 <a href="http://windrunnerlihuan.com/2017/05/02/Android-SurfaceFlinger-%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF-%E4%B8%89-Android%E5%BC%80%E6%9C%BA%E5%8A%A8%E7%94%BB%E6%B5%81%E7%A8%8B%E7%AE%80%E8%BF%B0/">Android SurfaceFlinger 学习之路(三)—-Android开机动画流程简述</a> ，开机动画中创建surface流程位于BootAnimation.cpp的readyToRun函数，位于frameworks/base/cmds/bootanimation/BootAnimation.cpp中：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">status_t</span> BootAnimation::readyToRun() &#123;</span><br><span class="line">    ......</span><br><span class="line">    <span class="comment">// create the native surface</span></span><br><span class="line">    sp&lt;SurfaceControl&gt; control = session()-&gt;createSurface(String8(<span class="string">"BootAnimation"</span>),</span><br><span class="line">            dinfo.w, dinfo.h, PIXEL_FORMAT_RGB_565);</span><br><span class="line"></span><br><span class="line">    SurfaceComposerClient::openGlobalTransaction();</span><br><span class="line">    control-&gt;setLayer(<span class="number">0x40000000</span>);</span><br><span class="line">    SurfaceComposerClient::closeGlobalTransaction();</span><br><span class="line"></span><br><span class="line">    sp&lt;Surface&gt; s = control-&gt;getSurface();</span><br><span class="line">   </span><br><span class="line">    ......</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">sp&lt;SurfaceComposerClient&gt; BootAnimation::session() <span class="keyword">const</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> mSession;</span><br><span class="line">&#125;</span><br><span class="line">BootAnimation::BootAnimation() : Thread(<span class="literal">false</span>), mZip(<span class="literal">NULL</span>)</span><br><span class="line">&#123;</span><br><span class="line">    mSession = <span class="keyword">new</span> SurfaceComposerClient();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;这里session函数返回一个SurfaceComposerClient对象，在<a href="http://windrunnerlihuan.com/2017/05/13/Android-SurfaceFlinger-%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF-%E5%9B%9B-SurfaceFlinger%E6%9C%8D%E5%8A%A1%E7%9A%84%E5%90%AF%E5%8A%A8%E4%B8%8E%E8%BF%9E%E6%8E%A5%E8%BF%87%E7%A8%8B/">Android SurfaceFlinger 学习之路(四)—-SurfaceFlinger服务的启动与连接过程</a>一文中，我们已经看到过SurfaceComposerClient类的作用了，Android应用程序主要就是通过它来和SurfaceFlinger服务建立连接的，连接的结果就是得到一个类型为Client的Binder代理对象，保存它的成员变量mClient中。<br>&#160; &#160; &#160; &#160;我们查看SurfaceComposerClient的createSurface函数，位于frameworks/native/libs/gui/SurfaceComposerClient.cpp中：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">sp&lt;SurfaceControl&gt; SurfaceComposerClient::createSurface(</span><br><span class="line">        <span class="keyword">const</span> String8&amp; name,</span><br><span class="line">        <span class="keyword">uint32_t</span> w,</span><br><span class="line">        <span class="keyword">uint32_t</span> h,</span><br><span class="line">        PixelFormat format,</span><br><span class="line">        <span class="keyword">uint32_t</span> flags)</span><br><span class="line">&#123;</span><br><span class="line">    sp&lt;SurfaceControl&gt; sur;</span><br><span class="line">    <span class="keyword">if</span> (mStatus == NO_ERROR) &#123;</span><br><span class="line">        sp&lt;IBinder&gt; handle;</span><br><span class="line">        sp&lt;IGraphicBufferProducer&gt; gbp;</span><br><span class="line">        <span class="comment">//我们先分析这里，里面有创建Layer的部分</span></span><br><span class="line">        <span class="keyword">status_t</span> err = mClient-&gt;createSurface(name, w, h, format, flags,</span><br><span class="line">                &amp;handle, &amp;gbp);</span><br><span class="line">        ALOGE_IF(err, <span class="string">"SurfaceComposerClient::createSurface error %s"</span>, strerror(-err));</span><br><span class="line">        <span class="keyword">if</span> (err == NO_ERROR) &#123;</span><br><span class="line">            sur = <span class="keyword">new</span> SurfaceControl(<span class="keyword">this</span>, handle, gbp);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> sur;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;因此又要到Client的createSurface函数中，位于frameworks/native/services/surfaceflinger/Client.cpp中：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">status_t</span> Client::createSurface(</span><br><span class="line">        <span class="keyword">const</span> String8&amp; name,</span><br><span class="line">        <span class="keyword">uint32_t</span> w, <span class="keyword">uint32_t</span> h, PixelFormat format, <span class="keyword">uint32_t</span> flags,</span><br><span class="line">        sp&lt;IBinder&gt;* handle,</span><br><span class="line">        sp&lt;IGraphicBufferProducer&gt;* gbp)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">/*</span><br><span class="line">     * createSurface must be called from the GL thread so that it can</span><br><span class="line">     * have access to the GL context.</span><br><span class="line">     */</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">class</span> MessageCreateLayer : <span class="keyword">public</span> MessageBase &#123;</span><br><span class="line">        SurfaceFlinger* flinger;</span><br><span class="line">        Client* client;</span><br><span class="line">        sp&lt;IBinder&gt;* handle;</span><br><span class="line">        sp&lt;IGraphicBufferProducer&gt;* gbp;</span><br><span class="line">        <span class="keyword">status_t</span> result;</span><br><span class="line">        <span class="keyword">const</span> String8&amp; name;</span><br><span class="line">        <span class="keyword">uint32_t</span> w, h;</span><br><span class="line">        PixelFormat format;</span><br><span class="line">        <span class="keyword">uint32_t</span> flags;</span><br><span class="line">    <span class="keyword">public</span>:</span><br><span class="line">        MessageCreateLayer(SurfaceFlinger* flinger,</span><br><span class="line">                <span class="keyword">const</span> String8&amp; name, Client* client,</span><br><span class="line">                <span class="keyword">uint32_t</span> w, <span class="keyword">uint32_t</span> h, PixelFormat format, <span class="keyword">uint32_t</span> flags,</span><br><span class="line">                sp&lt;IBinder&gt;* handle,</span><br><span class="line">                sp&lt;IGraphicBufferProducer&gt;* gbp)</span><br><span class="line">            : flinger(flinger), client(client),</span><br><span class="line">              handle(handle), gbp(gbp),</span><br><span class="line">              name(name), w(w), h(h), format(format), flags(flags) &#123;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">status_t</span> getResult() <span class="keyword">const</span> &#123; <span class="keyword">return</span> result; &#125;</span><br><span class="line">        <span class="function"><span class="keyword">virtual</span> <span class="keyword">bool</span> <span class="title">handler</span><span class="params">()</span> </span>&#123;</span><br><span class="line">            <span class="comment">//给SurfaceFlinger的MessageQueue发送同步消息，createLayer函数被调用</span></span><br><span class="line">            result = flinger-&gt;createLayer(name, client, w, h, format, flags,</span><br><span class="line">                    handle, gbp);</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line">    sp&lt;MessageBase&gt; msg = <span class="keyword">new</span> MessageCreateLayer(mFlinger.get(),</span><br><span class="line">            name, <span class="keyword">this</span>, w, h, format, flags, handle, gbp);</span><br><span class="line">    mFlinger-&gt;postMessageSync(msg);</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">static_cast</span>&lt;MessageCreateLayer*&gt;( msg.get() )-&gt;getResult();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;给SurfaceFlinger的MessageQueue发送同步消息，createLayer函数被调用，位于frameworks/native/services/surfaceflinger/SurfaceFlinger.cpp中：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">status_t</span> SurfaceFlinger::createLayer(</span><br><span class="line">        <span class="keyword">const</span> String8&amp; name,</span><br><span class="line">        <span class="keyword">const</span> sp&lt;Client&gt;&amp; client,</span><br><span class="line">        <span class="keyword">uint32_t</span> w, <span class="keyword">uint32_t</span> h, PixelFormat format, <span class="keyword">uint32_t</span> flags,</span><br><span class="line">        sp&lt;IBinder&gt;* handle, sp&lt;IGraphicBufferProducer&gt;* gbp)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">//ALOGD("createLayer for (%d x %d), name=%s", w, h, name.string());</span></span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">int32_t</span>(w|h) &lt; <span class="number">0</span>) &#123;</span><br><span class="line">        ALOGE(<span class="string">"createLayer() failed, w or h is negative (w=%d, h=%d)"</span>,</span><br><span class="line">                <span class="keyword">int</span>(w), <span class="keyword">int</span>(h));</span><br><span class="line">        <span class="keyword">return</span> BAD_VALUE;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">status_t</span> result = NO_ERROR;</span><br><span class="line"></span><br><span class="line">    sp&lt;Layer&gt; layer;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">switch</span> (flags &amp; ISurfaceComposerClient::eFXSurfaceMask) &#123;</span><br><span class="line">        <span class="keyword">case</span> ISurfaceComposerClient::eFXSurfaceNormal:</span><br><span class="line">            <span class="comment">//创建普通的Layer</span></span><br><span class="line">            result = createNormalLayer(client,</span><br><span class="line">                    name, w, h, flags, format,</span><br><span class="line">                    handle, gbp, &amp;layer);</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        <span class="keyword">case</span> ISurfaceComposerClient::eFXSurfaceDim:</span><br><span class="line">            <span class="comment">////创建模糊的Layer</span></span><br><span class="line">            result = createDimLayer(client,</span><br><span class="line">                    name, w, h, flags,</span><br><span class="line">                    handle, gbp, &amp;layer);</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        <span class="keyword">default</span>:</span><br><span class="line">            result = BAD_VALUE;</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (result == NO_ERROR) &#123;</span><br><span class="line">        <span class="comment">//将创建的Layer按顺序添加进list中，我们以后讲z-order会讲</span></span><br><span class="line">        addClientLayer(client, *handle, *gbp, layer);</span><br><span class="line">        <span class="comment">//修改标志位</span></span><br><span class="line">        setTransactionFlags(eTransactionNeeded);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> result;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;这里会根据传进来的flag判断创建什么类型的Layer，一个是普通的，一个是模糊的Layer。这里我们只看看普通的Layer，createNormalLayer函数。<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">status_t</span> SurfaceFlinger::createNormalLayer(<span class="keyword">const</span> sp&lt;Client&gt;&amp; client,</span><br><span class="line">        <span class="keyword">const</span> String8&amp; name, <span class="keyword">uint32_t</span> w, <span class="keyword">uint32_t</span> h, <span class="keyword">uint32_t</span> flags, PixelFormat&amp; format,</span><br><span class="line">        sp&lt;IBinder&gt;* handle, sp&lt;IGraphicBufferProducer&gt;* gbp, sp&lt;Layer&gt;* outLayer)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// initialize the surfaces</span></span><br><span class="line">    <span class="keyword">switch</span> (format) &#123;<span class="comment">//像素格式</span></span><br><span class="line">    <span class="keyword">case</span> PIXEL_FORMAT_TRANSPARENT:</span><br><span class="line">    <span class="keyword">case</span> PIXEL_FORMAT_TRANSLUCENT:</span><br><span class="line">        format = PIXEL_FORMAT_RGBA_8888;</span><br><span class="line">        <span class="keyword">break</span>;</span><br><span class="line">    <span class="keyword">case</span> PIXEL_FORMAT_OPAQUE:</span><br><span class="line">        format = PIXEL_FORMAT_RGBX_8888;</span><br><span class="line">        <span class="keyword">break</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//创建一个Layer对象</span></span><br><span class="line">    *outLayer = <span class="keyword">new</span> Layer(<span class="keyword">this</span>, client, name, w, h, flags);</span><br><span class="line">    <span class="comment">//调用Layer的setBuffers函数，这只一些变量</span></span><br><span class="line">    <span class="keyword">status_t</span> err = (*outLayer)-&gt;setBuffers(w, h, format, flags);</span><br><span class="line">    <span class="keyword">if</span> (err == NO_ERROR) &#123;</span><br><span class="line">        <span class="comment">//给成员变量handle和gbp赋值</span></span><br><span class="line">        *handle = (*outLayer)-&gt;getHandle();</span><br><span class="line">        *gbp = (*outLayer)-&gt;getProducer();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    ALOGE_IF(err, <span class="string">"createNormalLayer() failed (%s)"</span>, strerror(-err));</span><br><span class="line">    <span class="keyword">return</span> err;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;这里创建了一个Layer对象，我们可以看看Layer的构造函数，位于frameworks/native/services/surfaceflinger/Layer.cpp中：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br></pre></td><td class="code"><pre><span class="line">Layer::Layer(SurfaceFlinger* flinger, <span class="keyword">const</span> sp&lt;Client&gt;&amp; client,</span><br><span class="line">        <span class="keyword">const</span> String8&amp; name, <span class="keyword">uint32_t</span> w, <span class="keyword">uint32_t</span> h, <span class="keyword">uint32_t</span> flags)</span><br><span class="line">    :   contentDirty(<span class="literal">false</span>),</span><br><span class="line">        sequence(<span class="keyword">uint32_t</span>(android_atomic_inc(&amp;sSequence))),</span><br><span class="line">        mFlinger(flinger),</span><br><span class="line">        mTextureName(<span class="number">-1</span>U),</span><br><span class="line">        mPremultipliedAlpha(<span class="literal">true</span>),</span><br><span class="line">        mName(<span class="string">"unnamed"</span>),</span><br><span class="line">        mDebug(<span class="literal">false</span>),</span><br><span class="line">        mFormat(PIXEL_FORMAT_NONE),</span><br><span class="line">        mTransactionFlags(<span class="number">0</span>),</span><br><span class="line">        mQueuedFrames(<span class="number">0</span>),</span><br><span class="line">        mSidebandStreamChanged(<span class="literal">false</span>),</span><br><span class="line">        mCurrentTransform(<span class="number">0</span>),</span><br><span class="line">        mCurrentScalingMode(NATIVE_WINDOW_SCALING_MODE_FREEZE),</span><br><span class="line">        mCurrentOpacity(<span class="literal">true</span>),</span><br><span class="line">        mRefreshPending(<span class="literal">false</span>),</span><br><span class="line">        mFrameLatencyNeeded(<span class="literal">false</span>),</span><br><span class="line">        mFiltering(<span class="literal">false</span>),</span><br><span class="line">        mNeedsFiltering(<span class="literal">false</span>),</span><br><span class="line">        mMesh(Mesh::TRIANGLE_FAN, <span class="number">4</span>, <span class="number">2</span>, <span class="number">2</span>),</span><br><span class="line">        mSecure(<span class="literal">false</span>),</span><br><span class="line">        mProtectedByApp(<span class="literal">false</span>),</span><br><span class="line">        mHasSurface(<span class="literal">false</span>),</span><br><span class="line">        mClientRef(client),</span><br><span class="line">        mPotentialCursor(<span class="literal">false</span>)</span><br><span class="line">&#123;</span><br><span class="line">    mCurrentCrop.makeInvalid();</span><br><span class="line">    mFlinger-&gt;getRenderEngine().genTextures(<span class="number">1</span>, &amp;mTextureName);</span><br><span class="line">    mTexture.init(Texture::TEXTURE_EXTERNAL, mTextureName);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">uint32_t</span> layerFlags = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">if</span> (flags &amp; ISurfaceComposerClient::eHidden)</span><br><span class="line">        layerFlags |= <span class="keyword">layer_state_t</span>::eLayerHidden;</span><br><span class="line">    <span class="keyword">if</span> (flags &amp; ISurfaceComposerClient::eOpaque)</span><br><span class="line">        layerFlags |= <span class="keyword">layer_state_t</span>::eLayerOpaque;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (flags &amp; ISurfaceComposerClient::eNonPremultiplied)</span><br><span class="line">        mPremultipliedAlpha = <span class="literal">false</span>;</span><br><span class="line"></span><br><span class="line">    mName = name;</span><br><span class="line"></span><br><span class="line">    mCurrentState.active.w = w;</span><br><span class="line">    mCurrentState.active.h = h;</span><br><span class="line">    mCurrentState.active.crop.makeInvalid();</span><br><span class="line">    mCurrentState.z = <span class="number">0</span>;</span><br><span class="line">    mCurrentState.alpha = <span class="number">0xFF</span>;</span><br><span class="line">    mCurrentState.layerStack = <span class="number">0</span>;</span><br><span class="line">    mCurrentState.flags = layerFlags;</span><br><span class="line">    mCurrentState.sequence = <span class="number">0</span>;</span><br><span class="line">    mCurrentState.transform.<span class="built_in">set</span>(<span class="number">0</span>, <span class="number">0</span>);</span><br><span class="line">    mCurrentState.requested = mCurrentState.active;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// drawing state &amp; current state are identical</span></span><br><span class="line">    mDrawingState = mCurrentState;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">nsecs_t</span> displayPeriod =</span><br><span class="line">            flinger-&gt;getHwComposer().getRefreshPeriod(HWC_DISPLAY_PRIMARY);</span><br><span class="line">    mFrameTracker.setDisplayRefreshPeriod(displayPeriod);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;Layer的构造函数中就是给一些变量赋了初值，事情不多。<br>&#160; &#160; &#160; &#160;我们从上面的类图看到Layer间接继承于RefBase类，所以对象第一次被赋值给强指针会调用onFirstRef函数，我们看看它里面做了那些事情：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">void</span> Layer::onFirstRef() &#123;</span><br><span class="line">    <span class="comment">// Creates a custom BufferQueue for SurfaceFlingerConsumer to use</span></span><br><span class="line">    sp&lt;IGraphicBufferProducer&gt; producer;</span><br><span class="line">    sp&lt;IGraphicBufferConsumer&gt; consumer;</span><br><span class="line">    <span class="comment">//BufferQueue创建图形缓冲区管理成员，我们以后分析图形缓冲区管理会讲到</span></span><br><span class="line">    BufferQueue::createBufferQueue(&amp;producer, &amp;consumer);</span><br><span class="line">    <span class="comment">//mProducer 不为空了，赋值</span></span><br><span class="line">    mProducer = <span class="keyword">new</span> MonitoredProducer(producer, mFlinger);</span><br><span class="line">    <span class="comment">//mSurfaceFlingerConsumer 不为空了，赋值</span></span><br><span class="line">    mSurfaceFlingerConsumer = <span class="keyword">new</span> SurfaceFlingerConsumer(consumer, mTextureName);</span><br><span class="line">    <span class="comment">//设置消费者相关设置</span></span><br><span class="line">    mSurfaceFlingerConsumer-&gt;setConsumerUsageBits(getEffectiveUsage(<span class="number">0</span>));</span><br><span class="line">    mSurfaceFlingerConsumer-&gt;setContentsChangedListener(<span class="keyword">this</span>);</span><br><span class="line">    mSurfaceFlingerConsumer-&gt;setName(mName);</span><br><span class="line">    </span><br><span class="line"><span class="comment">// TARGET_DISABLE_TRIPLE_BUFFERING为false，所以使用了三缓冲，project butter计划嘛</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">ifdef</span> TARGET_DISABLE_TRIPLE_BUFFERING</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">warning</span> <span class="string">"disabling triple buffering"</span></span></span><br><span class="line">    mSurfaceFlingerConsumer-&gt;setDefaultMaxBufferCount(<span class="number">2</span>);</span><br><span class="line"><span class="meta">#<span class="meta-keyword">else</span></span></span><br><span class="line">    mSurfaceFlingerConsumer-&gt;setDefaultMaxBufferCount(<span class="number">3</span>);</span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br><span class="line">    <span class="comment">//获取默认显示器</span></span><br><span class="line">    <span class="keyword">const</span> sp&lt;<span class="keyword">const</span> DisplayDevice&gt; hw(mFlinger-&gt;getDefaultDisplayDevice());</span><br><span class="line">    <span class="comment">//更新显示图像方向</span></span><br><span class="line">    updateTransformHint(hw);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;onFirstRef函数中做的事情主要是创建图形缓冲区管理成员相关，这个我们后面会讲到。<br>&#160; &#160; &#160; &#160;然后就是根据“黄油计划”定义了三缓冲，以及显示器方向的调整。</p>
+<p>&#160; &#160; &#160; &#160;Layer对象创建完后，就调用Layer的setBuffers函数：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">status_t</span> Layer::setBuffers( <span class="keyword">uint32_t</span> w, <span class="keyword">uint32_t</span> h,</span><br><span class="line">                            PixelFormat format, <span class="keyword">uint32_t</span> flags)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">uint32_t</span> <span class="keyword">const</span> maxSurfaceDims = min(</span><br><span class="line">            mFlinger-&gt;getMaxTextureSize(), mFlinger-&gt;getMaxViewportDims());</span><br><span class="line"></span><br><span class="line">    <span class="comment">// never allow a surface larger than what our underlying GL implementation</span></span><br><span class="line">    <span class="comment">// can handle.</span></span><br><span class="line">    <span class="keyword">if</span> ((<span class="keyword">uint32_t</span>(w)&gt;maxSurfaceDims) || (<span class="keyword">uint32_t</span>(h)&gt;maxSurfaceDims)) &#123;</span><br><span class="line">        ALOGE(<span class="string">"dimensions too large %u x %u"</span>, <span class="keyword">uint32_t</span>(w), <span class="keyword">uint32_t</span>(h));</span><br><span class="line">        <span class="keyword">return</span> BAD_VALUE;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    mFormat = format;</span><br><span class="line"></span><br><span class="line">    mPotentialCursor = (flags &amp; ISurfaceComposerClient::eCursorWindow) ? <span class="literal">true</span> : <span class="literal">false</span>;</span><br><span class="line">    mSecure = (flags &amp; ISurfaceComposerClient::eSecure) ? <span class="literal">true</span> : <span class="literal">false</span>;</span><br><span class="line">    mProtectedByApp = (flags &amp; ISurfaceComposerClient::eProtectedByApp) ? <span class="literal">true</span> : <span class="literal">false</span>;</span><br><span class="line">    mCurrentOpacity = getOpacityForFormat(format);</span><br><span class="line"></span><br><span class="line">    mSurfaceFlingerConsumer-&gt;setDefaultBufferSize(w, h);</span><br><span class="line">    mSurfaceFlingerConsumer-&gt;setDefaultBufferFormat(format);</span><br><span class="line">    mSurfaceFlingerConsumer-&gt;setConsumerUsageBits(getEffectiveUsage(<span class="number">0</span>));</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> NO_ERROR;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;这里也是一些变量的设置，东西不多。<br>&#160; &#160; &#160; &#160;然后就是给gbp和handle赋值。gbp已经不为空了，我们在onFirstRef函数中对它付了值。那么我们看看给handle赋值，Layer的getHandle函数：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">sp&lt;IBinder&gt; Layer::getHandle() &#123;</span><br><span class="line">    Mutex::Autolock _l(mLock);</span><br><span class="line"></span><br><span class="line">    LOG_ALWAYS_FATAL_IF(mHasSurface,</span><br><span class="line">            <span class="string">"Layer::getHandle() has already been called"</span>);</span><br><span class="line"></span><br><span class="line">    mHasSurface = <span class="literal">true</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/*</span><br><span class="line">     * The layer handle is just a BBinder object passed to the client</span><br><span class="line">     * (remote process) -- we don't keep any reference on our side such that</span><br><span class="line">     * the dtor is called when the remote side let go of its reference.</span><br><span class="line">     *</span><br><span class="line">     * LayerCleaner ensures that mFlinger-&gt;onLayerDestroyed() is called for</span><br><span class="line">     * this layer when the handle is destroyed.</span><br><span class="line">     */</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">class</span> Handle : <span class="keyword">public</span> BBinder, <span class="keyword">public</span> LayerCleaner &#123;</span><br><span class="line">        wp&lt;<span class="keyword">const</span> Layer&gt; mOwner;</span><br><span class="line">    <span class="keyword">public</span>:</span><br><span class="line">        Handle(<span class="keyword">const</span> sp&lt;SurfaceFlinger&gt;&amp; flinger, <span class="keyword">const</span> sp&lt;Layer&gt;&amp; layer)</span><br><span class="line">            : LayerCleaner(flinger, layer), mOwner(layer) &#123;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> Handle(mFlinger, <span class="keyword">this</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;只是新建一个Handle，而这个Handle只是一个Binder的实现，就是标识Surface的全局唯一性，没有什么实际的内容。</p>
+<p>&#160; &#160; &#160; &#160;上述就是Layer的创建，是基于SurfaceFlinger服务端这一侧。</p>
+<h2 id="应用侧Surface创建"><a href="#应用侧Surface创建" class="headerlink" title="应用侧Surface创建"></a>应用侧Surface创建</h2><p>&#160; &#160; &#160; &#160;我们继续回到上面的SurfaceComposerClient的createSurface函数，为了不往上翻我再贴一遍：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">sp&lt;SurfaceControl&gt; SurfaceComposerClient::createSurface(</span><br><span class="line">        <span class="keyword">const</span> String8&amp; name,</span><br><span class="line">        <span class="keyword">uint32_t</span> w,</span><br><span class="line">        <span class="keyword">uint32_t</span> h,</span><br><span class="line">        PixelFormat format,</span><br><span class="line">        <span class="keyword">uint32_t</span> flags)</span><br><span class="line">&#123;</span><br><span class="line">    sp&lt;SurfaceControl&gt; sur;</span><br><span class="line">    <span class="keyword">if</span> (mStatus == NO_ERROR) &#123;</span><br><span class="line">        sp&lt;IBinder&gt; handle;</span><br><span class="line">        sp&lt;IGraphicBufferProducer&gt; gbp;</span><br><span class="line">        <span class="comment">//上面分析完了SurfaceFlinger创建完了一个Layer</span></span><br><span class="line">        <span class="keyword">status_t</span> err = mClient-&gt;createSurface(name, w, h, format, flags,</span><br><span class="line">                &amp;handle, &amp;gbp);</span><br><span class="line">        ALOGE_IF(err, <span class="string">"SurfaceComposerClient::createSurface error %s"</span>, strerror(-err));</span><br><span class="line">        <span class="keyword">if</span> (err == NO_ERROR) &#123;</span><br><span class="line">            <span class="comment">//根据上面创建Layer时创建的handle和gbp再创建一个SurfaceControl，并返回</span></span><br><span class="line">            sur = <span class="keyword">new</span> SurfaceControl(<span class="keyword">this</span>, handle, gbp);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> sur;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;上面分析完了SurfaceFlinger创建完了一个Layer，接着根据上面创建Layer时创建的handle和gbp再创建一个SurfaceControl，并返回。</p>
+<h3 id="SurfaceControl创建"><a href="#SurfaceControl创建" class="headerlink" title="SurfaceControl创建"></a>SurfaceControl创建</h3><p>&#160; &#160; &#160; &#160;在Android应用程序这一侧，每一个绘图表面都使用一个Surface对象来描述，每一个Surface对象都是由一个SurfaceControl对象来创建的。Surface类和SurfaceControl类的关系以及实现如图所示：</p>
+<p><img src="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E5%85%AD%29----SurfaceFlinger%E5%88%9B%E5%BB%BASurface/SurfaceControl.jpg" alt="SurfaceControl"></p>
+<p>&#160; &#160; &#160; &#160;SurfaceControl类的成员变量mClient是一个类型为SurfaceComposerClient对象，在<a href="http://windrunnerlihuan.com/2017/05/13/Android-SurfaceFlinger-%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF-%E5%9B%9B-SurfaceFlinger%E6%9C%8D%E5%8A%A1%E7%9A%84%E5%90%AF%E5%8A%A8%E4%B8%8E%E8%BF%9E%E6%8E%A5%E8%BF%87%E7%A8%8B/">Android SurfaceFlinger 学习之路(四)—-SurfaceFlinger服务的启动与连接过程</a>一文中，我们已经看到过SurfaceComposerClient类的作用了，Android应用程序主要就是通过它来和SurfaceFlinger服务建立连接的，连接的结果就是得到一个类型为Client的Binder代理对象，保存它的成员变量mClient中。</p>
+<p>&#160; &#160; &#160; &#160;SurfaceControl类的成员变量mHandle是指向的就是我们上面分析的创建Layer时，最后将Layer和SurfaceFlinger作为构造函数的参数创建一个Handle对象，这个Handle是一个Binder的实现，就是标识Surface的全局唯一性。当Android应用程序请求SurfaceFlinger服务创建一个绘图表面的时候，SurfaceFlinger服务就会在内部创建一个Layer对象，然后将Layer和SurfaceFlinger包装成一个Handle的一个Binder代理对象返回来给Android应用程序，然后Android应用程序再将这个Binder代理对象保存在一个SurfaceControl对象的成员变量mHandle中。</p>
+<p>&#160; &#160; &#160; &#160;SurfaceControl类的成员变量mSurfaceData是一个类型为Surface的强指针，它指向了一个Surface对象。</p>
+<p>&#160; &#160; &#160; &#160;SurfaceControl的构造函数也比较简单，位于frameworks/native/libs/gui/SurfaceControl.cpp中：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">SurfaceControl::SurfaceControl(</span><br><span class="line">        <span class="keyword">const</span> sp&lt;SurfaceComposerClient&gt;&amp; client,</span><br><span class="line">        <span class="keyword">const</span> sp&lt;IBinder&gt;&amp; handle,</span><br><span class="line">        <span class="keyword">const</span> sp&lt;IGraphicBufferProducer&gt;&amp; gbp)</span><br><span class="line">    : mClient(client), mHandle(handle), mGraphicBufferProducer(gbp)</span><br><span class="line">&#123;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;SurfaceControl类创建就到这里。</p>
+<p>&#160; &#160; &#160; &#160;<strong>附：</strong>这是native层的SurfaceControl，对于java层，也有一个SurfaceControl，Android 4.3 里新引进的类。Google从之前的Surface类里拆出部分接口，变成SurfaceControl，为什么要这样？为了让结构更清晰，WindowManagerService 只能对Surface进行控制，但并不更新Surface里的内容，分拆之后，WindowManagerService 只能访问SurfaceControl，它主要控制Surface的创建，销毁，Z-order，透明度，显示或隐藏，等等。而真正的更新者，View会通过Canvas的接口将内容画到Surface上。那View怎么拿到WMService创建的Surface，答案是outSurface.copyFrom(surfaceControl)；，surfaceControl 被转换成一个Surface对象，然后传回给ViewRoot, 前面创建的空的Surface现在有了实质内容。Surface通过这种方式被创建出来，Surface对应的Buffer 也相应的在SurfaceFlinger内部通过HAL层模块（GRAlloc)分配并维护在SurfaceFlinger 内部，Canvas() 通过dequeueBuffer（）接口拿到Surface的一个Buffer，绘制完成后通过queueBuffer（）还给SurfaceFlinger进行绘制。（<strong>这一部分我们后期学习WMS时候再分析</strong>）</p>
+<h3 id="Surface创建"><a href="#Surface创建" class="headerlink" title="Surface创建"></a>Surface创建</h3><p>&#160; &#160; &#160; &#160;从上面的类图，可以看到Surface类的成员变量mGraphicBufferProducer指向一个sp&lt; IGraphicBufferProducer &gt; 类型的对象，在Layer的onFirstRef函数中，mProducer复制后，类型为MonitoredProducer，将它有传给了Surface中。我们注意MonitoredProducer构造函数的一个参数producer，事实上MonitoredProducer只是一个代理类，真正的实现在这个producer参数。它是在BufferQueue::createBufferQueue中创造的。这个我们下一篇会分析这个。</p>
+<p>&#160; &#160; &#160; &#160;Surface类继承了ANativeObjectBase类，而ANativeObjectBase类又继承了ANativeWindow类。我们知道，Android系统是通过OpenGL库来绘制UI的。OpenGL库在绘制UI的时候，需要底层的系统提供一个本地窗口给它，以便它可以将UI绘制在这个本地窗口上。Android系统为OpenGL库定提供的本地窗口使用ANativeWindow类来描述，Surface类通过ANativeObjectBase类间接地继承了ANativeWindow类，因此，Surface类也是用来描述OpenGL绘图所需要的一个本地窗口的。从这个角度出发，我们可以将Surface类看作OpenGL库与Android的UI系统之间的一个桥梁。</p>
+<p>&#160; &#160; &#160; &#160;创建Surface的函数也很简单，查看SurfaceControl的getSurface函数：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">sp&lt;Surface&gt; SurfaceControl::getSurface() <span class="keyword">const</span></span><br><span class="line">&#123;</span><br><span class="line">    Mutex::Autolock _l(mLock);</span><br><span class="line">    <span class="keyword">if</span> (mSurfaceData == <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="comment">// This surface is always consumed by SurfaceFlinger, so the</span></span><br><span class="line">        <span class="comment">// producerControlledByApp value doesn't matter; using false.</span></span><br><span class="line">        mSurfaceData = <span class="keyword">new</span> Surface(mGraphicBufferProducer, <span class="literal">false</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> mSurfaceData;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;以及看看Surface的构造函数，位于frameworks/native/libs/gui/Surface.cpp：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line">Surface::Surface(</span><br><span class="line">        <span class="keyword">const</span> sp&lt;IGraphicBufferProducer&gt;&amp; bufferProducer,</span><br><span class="line">        <span class="keyword">bool</span> controlledByApp)</span><br><span class="line">    : mGraphicBufferProducer(bufferProducer)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// Initialize the ANativeWindow function pointers.</span></span><br><span class="line">    ANativeWindow::setSwapInterval  = hook_setSwapInterval;</span><br><span class="line">    ANativeWindow::dequeueBuffer    = hook_dequeueBuffer;</span><br><span class="line">    ANativeWindow::cancelBuffer     = hook_cancelBuffer;</span><br><span class="line">    ANativeWindow::queueBuffer      = hook_queueBuffer;</span><br><span class="line">    ANativeWindow::query            = hook_query;</span><br><span class="line">    ANativeWindow::perform          = hook_perform;</span><br><span class="line"></span><br><span class="line">    ANativeWindow::dequeueBuffer_DEPRECATED = hook_dequeueBuffer_DEPRECATED;</span><br><span class="line">    ANativeWindow::cancelBuffer_DEPRECATED  = hook_cancelBuffer_DEPRECATED;</span><br><span class="line">    ANativeWindow::lockBuffer_DEPRECATED    = hook_lockBuffer_DEPRECATED;</span><br><span class="line">    ANativeWindow::queueBuffer_DEPRECATED   = hook_queueBuffer_DEPRECATED;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">const_cast</span>&lt;<span class="keyword">int</span>&amp;&gt;(ANativeWindow::minSwapInterval) = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">const_cast</span>&lt;<span class="keyword">int</span>&amp;&gt;(ANativeWindow::maxSwapInterval) = <span class="number">1</span>;</span><br><span class="line"></span><br><span class="line">    mReqWidth = <span class="number">0</span>;</span><br><span class="line">    mReqHeight = <span class="number">0</span>;</span><br><span class="line">    mReqFormat = <span class="number">0</span>;</span><br><span class="line">    mReqUsage = <span class="number">0</span>;</span><br><span class="line">    mTimestamp = NATIVE_WINDOW_TIMESTAMP_AUTO;</span><br><span class="line">    mCrop.clear();</span><br><span class="line">    mScalingMode = NATIVE_WINDOW_SCALING_MODE_FREEZE;</span><br><span class="line">    mTransform = <span class="number">0</span>;</span><br><span class="line">    mStickyTransform = <span class="number">0</span>;</span><br><span class="line">    mDefaultWidth = <span class="number">0</span>;</span><br><span class="line">    mDefaultHeight = <span class="number">0</span>;</span><br><span class="line">    mUserWidth = <span class="number">0</span>;</span><br><span class="line">    mUserHeight = <span class="number">0</span>;</span><br><span class="line">    mTransformHint = <span class="number">0</span>;</span><br><span class="line">    mConsumerRunningBehind = <span class="literal">false</span>;</span><br><span class="line">    mConnectedToCpu = <span class="literal">false</span>;</span><br><span class="line">    mProducerControlledByApp = controlledByApp;</span><br><span class="line">    mSwapIntervalZero = <span class="literal">false</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;主要是设置了一些钩子方法，用于创建GraphicBuffer等等。还有一些变量的初始化。所以重点应该在这些钩子方法当中，我们下一节会分析。</p>
+<h1 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h1><p>&#160; &#160; &#160; &#160;本节我们主要讲了SurfaceFlinger创建Surface的过程，文章末尾我们我发现管理图形缓冲区的一个重要工具：BufferQueue。我们下一节会分析这个。</p>
+<p><img src="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E5%85%AD%29----SurfaceFlinger%E5%88%9B%E5%BB%BASurface/meizi.jpg" alt="meizi"></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>坚持技术分享，您的支持将鼓励我继续创作！</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="/images/wechat.jpg" alt="windrunnerlihuan WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+        <div id="alipay" style="display: inline-block">
+          <img id="alipay_qr" src="/images/alipay.jpg" alt="windrunnerlihuan Alipay"/>
+          <p>支付宝打赏</p>
+        </div>
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/SurfaceFlinger/" rel="tag"># SurfaceFlinger</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/05/25/Android-SurfaceFlinger-学习之路-五-VSync-工作原理/" rel="next" title="Android SurfaceFlinger 学习之路(五)----VSync 工作原理">
+                <i class="fa fa-chevron-left"></i> Android SurfaceFlinger 学习之路(五)----VSync 工作原理
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+        <!-- JiaThis Button BEGIN -->
+<div class="jiathis_style">
+  <a class="jiathis_button_tsina"></a>
+  <a class="jiathis_button_tqq"></a>
+  <a class="jiathis_button_weixin"></a>
+  <a class="jiathis_button_cqq"></a>
+  <a class="jiathis_button_douban"></a>
+  <a class="jiathis_button_renren"></a>
+  <a class="jiathis_button_qzone"></a>
+  <a class="jiathis_button_kaixin001"></a>
+  <a class="jiathis_button_copy"></a>
+  <a href="http://www.jiathis.com/share" class="jiathis jiathis_txt jiathis_separator jtico jtico_jiathis" target="_blank"></a>
+  <a class="jiathis_counter_style"></a>
+</div>
+<script type="text/javascript" >
+  var jiathis_config={
+    hideMore:false
+  }
+</script>
+<script type="text/javascript" src="http://v3.jiathis.com/code/jia.js" charset="utf-8"></script>
+<!-- JiaThis Button END -->
+
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div id="cloud-tie-wrapper" class="cloud-tie-wrapper"></div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.png"
+               alt="windrunnerlihuan" />
+          <p class="site-author-name" itemprop="name">windrunnerlihuan</p>
+           
+              <p class="site-description motion-element" itemprop="description"></p>
+           
+        </div>
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives">
+                <span class="site-state-item-count">30</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-categories">
+              <a href="/categories/index.html">
+                <span class="site-state-item-count">5</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-tags">
+              <a href="/tags/index.html">
+                <span class="site-state-item-count">18</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="mailto:937874128@qq.com" target="_blank" title="Email">
+                  
+                    <i class="fa fa-fw fa-envelope-o"></i>
+                  
+                  Email
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/windrunnerlihuan" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+          <div class="links-of-blogroll motion-element links-of-blogroll-inline">
+            <div class="links-of-blogroll-title">
+              <i class="fa  fa-fw fa-globe"></i>
+              Links
+            </div>
+            <ul class="links-of-blogroll-list">
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://gank.io/" title="干货集中营" target="_blank">干货集中营</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.jcodecraeer.com/" title="泡在网上的日子" target="_blank">泡在网上的日子</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://trinea.cn/" title="Trinea" target="_blank">Trinea</a>
+                </li>
+              
+            </ul>
+          </div>
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#图层分析"><span class="nav-number">1.</span> <span class="nav-text">图层分析</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#猜测"><span class="nav-number">1.1.</span> <span class="nav-text">猜测</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#概述"><span class="nav-number">1.2.</span> <span class="nav-text">概述</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Surface创建流程"><span class="nav-number">2.</span> <span class="nav-text">Surface创建流程</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#SurfaceFlinger服务侧Layer创建"><span class="nav-number">2.1.</span> <span class="nav-text">SurfaceFlinger服务侧Layer创建</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#应用侧Surface创建"><span class="nav-number">2.2.</span> <span class="nav-text">应用侧Surface创建</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#SurfaceControl创建"><span class="nav-number">2.2.1.</span> <span class="nav-text">SurfaceControl创建</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Surface创建"><span class="nav-number">2.2.2.</span> <span class="nav-text">Surface创建</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#小结"><span class="nav-number">3.</span> <span class="nav-text">小结</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy;  2016 - 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">windrunnerlihuan</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+
+        
+<div class="busuanzi-count">
+  <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="site-uv">
+      <i class="fa fa-user"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_uv"></span>
+      
+    </span>
+  
+
+  
+    <span class="site-pv">
+      <i class="fa fa-eye"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_pv"></span>
+      
+    </span>
+  
+</div>
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+  
+  <script type="text/javascript" src="/lib/canvas-nest/canvas-nest.min.js"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.1"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+    
+    <script>
+      var cloudTieConfig = {
+        url: document.location.href, 
+        sourceId: "",
+        productKey: "8d52b6e0ec984fd8aa832e1dd0341885",
+        target: "cloud-tie-wrapper"
+      };
+    </script>
+    <script src="https://img1.ws.126.net/f2e/tie/yun/sdk/loader.js"></script>
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (search_path.endsWith("json")) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("bJlEg1N9ed75pssz1m514avl-gzGzoHsz", "Swtq2cOp8A7KYeJ9lpD5nKAy");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
