@@ -1,0 +1,1548 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+  <meta name="google-site-verification" content="3Gndr5oonivG3ajghQU1MgL0IHoMHT4esMsPKjnbeis" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+    
+    
+    <link href="//fonts.lug.ustc.edu.cn/css?family=Monda:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Lobster Two:300,300italic,400,400italic,700,700italic|PT Mono:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="SurfaceFlinger," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="April is your lie" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/images/favicon.ico?v=5.1.1" />
+
+
+
+
+
+
+<meta name="description" content="&amp;#160; &amp;#160; &amp;#160; &amp;#160;在上一篇SurfaceFlinger创建Surface流程中，我们会关联到BufferQueue对GraphicBuffer的管理机制，我们这次就来分析一下它的原理。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android SurfaceFlinger 学习之路(七)----创建图形缓冲区GraphicBuffer">
+<meta property="og:url" content="http://windrunnerlihuan.com/2017/06/22/Android-SurfaceFlinger-学习之路-七-创建图形缓冲区GraphicBuffer/index.html">
+<meta property="og:site_name" content="April is your lie">
+<meta property="og:description" content="&amp;#160; &amp;#160; &amp;#160; &amp;#160;在上一篇SurfaceFlinger创建Surface流程中，我们会关联到BufferQueue对GraphicBuffer的管理机制，我们这次就来分析一下它的原理。">
+<meta property="og:image" content="http://o7xxrho8u.bkt.clouddn.com/file/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E4%BA%8C%29----SurfaceFlinger%E6%A6%82%E8%BF%B0/PC1.jpg">
+<meta property="og:image" content="http://o7xxrho8u.bkt.clouddn.com/file/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E4%BA%8C%29----SurfaceFlinger%E6%A6%82%E8%BF%B0/PC2.jpg">
+<meta property="og:image" content="http://o7xxrho8u.bkt.clouddn.com/file/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E4%BA%8C%29----SurfaceFlinger%E6%A6%82%E8%BF%B0/consumer.jpg">
+<meta property="og:image" content="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E4%B8%83%29----%E5%88%9B%E5%BB%BA%E5%9B%BE%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BAGraphicBuffer/BufferQueue.jpg">
+<meta property="og:image" content="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E4%B8%83%29----%E5%88%9B%E5%BB%BA%E5%9B%BE%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BAGraphicBuffer/slot.jpg">
+<meta property="og:image" content="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E4%B8%83%29----%E5%88%9B%E5%BB%BA%E5%9B%BE%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BAGraphicBuffer/Producer.jpg">
+<meta property="og:image" content="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E4%B8%83%29----%E5%88%9B%E5%BB%BA%E5%9B%BE%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BAGraphicBuffer/Consumer.jpg">
+<meta property="og:image" content="http://o7xxrho8u.bkt.clouddn.com/file/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E4%BA%8C%29----SurfaceFlinger%E6%A6%82%E8%BF%B0/PC3.jpg">
+<meta property="og:image" content="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E4%B8%83%29----%E5%88%9B%E5%BB%BA%E5%9B%BE%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BAGraphicBuffer/bufferalloc2.png">
+<meta property="og:image" content="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E4%B8%83%29----%E5%88%9B%E5%BB%BA%E5%9B%BE%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BAGraphicBuffer/GraphicBuffer.jpg">
+<meta property="og:image" content="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E4%B8%83%29----%E5%88%9B%E5%BB%BA%E5%9B%BE%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BAGraphicBuffer/flatten.jpg">
+<meta property="og:image" content="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E4%B8%83%29----%E5%88%9B%E5%BB%BA%E5%9B%BE%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BAGraphicBuffer/gralloc.jpg">
+<meta property="og:image" content="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E4%B8%83%29----%E5%88%9B%E5%BB%BA%E5%9B%BE%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BAGraphicBuffer/unflatten.jpg">
+<meta property="og:image" content="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E4%B8%83%29----%E5%88%9B%E5%BB%BA%E5%9B%BE%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BAGraphicBuffer/meizi.png">
+<meta property="og:updated_time" content="2017-06-22T14:34:50.463Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Android SurfaceFlinger 学习之路(七)----创建图形缓冲区GraphicBuffer">
+<meta name="twitter:description" content="&amp;#160; &amp;#160; &amp;#160; &amp;#160;在上一篇SurfaceFlinger创建Surface流程中，我们会关联到BufferQueue对GraphicBuffer的管理机制，我们这次就来分析一下它的原理。">
+<meta name="twitter:image" content="http://o7xxrho8u.bkt.clouddn.com/file/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E4%BA%8C%29----SurfaceFlinger%E6%A6%82%E8%BF%B0/PC1.jpg">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    sidebar: {"position":"right","display":"post","offset":12,"offset_float":0,"b2t":false,"scrollpercent":false},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://windrunnerlihuan.com/2017/06/22/Android-SurfaceFlinger-学习之路-七-创建图形缓冲区GraphicBuffer/"/>
+
+
+
+
+
+  <title>Android SurfaceFlinger 学习之路(七)----创建图形缓冲区GraphicBuffer | April is your lie</title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-100464707-1', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?bb4df6db80a16ce54c1fb2c6e1767e18";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+  <script type="text/javascript">
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//tajs.qq.com/stats?sId=62459705";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+<script>
+  	var _mtac = {};
+  	(function() {
+  		var mta = document.createElement("script");
+  		mta.src = "https://pingjs.qq.com/h5/stats.js?v2.0.4";
+  		mta.setAttribute("name", "MTAH5");
+  		mta.setAttribute("sid", "500465801");
+
+  		var s = document.getElementsByTagName("script")[0];
+  		s.parentNode.insertBefore(mta, s);
+  	})();
+</script>
+
+
+
+
+  <div style="display: none;">
+    <script src="//s95.cnzz.com/z_stat.php?id=1262111741&web_id=1262111741" language="JavaScript"></script>
+  </div>
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-right page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">April is your lie</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <h1 class="site-subtitle" itemprop="description">四月是你的谎言</h1>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off"
+             placeholder="搜索..." spellcheck="false"
+             type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://windrunnerlihuan.com/2017/06/22/Android-SurfaceFlinger-学习之路-七-创建图形缓冲区GraphicBuffer/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="windrunnerlihuan">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="April is your lie">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">Android SurfaceFlinger 学习之路(七)----创建图形缓冲区GraphicBuffer</h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-06-22T22:33:29+08:00">
+                2017-06-22
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Android技术点/" itemprop="url" rel="index">
+                    <span itemprop="name">Android技术点</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a class="cloud-tie-join-count" href="/2017/06/22/Android-SurfaceFlinger-学习之路-七-创建图形缓冲区GraphicBuffer/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count join-count" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+             <span id="/2017/06/22/Android-SurfaceFlinger-学习之路-七-创建图形缓冲区GraphicBuffer/" class="leancloud_visitors" data-flag-title="Android SurfaceFlinger 学习之路(七)----创建图形缓冲区GraphicBuffer">
+               <span class="post-meta-divider">|</span>
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               
+                 <span class="post-meta-item-text">阅读次数 </span>
+               
+                 <span class="leancloud-visitors-count"></span>
+             </span>
+          
+
+          
+            <span class="post-meta-divider">|</span>
+            <span class="page-pv"><i class="fa fa-file-o"></i>
+            <span class="busuanzi-value" id="busuanzi_value_page_pv" ></span>
+            </span>
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>&#160; &#160; &#160; &#160;在上一篇SurfaceFlinger创建Surface流程中，我们会关联到BufferQueue对GraphicBuffer的管理机制，我们这次就来分析一下它的原理。<br><a id="more"></a></p>
+<h1 id="角色扮演"><a href="#角色扮演" class="headerlink" title="角色扮演"></a>角色扮演</h1><p>&#160; &#160; &#160; &#160;Android应用的UI显示到Display的过程中，SurfaceFlinger扮演的角色只是“Flinger”，就是定于检查Layer更新，然后计算DirtyRegion，然后将结果推送给底层显示驱动进行显示。但是在App端，Surface的内容绘制却由应用层来承担。应用层绘制UI内容都需要一个GraphicBuffer，那么Surface对GraphicBuffer的申请、绘制完毕交给SurfaceFlinger去合成然后显示，这个工作也需要一套机制去管理。所以对于GraphicBuffer的管理，Android也设计了一套机制：BufferQueue，作为SurfaceFlinger管理和消费surface的中介。</p>
+<h2 id="生产-消费-模型"><a href="#生产-消费-模型" class="headerlink" title="生产-消费 模型"></a>生产-消费 模型</h2><p>&#160; &#160; &#160; &#160;回顾<a href="http://windrunnerlihuan.com/2017/04/27/Android-SurfaceFlinger-%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF-%E4%BA%8C-SurfaceFlinger%E6%A6%82%E8%BF%B0/">Android SurfaceFlinger 学习之路(二)—-SurfaceFlinger概述</a>，我们可以用这副简图表示App、BufferQueue和SurfaceFlinger的关系。</p>
+<p><img src="http://o7xxrho8u.bkt.clouddn.com/file/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E4%BA%8C%29----SurfaceFlinger%E6%A6%82%E8%BF%B0/PC1.jpg" alt="C/S"></p>
+<p>&#160; &#160; &#160; &#160;虽说是三者的关系，但是他们所属的层却只有两个，app属于Java层，BufferQueue/SurfaceFlinger属于native层。也就是说BufferQueue也是隶属SurfaceFlinger，所有工作围绕SurfaceFlinger展开。</p>
+<h3 id="生产者模型"><a href="#生产者模型" class="headerlink" title="生产者模型"></a>生产者模型</h3><p>&#160; &#160; &#160; &#160; 这里IGraphicBufferProducer就是app和BufferQueue重要桥梁，GraphicBufferProducer承担着单个应用进程中的UI显示需求，与BufferQueue打交道的就是它。<br>&#160; &#160; &#160; &#160; 根据上一篇Surface的创建流程，我们从Surface类图分析了GraphicBufferProducer在Surface中的位置，下图也可以表示：</p>
+<p><img src="http://o7xxrho8u.bkt.clouddn.com/file/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E4%BA%8C%29----SurfaceFlinger%E6%A6%82%E8%BF%B0/PC2.jpg" alt="producer"></p>
+<p>&#160; &#160; &#160; &#160;BpGraphicBufferProducer是GraphicBufferProducer在客户端这边的代理对象，负责和SF交互，GraphicBufferProducer通过gbp（IGraphicBufferProducer类对象）向BufferQueue获取buffer，然后进行填充UI信息，当填充完毕会通知SF，SF知道后就对该Buffer进行下一步操作。<strong>典型的生产-消费者模式</strong>。</p>
+<h3 id="消费者模型"><a href="#消费者模型" class="headerlink" title="消费者模型"></a>消费者模型</h3><p>&#160; &#160; &#160; &#160;BufferQueue和SurfaceFlinger之间的通信模式如下：</p>
+<p><img src="http://o7xxrho8u.bkt.clouddn.com/file/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E4%BA%8C%29----SurfaceFlinger%E6%A6%82%E8%BF%B0/consumer.jpg" alt="consumer"></p>
+<p>&#160; &#160; &#160; &#160;也是有一对BpGraphicBufferConsumer/BnGraphicBufferConsumer支持他们之间的信息传输。</p>
+<h1 id="模型实现"><a href="#模型实现" class="headerlink" title="模型实现"></a>模型实现</h1><p>&#160; &#160; &#160; &#160;上一篇创建Surface流程中，当创建Layer时候，在onFirstRef里面创建了一个生产者和消费者，并对两者进行了包装：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">void</span> Layer::onFirstRef() &#123;</span><br><span class="line">    <span class="comment">// Creates a custom BufferQueue for SurfaceFlingerConsumer to use</span></span><br><span class="line">    sp&lt;IGraphicBufferProducer&gt; producer;<span class="comment">//生产者</span></span><br><span class="line">    sp&lt;IGraphicBufferConsumer&gt; consumer;<span class="comment">//消费者</span></span><br><span class="line">    BufferQueue::createBufferQueue(&amp;producer, &amp;consumer);<span class="comment">//创建生产者和消费者</span></span><br><span class="line">    mProducer = <span class="keyword">new</span> MonitoredProducer(producer, mFlinger);<span class="comment">//包装生产者</span></span><br><span class="line">    mSurfaceFlingerConsumer = <span class="keyword">new</span> SurfaceFlingerConsumer(consumer, mTextureName);<span class="comment">//包装消费者</span></span><br><span class="line">    <span class="comment">//设置消费者相关回调</span></span><br><span class="line">    mSurfaceFlingerConsumer-&gt;setConsumerUsageBits(getEffectiveUsage(<span class="number">0</span>));</span><br><span class="line">    mSurfaceFlingerConsumer-&gt;setContentsChangedListener(<span class="keyword">this</span>);</span><br><span class="line">    mSurfaceFlingerConsumer-&gt;setName(mName);</span><br><span class="line"></span><br><span class="line">    ......</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;MonitoredProducer对象，这个对象只是一个代理，真正实是BufferQueueProducer类，这个对象和BufferQueueCore有关联，可以管理最多达64块的缓冲区。<br>&#160; &#160; &#160; &#160;SurfaceFlingerConsumer构造函数将BufferQueueConsumer传入，并设置相关回调，以便生产者填充完GraphicBuffer然后通知Consumer消费。</p>
+<h2 id="Core"><a href="#Core" class="headerlink" title="Core"></a>Core</h2><p>&#160; &#160; &#160; &#160;所以创建生产者和消费者就是由BufferQueue来创建，我们可以看看BufferQueue的createBufferQueue函数，位于frameworks/native/libs/gui/BufferQueue.cpp：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">void</span> BufferQueue::createBufferQueue(sp&lt;IGraphicBufferProducer&gt;* outProducer,</span><br><span class="line">        sp&lt;IGraphicBufferConsumer&gt;* outConsumer,</span><br><span class="line">        <span class="keyword">const</span> sp&lt;IGraphicBufferAlloc&gt;&amp; allocator) &#123;<span class="comment">//allocator == NULL</span></span><br><span class="line">    ......</span><br><span class="line">    <span class="comment">//创建一个BufferQueueCore，她是核心</span></span><br><span class="line">    sp&lt;BufferQueueCore&gt; core(<span class="keyword">new</span> BufferQueueCore(allocator));</span><br><span class="line">    ......</span><br><span class="line">    <span class="comment">//用BufferQueueCore创建生产者</span></span><br><span class="line">    sp&lt;IGraphicBufferProducer&gt; producer(<span class="keyword">new</span> BufferQueueProducer(core));</span><br><span class="line">    ......</span><br><span class="line">    <span class="comment">//用core创建消费者</span></span><br><span class="line">    sp&lt;IGraphicBufferConsumer&gt; consumer(<span class="keyword">new</span> BufferQueueConsumer(core));</span><br><span class="line">    ......</span><br><span class="line">    <span class="comment">//向外面传入指针赋值</span></span><br><span class="line">    *outProducer = producer;</span><br><span class="line">    *outConsumer = consumer;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;所以核心都是这个BufferQueueCore，他是管理图形缓冲区的中枢。这里举一个SurfaceTexture的例子，来看看他们之间的关系：</p>
+<p><img src="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E4%B8%83%29----%E5%88%9B%E5%BB%BA%E5%9B%BE%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BAGraphicBuffer/BufferQueue.jpg" alt="BufferQueue"></p>
+<p>&#160; &#160; &#160; &#160;可以认为BufferQueueCore是一个服务中心，生产者、消费者都要通过它来管理buffer。</p>
+<ul>
+<li><strong>里面有一个重要的成员数组：BufferQueueDefs::SlotsType mSlots;</strong></li>
+<li><strong>这个BufferSlot中有一个成员变量：sp&lt; GraphicBuffer &gt;mGraphicBuffer;记录这个slot所涉及的缓冲区；</strong></li>
+<li><strong>另一个变量BufferState mBufferState;用于跟踪这个缓冲区的状态。</strong></li>
+</ul>
+<p>&#160; &#160; &#160; &#160;1）在BufferQueueCore类中定义了一个64项的数据mSlots，framework/native/libs/gui/BufferQueueCore.h：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// mSlots is an array of buffer slots that must be mirrored on the producer</span></span><br><span class="line"><span class="comment">// side. This allows buffer ownership to be transferred between the producer</span></span><br><span class="line"><span class="comment">// and consumer without sending a GraphicBuffer over Binder. The entire</span></span><br><span class="line"><span class="comment">// array is initialized to NULL at construction time, and buffers are</span></span><br><span class="line"><span class="comment">// allocated for a slot when requestBuffer is called with that slot's index.</span></span><br><span class="line">BufferQueueDefs::SlotsType mSlots;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;我们看看这个mSlot定义所在的位置，位于frameworks/native/include/gui/BufferQueueDefs.h中：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">namespace</span> BufferQueueDefs &#123;</span><br><span class="line">        <span class="comment">// BufferQueue will keep track of at most this value of buffers.</span></span><br><span class="line">        <span class="comment">// Attempts at runtime to increase the number of buffers past this</span></span><br><span class="line">        <span class="comment">// will fail.</span></span><br><span class="line">        <span class="keyword">enum</span> &#123; NUM_BUFFER_SLOTS = <span class="number">64</span> &#125;;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">typedef</span> BufferSlot SlotsType[NUM_BUFFER_SLOTS];</span><br><span class="line">    &#125; <span class="comment">// namespace BufferQueueDefs</span></span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;<strong>我们可以看到这是一个容量大小为64的数组，因此BufferQueueCore可以管理最多64块的GraphicBuffer</strong>。</p>
+<p>&#160; &#160; &#160; &#160;我们可以帖一幅图表示Slot的角色：</p>
+<p><img src="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E4%B8%83%29----%E5%88%9B%E5%BB%BA%E5%9B%BE%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BAGraphicBuffer/slot.jpg" alt="slot"></p>
+<p>&#160; &#160; &#160; &#160;2）BufferSlot的定义位于frameworks/native/include/gui/BufferSlot.h中：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> BufferSlot &#123;</span><br><span class="line"></span><br><span class="line">    BufferSlot()</span><br><span class="line">    : mEglDisplay(EGL_NO_DISPLAY),</span><br><span class="line">      mBufferState(BufferSlot::FREE),</span><br><span class="line">      mRequestBufferCalled(<span class="literal">false</span>),</span><br><span class="line">      mFrameNumber(<span class="number">0</span>),</span><br><span class="line">      mEglFence(EGL_NO_SYNC_KHR),</span><br><span class="line">      mAcquireCalled(<span class="literal">false</span>),</span><br><span class="line">      mNeedsCleanupOnRelease(<span class="literal">false</span>),</span><br><span class="line">      mAttachedByConsumer(<span class="literal">false</span>) &#123;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// mGraphicBuffer points to the buffer allocated for this slot or is NULL</span></span><br><span class="line">    <span class="comment">// if no buffer has been allocated.</span></span><br><span class="line">    sp&lt;GraphicBuffer&gt; mGraphicBuffer;</span><br><span class="line">    <span class="comment">// BufferState represents the different states in which a buffer slot</span></span><br><span class="line">    <span class="comment">// can be.  All slots are initially FREE.</span></span><br><span class="line">    <span class="keyword">enum</span> BufferState &#123;</span><br><span class="line">        <span class="comment">// FREE indicates that the buffer is available to be dequeued</span></span><br><span class="line">        <span class="comment">// by the producer.  The buffer may be in use by the consumer for</span></span><br><span class="line">        <span class="comment">// a finite time, so the buffer must not be modified until the</span></span><br><span class="line">        <span class="comment">// associated fence is signaled.</span></span><br><span class="line">        <span class="comment">//</span></span><br><span class="line">        <span class="comment">// The slot is "owned" by BufferQueue.  It transitions to DEQUEUED</span></span><br><span class="line">        <span class="comment">// when dequeueBuffer is called.</span></span><br><span class="line">        FREE = <span class="number">0</span>,</span><br><span class="line"></span><br><span class="line">        <span class="comment">// DEQUEUED indicates that the buffer has been dequeued by the</span></span><br><span class="line">        <span class="comment">// producer, but has not yet been queued or canceled.  The</span></span><br><span class="line">        <span class="comment">// producer may modify the buffer's contents as soon as the</span></span><br><span class="line">        <span class="comment">// associated ready fence is signaled.</span></span><br><span class="line">        <span class="comment">//</span></span><br><span class="line">        <span class="comment">// The slot is "owned" by the producer.  It can transition to</span></span><br><span class="line">        <span class="comment">// QUEUED (via queueBuffer) or back to FREE (via cancelBuffer).</span></span><br><span class="line">        DEQUEUED = <span class="number">1</span>,</span><br><span class="line"></span><br><span class="line">        <span class="comment">// QUEUED indicates that the buffer has been filled by the</span></span><br><span class="line">        <span class="comment">// producer and queued for use by the consumer.  The buffer</span></span><br><span class="line">        <span class="comment">// contents may continue to be modified for a finite time, so</span></span><br><span class="line">        <span class="comment">// the contents must not be accessed until the associated fence</span></span><br><span class="line">        <span class="comment">// is signaled.</span></span><br><span class="line">        <span class="comment">//</span></span><br><span class="line">        <span class="comment">// The slot is "owned" by BufferQueue.  It can transition to</span></span><br><span class="line">        <span class="comment">// ACQUIRED (via acquireBuffer) or to FREE (if another buffer is</span></span><br><span class="line">        <span class="comment">// queued in asynchronous mode).</span></span><br><span class="line">        QUEUED = <span class="number">2</span>,</span><br><span class="line"></span><br><span class="line">        <span class="comment">// ACQUIRED indicates that the buffer has been acquired by the</span></span><br><span class="line">        <span class="comment">// consumer.  As with QUEUED, the contents must not be accessed</span></span><br><span class="line">        <span class="comment">// by the consumer until the fence is signaled.</span></span><br><span class="line">        <span class="comment">//</span></span><br><span class="line">        <span class="comment">// The slot is "owned" by the consumer.  It transitions to FREE</span></span><br><span class="line">        <span class="comment">// when releaseBuffer is called.</span></span><br><span class="line">        ACQUIRED = <span class="number">3</span></span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// mBufferState is the current state of this buffer slot.</span></span><br><span class="line">    BufferState mBufferState;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;mGraphicBuffer代表一块图形缓冲区GraphicBuffer，用于应用绘制UI。<br>&#160; &#160; &#160; &#160;mBufferState类型为BufferState ，BufferState 的定义也位于其中，代表图形缓冲区的几种状态：</p>
+<ul>
+<li>FREE：buffer当前可用，可以被生产者dequeued，此时owner是BufferQueueCore，当dequeuebuffer调用时，状态可以转为dequeued。</li>
+<li>DEQUEUED：buffer已经被dequeued，还没被queue或canceld，此时owner是producer。</li>
+<li>QUEUED：buffer已经被生产者填充，并被queued，此时的owner是bufferQueueCore。</li>
+<li>ACQUIRED：buffer已经被消费者获得，此时的owner是consumer。</li>
+</ul>
+<p>&#160; &#160; &#160; &#160;一般的buffer大致会经过<strong>FREE-&gt;DEQUEUED-&gt;QUEUED-&gt;ACQUIRED-&gt;FREE</strong>这个流程，我们下面会讲到它。</p>
+<p>&#160; &#160; &#160; &#160;3）在BufferQueueCore创建时候，还会创建一个GraphicBufferAlloc，并将它赋值给BufferQueueCore的mAllocator成员变量。我们可以看看BufferQueueCore的构造函数，位于framework/native/libs/gui/BufferQueueCore.cpp：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line">BufferQueueCore::BufferQueueCore(<span class="keyword">const</span> sp&lt;IGraphicBufferAlloc&gt;&amp; allocator) :<span class="comment">//allocator为NULL</span></span><br><span class="line">    mAllocator(allocator),</span><br><span class="line">    mMutex(),</span><br><span class="line">    mIsAbandoned(<span class="literal">false</span>),</span><br><span class="line">    mConsumerControlledByApp(<span class="literal">false</span>),</span><br><span class="line">    mConsumerName(getUniqueName()),</span><br><span class="line">    mConsumerListener(),</span><br><span class="line">    mConsumerUsageBits(<span class="number">0</span>),</span><br><span class="line">    mConnectedApi(NO_CONNECTED_API),</span><br><span class="line">    mConnectedProducerListener(),</span><br><span class="line">    mSlots(),</span><br><span class="line">    mQueue(),</span><br><span class="line">    mOverrideMaxBufferCount(<span class="number">0</span>),</span><br><span class="line">    mDequeueCondition(),</span><br><span class="line">    mUseAsyncBuffer(<span class="literal">true</span>),</span><br><span class="line">    mDequeueBufferCannotBlock(<span class="literal">false</span>),</span><br><span class="line">    mDefaultBufferFormat(PIXEL_FORMAT_RGBA_8888),</span><br><span class="line">    mDefaultWidth(<span class="number">1</span>),</span><br><span class="line">    mDefaultHeight(<span class="number">1</span>),</span><br><span class="line">    mDefaultMaxBufferCount(<span class="number">2</span>),</span><br><span class="line">    mMaxAcquiredBufferCount(<span class="number">1</span>),</span><br><span class="line">    mBufferHasBeenQueued(<span class="literal">false</span>),</span><br><span class="line">    mFrameCounter(<span class="number">0</span>),</span><br><span class="line">    mTransformHint(<span class="number">0</span>),</span><br><span class="line">    mIsAllocating(<span class="literal">false</span>),</span><br><span class="line">    mIsAllocatingCondition()</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">if</span> (allocator == <span class="literal">NULL</span>) &#123;<span class="comment">//NULL</span></span><br><span class="line">        sp&lt;ISurfaceComposer&gt; composer(ComposerService::getComposerService());</span><br><span class="line">        <span class="comment">//请求SurfaceFlinger创建GraphicBufferAlloc</span></span><br><span class="line">        mAllocator = composer-&gt;createGraphicBufferAlloc();</span><br><span class="line">        <span class="keyword">if</span> (mAllocator == <span class="literal">NULL</span>) &#123;</span><br><span class="line">            BQ_LOGE(<span class="string">"createGraphicBufferAlloc failed"</span>);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;然后回去请求SurfaceFlinger创建一个GraphicBufferAlloc，位于frameworks/native/services/surfaceflinger/SurfaceFlinger.cpp中：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">sp&lt;IGraphicBufferAlloc&gt; SurfaceFlinger::createGraphicBufferAlloc()</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">//创建一个GraphicBufferAlloc对象，并赋给强指针</span></span><br><span class="line">    sp&lt;GraphicBufferAlloc&gt; gba(<span class="keyword">new</span> GraphicBufferAlloc());</span><br><span class="line">    <span class="keyword">return</span> gba;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;因为BufferQueueCore的mAllocator 类型为IGraphicBufferAlloc，继承于IInterface，所以又是跨进程调用创建。我们下面会分析到它的。</p>
+<h2 id="Producer"><a href="#Producer" class="headerlink" title="Producer"></a>Producer</h2><p>&#160; &#160; &#160; &#160;BufferQueueProducer是生产者的实现，需要实现IGraphicBufferProducer接口，相关方法如下：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span><br><span class="line"> * This class defines the Binder IPC interface for the producer side of</span><br><span class="line"> * a queue of graphics buffers.  It's used to send graphics data from one</span><br><span class="line"> * component to another.  For example, a class that decodes video for</span><br><span class="line"> * playback might use this to provide frames.  This is typically done</span><br><span class="line"> * indirectly, through Surface.</span><br><span class="line"> *</span><br><span class="line"> * The underlying mechanism is a BufferQueue, which implements</span><br><span class="line"> * BnGraphicBufferProducer.  In normal operation, the producer calls</span><br><span class="line"> * dequeueBuffer() to get an empty buffer, fills it with data, then</span><br><span class="line"> * calls queueBuffer() to make it available to the consumer.</span><br><span class="line"> *</span><br><span class="line"> * This class was previously called ISurfaceTexture.</span><br><span class="line"> */</span></span><br><span class="line"><span class="keyword">class</span> IGraphicBufferProducer : <span class="keyword">public</span> IInterface</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    ......</span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> status_t <span class="title">requestBuffer</span><span class="params">(<span class="keyword">int</span> slot, sp&lt;GraphicBuffer&gt;* buf)</span> </span>= <span class="number">0</span>;</span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> status_t <span class="title">dequeueBuffer</span><span class="params">(<span class="keyword">int</span>* slot, sp&lt;Fence&gt;* fence, <span class="keyword">bool</span> async,</span><br><span class="line">            <span class="keyword">uint32_t</span> w, <span class="keyword">uint32_t</span> h, <span class="keyword">uint32_t</span> format, <span class="keyword">uint32_t</span> usage)</span> </span>= <span class="number">0</span>;</span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> status_t <span class="title">queueBuffer</span><span class="params">(<span class="keyword">int</span> slot,</span><br><span class="line">            <span class="keyword">const</span> QueueBufferInput&amp; input, QueueBufferOutput* output)</span> </span>= <span class="number">0</span>;</span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> <span class="keyword">void</span> <span class="title">cancelBuffer</span><span class="params">(<span class="keyword">int</span> slot, <span class="keyword">const</span> sp&lt;Fence&gt;&amp; fence)</span> </span>= <span class="number">0</span>;  </span><br><span class="line">    ......      </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;这几个函数的注释写的很清楚，但是限于篇幅，没有贴出来。</p>
+<p>&#160; &#160; &#160; &#160;BufferQueueProducer的dequeueBuffer函数用来向BufferQueueCore申请一个空闲的slot，这个slot可能已经有缓冲区，也可能没有，如果没有缓冲区，<strong>dequeueBuffer函数会分配一块新的缓冲区</strong>。得到空闲的slot后，还需要调用requestBuffer函数来<strong>取出</strong>一块缓冲区，<strong>也是从BufferQueueCore中的mSlots数组根据index获取这个位置的slot</strong>。得到缓冲区，如果不需要了，可以使用cancelBuffer函数来释放这个slot。调用dequeueBuffer函数之后，缓冲区的拥有者是生产者，缓冲区处于DEQUEUED状态。一旦缓冲区复制数据完成，<strong>通过queueBuffer函数把缓冲区的控制权交还给BufferQueueCore</strong>，这时候缓冲区将处于QUEUED状态。这些函数的使用之处我们下面会讲到。<br>&#160; &#160; &#160; &#160;BufferQueueProducer类图结构如下：</p>
+<p><img src="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E4%B8%83%29----%E5%88%9B%E5%BB%BA%E5%9B%BE%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BAGraphicBuffer/Producer.jpg" alt="Producer"></p>
+<h2 id="Consumer"><a href="#Consumer" class="headerlink" title="Consumer"></a>Consumer</h2><p>&#160; &#160; &#160; &#160;同样，BufferQueueConsumer是消费者的实现，需要实现IGraphicBufferConsumer接口，相关方法如下：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> IGraphicBufferConsumer : <span class="keyword">public</span> IInterface &#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    ......</span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> status_t <span class="title">acquireBuffer</span><span class="params">(BufferItem* buffer, <span class="keyword">nsecs_t</span> presentWhen)</span> </span>= <span class="number">0</span>;</span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> status_t <span class="title">releaseBuffer</span><span class="params">(<span class="keyword">int</span> buf, <span class="keyword">uint64_t</span> frameNumber,</span><br><span class="line">            EGLDisplay display, EGLSyncKHR fence,</span><br><span class="line">            <span class="keyword">const</span> sp&lt;Fence&gt;&amp; releaseFence)</span> </span>= <span class="number">0</span>;</span><br><span class="line">    ......        </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;注释写的很清晰，但是限于篇幅。。。</p>
+<p>&#160; &#160; &#160; &#160;BufferQueueConsumer类是接口IGraphicBufferComsumer的实现，是一个回调接口，<strong>如果BufferQueue中有数据准备好了通知消费者取走数据</strong>。取走数据的时候，需要调用acquireBuffer函数，将缓冲区状态变成ACQUIRED，使用完之后调用releaseBuffer函数可以吧缓冲区数据归还给BufferQueueCore，这样缓冲区就变成FREE。</p>
+<p>&#160; &#160; &#160; &#160;当一块buffer就绪后，消费者就开始工作了，consumer对buffer的处理是被动的，它必须要等到一块buffer填充好才能工作，<code>那consumer怎么知道一块buffer已经填充好了</code>？</p>
+<p>&#160; &#160; &#160; &#160;所以我们顺着Layer的onFirstRef函数，里面还有一个对于消费者的封装：<strong>SurfaceFlingerConsumer</strong>。为了方便，我再贴一遍Layer的onFirstRef函数：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">void</span> Layer::onFirstRef() &#123;</span><br><span class="line">    <span class="comment">// Creates a custom BufferQueue for SurfaceFlingerConsumer to use</span></span><br><span class="line">    sp&lt;IGraphicBufferProducer&gt; producer;</span><br><span class="line">    sp&lt;IGraphicBufferConsumer&gt; consumer;</span><br><span class="line">    BufferQueue::createBufferQueue(&amp;producer, &amp;consumer);</span><br><span class="line">    mProducer = <span class="keyword">new</span> MonitoredProducer(producer, mFlinger);</span><br><span class="line">    <span class="comment">//创建一个SurfaceFlingerConsumer用于通知消费者消费</span></span><br><span class="line">    mSurfaceFlingerConsumer = <span class="keyword">new</span> SurfaceFlingerConsumer(consumer, mTextureName);</span><br><span class="line">    mSurfaceFlingerConsumer-&gt;setConsumerUsageBits(getEffectiveUsage(<span class="number">0</span>));</span><br><span class="line">    <span class="comment">//给消费者设置监听者</span></span><br><span class="line">    mSurfaceFlingerConsumer-&gt;setContentsChangedListener(<span class="keyword">this</span>);</span><br><span class="line">    mSurfaceFlingerConsumer-&gt;setName(mName);</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;为了方便起见，我们将BufferQueueConsumer和SurfaceFlingerConsumer的类图都贴出来：</p>
+<p><img src="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E4%B8%83%29----%E5%88%9B%E5%BB%BA%E5%9B%BE%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BAGraphicBuffer/Consumer.jpg" alt="Consumer"></p>
+<p>&#160; &#160; &#160; &#160;为了通知消费消费GraphicBuffer，这里提供了另外一个类ConsumerListener，位于frameworks/native/include/gui/IConsumerListener.h：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line">    ConsumerListener() &#123; &#125;</span><br><span class="line">    <span class="keyword">virtual</span> ~ConsumerListener() &#123; &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// onFrameAvailable is called from queueBuffer each time an additional</span></span><br><span class="line">    <span class="comment">// frame becomes available for consumption. This means that frames that</span></span><br><span class="line">    <span class="comment">// are queued while in asynchronous mode only trigger the callback if no</span></span><br><span class="line">    <span class="comment">// previous frames are pending. Frames queued while in synchronous mode</span></span><br><span class="line">    <span class="comment">// always trigger the callback.</span></span><br><span class="line">    <span class="comment">//</span></span><br><span class="line">    <span class="comment">// This is called without any lock held and can be called concurrently</span></span><br><span class="line">    <span class="comment">// by multiple threads.</span></span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> <span class="keyword">void</span> <span class="title">onFrameAvailable</span><span class="params">()</span> </span>= <span class="number">0</span>; <span class="comment">/* Asynchronous */</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// onBuffersReleased is called to notify the buffer consumer that the</span></span><br><span class="line">    <span class="comment">// BufferQueue has released its references to one or more GraphicBuffers</span></span><br><span class="line">    <span class="comment">// contained in its slots.  The buffer consumer should then call</span></span><br><span class="line">    <span class="comment">// BufferQueue::getReleasedBuffers to retrieve the list of buffers</span></span><br><span class="line">    <span class="comment">//</span></span><br><span class="line">    <span class="comment">// This is called without any lock held and can be called concurrently</span></span><br><span class="line">    <span class="comment">// by multiple threads.</span></span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> <span class="keyword">void</span> <span class="title">onBuffersReleased</span><span class="params">()</span> </span>= <span class="number">0</span>; <span class="comment">/* Asynchronous */</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// onSidebandStreamChanged is called to notify the buffer consumer that the</span></span><br><span class="line">    <span class="comment">// BufferQueue's sideband buffer stream has changed. This is called when a</span></span><br><span class="line">    <span class="comment">// stream is first attached and when it is either detached or replaced by a</span></span><br><span class="line">    <span class="comment">// different stream.</span></span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> <span class="keyword">void</span> <span class="title">onSidebandStreamChanged</span><span class="params">()</span> </span>= <span class="number">0</span>; <span class="comment">/* Asynchronous */</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;两个纯虚函数，当一块buffer可以被消费时，onFrameAvailable会被调用；当BufferQueue通知consumer它已经释放其mSlot中的一个或多个GraphicBuffer的引用时，会调用onBuffersReleased。</p>
+<p>&#160; &#160; &#160; &#160;那么什么时候注册的这个监听呢？我们需要跟随一下SurfaceFlingerConsumer 的构造函数，位于frameworks/native/services/surfaceflinger/SurfaceFlingerConsumer.h中：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">SurfaceFlingerConsumer(<span class="keyword">const</span> sp&lt;IGraphicBufferConsumer&gt;&amp; consumer,</span><br><span class="line">        <span class="keyword">uint32_t</span> tex)</span><br><span class="line">    <span class="comment">//调用了GLConsumer的构造函数</span></span><br><span class="line">    : GLConsumer(consumer, tex, GLConsumer::TEXTURE_EXTERNAL, <span class="literal">false</span>, <span class="literal">false</span>),</span><br><span class="line">      mTransformToDisplayInverse(<span class="literal">false</span>)</span><br><span class="line">&#123;&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;我们需要继续查看GLConsumer的构造函数，位于frameworks/native/libs/gui/GLConsumer.cpp：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">GLConsumer::GLConsumer(<span class="keyword">const</span> sp&lt;IGraphicBufferConsumer&gt;&amp; bq, <span class="keyword">uint32_t</span> tex,</span><br><span class="line">        <span class="keyword">uint32_t</span> texTarget, <span class="keyword">bool</span> useFenceSync, <span class="keyword">bool</span> isControlledByApp) :</span><br><span class="line">    ConsumerBase(bq, isControlledByApp), <span class="comment">//有调用了ConsumerBase的构造函数，猫腻应该在这里</span></span><br><span class="line">    mCurrentTransform(<span class="number">0</span>),</span><br><span class="line">    mCurrentScalingMode(NATIVE_WINDOW_SCALING_MODE_FREEZE),</span><br><span class="line">    mCurrentFence(Fence::NO_FENCE),</span><br><span class="line">    mCurrentTimestamp(<span class="number">0</span>),</span><br><span class="line">    mCurrentFrameNumber(<span class="number">0</span>),</span><br><span class="line">    mDefaultWidth(<span class="number">1</span>),</span><br><span class="line">    mDefaultHeight(<span class="number">1</span>),</span><br><span class="line">    mFilteringEnabled(<span class="literal">true</span>),</span><br><span class="line">    mTexName(tex),</span><br><span class="line">    mUseFenceSync(useFenceSync),</span><br><span class="line">    mTexTarget(texTarget),</span><br><span class="line">    mEglDisplay(EGL_NO_DISPLAY),</span><br><span class="line">    mEglContext(EGL_NO_CONTEXT),</span><br><span class="line">    mCurrentTexture(BufferQueue::INVALID_BUFFER_SLOT),</span><br><span class="line">    mAttached(<span class="literal">true</span>)</span><br><span class="line">&#123;</span><br><span class="line">    ST_LOGV(<span class="string">"GLConsumer"</span>);</span><br><span class="line"></span><br><span class="line">    <span class="built_in">memcpy</span>(mCurrentTransformMatrix, mtxIdentity,</span><br><span class="line">            <span class="keyword">sizeof</span>(mCurrentTransformMatrix));</span><br><span class="line"></span><br><span class="line">    mConsumer-&gt;setConsumerUsageBits(DEFAULT_USAGE_FLAGS);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;又调用了ConsumerBase的构造函数，猫腻应该在这里，我们继续查看ConsumerBase的构造函数，位于frameworks/native/libs/gui/ConsumerBase.cpp中：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">ConsumerBase::ConsumerBase(<span class="keyword">const</span> sp&lt;IGraphicBufferConsumer&gt;&amp; bufferQueue, <span class="keyword">bool</span> controlledByApp) :</span><br><span class="line">        mAbandoned(<span class="literal">false</span>),</span><br><span class="line">        mConsumer(bufferQueue) &#123;</span><br><span class="line">    <span class="comment">// Choose a name using the PID and a process-unique ID.</span></span><br><span class="line">    mName = String8::format(<span class="string">"unnamed-%d-%d"</span>, getpid(), createProcessUniqueId());</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Note that we can't create an sp&lt;...&gt;(this) in a ctor that will not keep a</span></span><br><span class="line">    <span class="comment">// reference once the ctor ends, as that would cause the refcount of 'this'</span></span><br><span class="line">    <span class="comment">// dropping to 0 at the end of the ctor.  Since all we need is a wp&lt;...&gt;</span></span><br><span class="line">    <span class="comment">// that's what we create.</span></span><br><span class="line">    <span class="comment">//创建监听者对象</span></span><br><span class="line">    wp&lt;ConsumerListener&gt; listener = <span class="keyword">static_cast</span>&lt;ConsumerListener*&gt;(<span class="keyword">this</span>);</span><br><span class="line">    <span class="comment">//包装成一个代理</span></span><br><span class="line">    sp&lt;IConsumerListener&gt; proxy = <span class="keyword">new</span> BufferQueue::ProxyConsumerListener(listener);</span><br><span class="line">    <span class="comment">//mConsumer调用consumerConnect函数，通过mConsumer，把consumerListener注册到服务者类bufferQueuecore中</span></span><br><span class="line">    <span class="keyword">status_t</span> err = mConsumer-&gt;consumerConnect(proxy, controlledByApp);</span><br><span class="line">    <span class="keyword">if</span> (err != NO_ERROR) &#123;</span><br><span class="line">        CB_LOGE(<span class="string">"ConsumerBase: error connecting to BufferQueue: %s (%d)"</span>,</span><br><span class="line">                strerror(-err), err);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        mConsumer-&gt;setConsumerName(mName);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;上面代码主要工作有：<br>&#160; &#160; &#160; &#160;1）创建监听者对象；<br>&#160; &#160; &#160; &#160;2）包装成一个代理；<br>&#160; &#160; &#160; &#160;3）mConsumer调用consumerConnect函数，通过mConsumer，把consumerListener注册到服务者类bufferQueuecore中。<br>&#160; &#160; &#160; &#160;那么注册操作就在于第三部。这里BufferQueueConsumer调用consumerConnect函数，位于frameworks/native/libs/gui/BufferQueueConsumer.h中：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">virtual</span> status_t <span class="title">consumerConnect</span><span class="params">(<span class="keyword">const</span> sp&lt;IConsumerListener&gt;&amp; consumer,</span><br><span class="line">        <span class="keyword">bool</span> controlledByApp)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> connect(consumer, controlledByApp);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;在头文件里定义了consumerConnect函数，调用connect函数，位于frameworks/native/libs/gui/BufferQueueConsumer.cpp中：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">status_t</span> BufferQueueConsumer::connect(</span><br><span class="line">        <span class="keyword">const</span> sp&lt;IConsumerListener&gt;&amp; consumerListener, <span class="keyword">bool</span> controlledByApp) &#123;</span><br><span class="line">    ATRACE_CALL();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (consumerListener == <span class="literal">NULL</span>) &#123;</span><br><span class="line">        BQ_LOGE(<span class="string">"connect(C): consumerListener may not be NULL"</span>);</span><br><span class="line">        <span class="keyword">return</span> BAD_VALUE;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    BQ_LOGV(<span class="string">"connect(C): controlledByApp=%s"</span>,</span><br><span class="line">            controlledByApp ? <span class="string">"true"</span> : <span class="string">"false"</span>);</span><br><span class="line"></span><br><span class="line">    Mutex::<span class="function">Autolock <span class="title">lock</span><span class="params">(mCore-&gt;mMutex)</span></span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (mCore-&gt;mIsAbandoned) &#123;</span><br><span class="line">        BQ_LOGE(<span class="string">"connect(C): BufferQueue has been abandoned"</span>);</span><br><span class="line">        <span class="keyword">return</span> NO_INIT;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//这里把consumerListener注册到服务者类bufferQueuecore中</span></span><br><span class="line">    mCore-&gt;mConsumerListener = consumerListener;</span><br><span class="line">    mCore-&gt;mConsumerControlledByApp = controlledByApp;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> NO_ERROR;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;connect连接，经过层层调用，把listener监听注册到bufferQueuecore中，<br>这样bufferQueuecore就可以利用这个监听通知到具体的消费者。</p>
+<p>&#160; &#160; &#160; &#160;接着就是设置监听者：mSurfaceFlingerConsumer-&gt;setContentsChangedListener(this);我们可以看看他的操作：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">void</span> SurfaceFlingerConsumer::setContentsChangedListener(</span><br><span class="line">        <span class="keyword">const</span> wp&lt;ContentsChangedListener&gt;&amp; listener) &#123;</span><br><span class="line">    <span class="comment">//调用了ConsumerBase的setFrameAvailableListener函数</span></span><br><span class="line">    setFrameAvailableListener(listener);</span><br><span class="line">    Mutex::<span class="function">Autolock <span class="title">lock</span><span class="params">(mMutex)</span></span>;</span><br><span class="line">    mContentsChangedListener = listener;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">/**ConsumerBase的setFrameAvailableListener函数**/</span></span><br><span class="line"><span class="keyword">void</span> ConsumerBase::setFrameAvailableListener(</span><br><span class="line">        <span class="keyword">const</span> wp&lt;FrameAvailableListener&gt;&amp; listener) &#123;</span><br><span class="line">    CB_LOGV(<span class="string">"setFrameAvailableListener"</span>);</span><br><span class="line">    Mutex::<span class="function">Autolock <span class="title">lock</span><span class="params">(mMutex)</span></span>;</span><br><span class="line">    mFrameAvailableListener = listener;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;这样就构成了完整的监听者模式了，有Observer，也有Observable。</p>
+<p>&#160; &#160; &#160; &#160;这样就清楚了buffer的生产者，消费者，管理者之间的关系。</p>
+<p>&#160; &#160; &#160; &#160;所以稍微总结一下BufferQueue机制，借助<code>Chris Simmonds</code>老爷子的话，就是如下内容：</p>
+<ul>
+<li>Mechanism for passing GraphicBuffers to SurfaceFlinger</li>
+<li>Contains an array of between 2 and 64 GraphicBuffers</li>
+<li>Uses interface IGraphicBufferAlloc to allocate buffers (see later)</li>
+<li>Provides two Binder interfaces：<ul>
+<li>IGraphicBufferProducer for the client (Activity)</li>
+<li>IGraphicBufferConsumer for the consumer (SurfaceFlinger)</li>
+</ul>
+</li>
+<li>Buffers cycle between producer and consumer</li>
+</ul>
+<h1 id="分配图形缓冲区"><a href="#分配图形缓冲区" class="headerlink" title="分配图形缓冲区"></a>分配图形缓冲区</h1><p>&#160; &#160; &#160; &#160;首先buffer是共享缓冲区，故肯定会涉及到互斥锁，所以buffer的状态也有很多种，一般buffer大致会经过<strong>FREE-&gt;DEQUEUED-&gt;QUEUED-&gt;ACQUIRED-&gt;FREE</strong>这个过程。如果所示：</p>
+<p><img src="http://o7xxrho8u.bkt.clouddn.com/file/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E4%BA%8C%29----SurfaceFlinger%E6%A6%82%E8%BF%B0/PC3.jpg" alt="bufferalloc"></p>
+<p>&#160; &#160; &#160; &#160;或者这样表示这个过程：</p>
+<p><img src="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E4%B8%83%29----%E5%88%9B%E5%BB%BA%E5%9B%BE%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BAGraphicBuffer/bufferalloc2.png" alt="bufferalloc2"></p>
+<h2 id="申请图形缓冲区"><a href="#申请图形缓冲区" class="headerlink" title="申请图形缓冲区"></a>申请图形缓冲区</h2><p>&#160; &#160; &#160; &#160;前面看到，bufferqueuecore中mSlots数组管理缓冲区，最大容量是64，这个mSlots一开始静态分配了64个bufferslot大小的空间，但是其中的数据缓冲区不是一次性分配的，不然就太浪费空间了，所以缓冲区的空间分配是动态的，具体就是producer在dequeuebuffer时，如果没有获取到可用的缓冲区，那就要重新分配空间了。</p>
+<p>&#160; &#160; &#160; &#160;分配图形缓冲区，即GraphicBuffer，我们需要查看BufferQueueProducer的dequeuebuffer函数：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">status_t</span> BufferQueueProducer::dequeueBuffer(<span class="keyword">int</span> *outSlot,</span><br><span class="line">        sp&lt;android::Fence&gt; *outFence, <span class="keyword">bool</span> async,</span><br><span class="line">        <span class="keyword">uint32_t</span> width, <span class="keyword">uint32_t</span> height, <span class="keyword">uint32_t</span> format, <span class="keyword">uint32_t</span> usage) &#123;</span><br><span class="line">    ATRACE_CALL();</span><br><span class="line">    &#123; <span class="comment">// Autolock scope</span></span><br><span class="line">        Mutex::<span class="function">Autolock <span class="title">lock</span><span class="params">(mCore-&gt;mMutex)</span></span>;</span><br><span class="line">        mConsumerName = mCore-&gt;mConsumerName;</span><br><span class="line">    &#125; <span class="comment">// Autolock scope</span></span><br><span class="line"></span><br><span class="line">    BQ_LOGV(<span class="string">"dequeueBuffer: async=%s w=%u h=%u format=%#x, usage=%#x"</span>,</span><br><span class="line">            async ? <span class="string">"true"</span> : <span class="string">"false"</span>, width, height, format, usage);</span><br><span class="line">    <span class="comment">//宽高不正常，则返回失败</span></span><br><span class="line">    <span class="keyword">if</span> ((width &amp;&amp; !height) || (!width &amp;&amp; height)) &#123;</span><br><span class="line">        BQ_LOGE(<span class="string">"dequeueBuffer: invalid size: w=%u h=%u"</span>, width, height);</span><br><span class="line">        <span class="keyword">return</span> BAD_VALUE;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//一些变量赋初值</span></span><br><span class="line">    <span class="keyword">status_t</span> returnFlags = NO_ERROR;</span><br><span class="line">    EGLDisplay eglDisplay = EGL_NO_DISPLAY;</span><br><span class="line">    EGLSyncKHR eglFence = EGL_NO_SYNC_KHR;</span><br><span class="line">    <span class="keyword">bool</span> attachedByConsumer = <span class="literal">false</span>;</span><br><span class="line"></span><br><span class="line">    &#123; <span class="comment">// Autolock scope</span></span><br><span class="line">        Mutex::<span class="function">Autolock <span class="title">lock</span><span class="params">(mCore-&gt;mMutex)</span></span>;</span><br><span class="line">        <span class="comment">//如果正在申请Grabuffer，则要wait。里面是一个mIsAllocating标志位判断，如果为true则要等待</span></span><br><span class="line">        mCore-&gt;waitWhileAllocatingLocked();</span><br><span class="line">        <span class="comment">//如果format为0，则赋为初值PIXEL_FORMAT_RGBA_8888</span></span><br><span class="line">        <span class="keyword">if</span> (format == <span class="number">0</span>) &#123;</span><br><span class="line">            format = mCore-&gt;mDefaultBufferFormat;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Enable the usage bits the consumer requested</span></span><br><span class="line">        usage |= mCore-&gt;mConsumerUsageBits;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">int</span> found;<span class="comment">//先在mSlot数组中查找FREE状态的slot，如果找到了就返回这个slot中的index。</span></span><br><span class="line">        <span class="keyword">status_t</span> status = waitForFreeSlotThenRelock(<span class="string">"dequeueBuffer"</span>, async,</span><br><span class="line">                &amp;found, &amp;returnFlags);</span><br><span class="line">        <span class="keyword">if</span> (status != NO_ERROR) &#123;</span><br><span class="line">            <span class="keyword">return</span> status;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// This should not happen</span></span><br><span class="line">        <span class="comment">//这种情况一般不会发生，因为如何found是INVALID_BUFFER_SLOT状态，上面的status就不会是NO_Error,就不会走到这里</span></span><br><span class="line">        <span class="keyword">if</span> (found == BufferQueueCore::INVALID_BUFFER_SLOT) &#123;</span><br><span class="line">            BQ_LOGE(<span class="string">"dequeueBuffer: no available buffer slots"</span>);</span><br><span class="line">            <span class="keyword">return</span> -EBUSY;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">//将找到的slot的index赋给外面传入的outSlot指向内容</span></span><br><span class="line">        *outSlot = found;</span><br><span class="line">        ATRACE_BUFFER_INDEX(found);</span><br><span class="line"></span><br><span class="line">        attachedByConsumer = mSlots[found].mAttachedByConsumer;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">const</span> <span class="keyword">bool</span> useDefaultSize = !width &amp;&amp; !height;</span><br><span class="line">        <span class="keyword">if</span> (useDefaultSize) &#123;</span><br><span class="line">            width = mCore-&gt;mDefaultWidth;</span><br><span class="line">            height = mCore-&gt;mDefaultHeight;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">//改变BufferState状态为DEQUEUED</span></span><br><span class="line">        mSlots[found].mBufferState = BufferSlot::DEQUEUED;</span><br><span class="line">        <span class="comment">//然后将返回index的slot的Graphicbuffer赋给buffer变量</span></span><br><span class="line">        <span class="keyword">const</span> sp&lt;GraphicBuffer&gt;&amp; buffer(mSlots[found].mGraphicBuffer);</span><br><span class="line">        <span class="comment">//判断这个GraphicBuffer是否需要重新分配空间，判断条件就是buffer为空，因为它初始值是null，第一次使用它需要分配空间，</span></span><br><span class="line">        <span class="comment">//如果不为null，但是buffer的width、height、format、usage属性跟要求的不一致，也要重新分配</span></span><br><span class="line">        <span class="keyword">if</span> ((buffer == <span class="literal">NULL</span>) ||</span><br><span class="line">                (<span class="keyword">static_cast</span>&lt;<span class="keyword">uint32_t</span>&gt;(buffer-&gt;width) != width) ||</span><br><span class="line">                (<span class="keyword">static_cast</span>&lt;<span class="keyword">uint32_t</span>&gt;(buffer-&gt;height) != height) ||</span><br><span class="line">                (<span class="keyword">static_cast</span>&lt;<span class="keyword">uint32_t</span>&gt;(buffer-&gt;format) != format) ||</span><br><span class="line">                ((<span class="keyword">static_cast</span>&lt;<span class="keyword">uint32_t</span>&gt;(buffer-&gt;usage) &amp; usage) != usage))</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="comment">//如果需要重新分配GraphicBuffer，先初始化这些变量</span></span><br><span class="line">            mSlots[found].mAcquireCalled = <span class="literal">false</span>;</span><br><span class="line">            mSlots[found].mGraphicBuffer = <span class="literal">NULL</span>;</span><br><span class="line">            mSlots[found].mRequestBufferCalled = <span class="literal">false</span>;</span><br><span class="line">            mSlots[found].mEglDisplay = EGL_NO_DISPLAY;</span><br><span class="line">            mSlots[found].mEglFence = EGL_NO_SYNC_KHR;</span><br><span class="line">            mSlots[found].mFence = Fence::NO_FENCE;</span><br><span class="line">            <span class="comment">//增加BUFFER_NEEDS_REALLOCATION标志，已重新分配GraphicBuffer</span></span><br><span class="line">            returnFlags |= BUFFER_NEEDS_REALLOCATION;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (CC_UNLIKELY(mSlots[found].mFence == <span class="literal">NULL</span>)) &#123;</span><br><span class="line">            BQ_LOGE(<span class="string">"dequeueBuffer: about to return a NULL fence - "</span></span><br><span class="line">                    <span class="string">"slot=%d w=%d h=%d format=%u"</span>,</span><br><span class="line">                    found, buffer-&gt;width, buffer-&gt;height, buffer-&gt;format);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">//给一些临时变量赋值</span></span><br><span class="line">        eglDisplay = mSlots[found].mEglDisplay;</span><br><span class="line">        eglFence = mSlots[found].mEglFence;</span><br><span class="line">        *outFence = mSlots[found].mFence;</span><br><span class="line">        <span class="comment">//给fence变量赋初值</span></span><br><span class="line">        mSlots[found].mEglFence = EGL_NO_SYNC_KHR;</span><br><span class="line">        mSlots[found].mFence = Fence::NO_FENCE;</span><br><span class="line">    &#125; <span class="comment">// Autolock scope</span></span><br><span class="line">    <span class="comment">//如果需要重新分配GraphicBuffer</span></span><br><span class="line">    <span class="keyword">if</span> (returnFlags &amp; BUFFER_NEEDS_REALLOCATION) &#123;</span><br><span class="line">        <span class="keyword">status_t</span> error;</span><br><span class="line">        BQ_LOGV(<span class="string">"dequeueBuffer: allocating a new buffer for slot %d"</span>, *outSlot);</span><br><span class="line">        <span class="comment">//需要重新分配，调用BufferQueueCore中的GraphicBufferAlloc中函数createGraphicBuffer，生成一个newGraphicBuffer</span></span><br><span class="line">        sp&lt;GraphicBuffer&gt; graphicBuffer(mCore-&gt;mAllocator-&gt;createGraphicBuffer(</span><br><span class="line">                    width, height, format, usage, &amp;error));</span><br><span class="line">        <span class="keyword">if</span> (graphicBuffer == <span class="literal">NULL</span>) &#123;</span><br><span class="line">            BQ_LOGE(<span class="string">"dequeueBuffer: createGraphicBuffer failed"</span>);</span><br><span class="line">            <span class="keyword">return</span> error;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        &#123; <span class="comment">// Autolock scope</span></span><br><span class="line">            Mutex::<span class="function">Autolock <span class="title">lock</span><span class="params">(mCore-&gt;mMutex)</span></span>;</span><br><span class="line"></span><br><span class="line">            <span class="keyword">if</span> (mCore-&gt;mIsAbandoned) &#123;</span><br><span class="line">                BQ_LOGE(<span class="string">"dequeueBuffer: BufferQueue has been abandoned"</span>);</span><br><span class="line">                <span class="keyword">return</span> NO_INIT;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="comment">////新分配的buffer，将slot的mFrameNumber 置为最大。mFrameNumber 用于LRU排序</span></span><br><span class="line">            mSlots[*outSlot].mFrameNumber = UINT32_MAX;</span><br><span class="line">            <span class="comment">//将分配的buffer赋给slot中的mGraphicBuffer </span></span><br><span class="line">            mSlots[*outSlot].mGraphicBuffer = graphicBuffer;</span><br><span class="line">        &#125; <span class="comment">// Autolock scope</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (attachedByConsumer) &#123;</span><br><span class="line">        returnFlags |= BUFFER_NEEDS_REALLOCATION;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//如果eglFence不等于EGL_NO_SYNC_KHR。Fence我们后面会讲到，一种围栏机制</span></span><br><span class="line">    <span class="keyword">if</span> (eglFence != EGL_NO_SYNC_KHR) &#123;</span><br><span class="line">        <span class="comment">//等待Buffer状态就绪，然后fence围栏放行</span></span><br><span class="line">        EGLint result = eglClientWaitSyncKHR(eglDisplay, eglFence, <span class="number">0</span>,</span><br><span class="line">                <span class="number">1000000000</span>);</span><br><span class="line">        <span class="comment">// If something goes wrong, log the error, but return the buffer without</span></span><br><span class="line">        <span class="comment">// synchronizing access to it. It's too late at this point to abort the</span></span><br><span class="line">        <span class="comment">// dequeue operation.</span></span><br><span class="line">        <span class="keyword">if</span> (result == EGL_FALSE) &#123;</span><br><span class="line">            BQ_LOGE(<span class="string">"dequeueBuffer: error %#x waiting for fence"</span>,</span><br><span class="line">                    eglGetError());</span><br><span class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span> (result == EGL_TIMEOUT_EXPIRED_KHR) &#123;</span><br><span class="line">            BQ_LOGE(<span class="string">"dequeueBuffer: timeout waiting for fence"</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        eglDestroySyncKHR(eglDisplay, eglFence);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    BQ_LOGV(<span class="string">"dequeueBuffer: returning slot=%d/%"</span> PRIu64 <span class="string">" buf=%p flags=%#x"</span>,</span><br><span class="line">            *outSlot,</span><br><span class="line">            mSlots[*outSlot].mFrameNumber,</span><br><span class="line">            mSlots[*outSlot].mGraphicBuffer-&gt;handle, returnFlags);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> returnFlags;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;代码虽然多，但是逻辑不复杂，我们分步查看：</p>
+<p>&#160; &#160; &#160; &#160;1）先在mSlot数组中查找FREE状态的slot，如果找到了就返回这个slot中的index。这个操作是调用了waitForFreeSlotThenRelock函数，我们看看这个函数的实现：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">status_t</span> BufferQueueProducer::waitForFreeSlotThenRelock(<span class="keyword">const</span> <span class="keyword">char</span>* caller,</span><br><span class="line">        <span class="keyword">bool</span> async, <span class="keyword">int</span>* found, <span class="keyword">status_t</span>* returnFlags) <span class="keyword">const</span> &#123;</span><br><span class="line">    <span class="keyword">bool</span> tryAgain = <span class="literal">true</span>;<span class="comment">//默认是true</span></span><br><span class="line">    <span class="keyword">while</span> (tryAgain) &#123;</span><br><span class="line">        <span class="keyword">if</span> (mCore-&gt;mIsAbandoned) &#123;<span class="comment">//如果没有初始化，BufferQueue被abandoned</span></span><br><span class="line">            BQ_LOGE(<span class="string">"%s: BufferQueue has been abandoned"</span>, caller);</span><br><span class="line">            <span class="keyword">return</span> NO_INIT;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">//getMaxBufferCountLocked returns the maximum number of buffers that can be allocated at once</span></span><br><span class="line">        <span class="comment">//注释还有一些，不贴了。就是获取一次申请的buffer的最大值。查看了代码，就是所有状态的buffer个数。</span></span><br><span class="line">        <span class="keyword">const</span> <span class="keyword">int</span> maxBufferCount = mCore-&gt;getMaxBufferCountLocked(async);</span><br><span class="line">        <span class="comment">//如果async为true，即异步操作，并且mOverrideMaxBufferCount不为0</span></span><br><span class="line">        <span class="comment">//（一般mOverrideMaxBufferCount是在BufferQueueProducer调用setBufferCount函数改变，</span></span><br><span class="line">        <span class="comment">//这个函数会更新mSlot中所有Slot的状态为未分配的，并把ower还给BufferQueue）</span></span><br><span class="line">        <span class="keyword">if</span> (async &amp;&amp; mCore-&gt;mOverrideMaxBufferCount) &#123;</span><br><span class="line">            <span class="comment">// <span class="doctag">FIXME:</span> Some drivers are manually setting the buffer count</span></span><br><span class="line">            <span class="comment">// (which they shouldn't), so we do this extra test here to</span></span><br><span class="line">            <span class="comment">// handle that case. This is TEMPORARY until we get this fixed.</span></span><br><span class="line">            <span class="comment">//因为是异步的关系，一些驱动会修改buffer count，但是返回不及时，所以这两个值可能不相等</span></span><br><span class="line">            <span class="keyword">if</span> (mCore-&gt;mOverrideMaxBufferCount &lt; maxBufferCount) &#123;</span><br><span class="line">                BQ_LOGE(<span class="string">"%s: async mode is invalid with buffer count override"</span>,</span><br><span class="line">                        caller);</span><br><span class="line">                <span class="keyword">return</span> BAD_VALUE;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// Free up any buffers that are in slots beyond the max buffer count</span></span><br><span class="line">        <span class="comment">//释放所有超出buffer数组最大数64的buffer</span></span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> s = maxBufferCount; s &lt; BufferQueueDefs::NUM_BUFFER_SLOTS; ++s) &#123;</span><br><span class="line">            assert(mSlots[s].mBufferState == BufferSlot::FREE);</span><br><span class="line">            <span class="keyword">if</span> (mSlots[s].mGraphicBuffer != <span class="literal">NULL</span>) &#123;</span><br><span class="line">                mCore-&gt;freeBufferLocked(s);</span><br><span class="line">                *returnFlags |= RELEASE_ALL_BUFFERS;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Look for a free buffer to give to the client</span></span><br><span class="line">        <span class="comment">//开始查找FREE状态的Buffer，并返回</span></span><br><span class="line">        *found = BufferQueueCore::INVALID_BUFFER_SLOT;</span><br><span class="line">        <span class="keyword">int</span> dequeuedCount = <span class="number">0</span>;</span><br><span class="line">        <span class="keyword">int</span> acquiredCount = <span class="number">0</span>;</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> s = <span class="number">0</span>; s &lt; maxBufferCount; ++s) &#123;</span><br><span class="line">            <span class="keyword">switch</span> (mSlots[s].mBufferState) &#123;</span><br><span class="line">                <span class="keyword">case</span> BufferSlot::DEQUEUED:</span><br><span class="line">                    ++dequeuedCount;<span class="comment">//DEQUEUED + 1</span></span><br><span class="line">                    <span class="keyword">break</span>;</span><br><span class="line">                <span class="keyword">case</span> BufferSlot::ACQUIRED:</span><br><span class="line">                    ++acquiredCount;<span class="comment">//ACQUIRED + 1</span></span><br><span class="line">                    <span class="keyword">break</span>;</span><br><span class="line">                <span class="keyword">case</span> BufferSlot::FREE:</span><br><span class="line">                    <span class="comment">// We return the oldest of the free buffers to avoid</span></span><br><span class="line">                    <span class="comment">// stalling the producer if possible, since the consumer</span></span><br><span class="line">                    <span class="comment">// may still have pending reads of in-flight buffers</span></span><br><span class="line">                    <span class="comment">//返回最老的FREE buffer，为了避免当consumer还在等待消费pending的正在起飞的buffer时候，producer突然GG了</span></span><br><span class="line">                    <span class="keyword">if</span> (*found == BufferQueueCore::INVALID_BUFFER_SLOT ||<span class="comment">//第一次找到FREE buffer，会将found指针指向这个index</span></span><br><span class="line">                            <span class="comment">//下次来的FREE buffer，就和上此找到的buffer对比slot的mFrameNumber ，找到mFrameNumber 最小的。</span></span><br><span class="line">                            <span class="comment">//这个就是根绝mFrameNumber 的大小进行LRU排序，最新的就是mFrameNumber 最大的，最老的就是mFrameNumber 最小的</span></span><br><span class="line">                            mSlots[s].mFrameNumber &lt; mSlots[*found].mFrameNumber) &#123;</span><br><span class="line">                        *found = s;</span><br><span class="line">                    &#125;</span><br><span class="line">                    <span class="keyword">break</span>;</span><br><span class="line">                <span class="keyword">default</span>:</span><br><span class="line">                    <span class="keyword">break</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Producers are not allowed to dequeue more than one buffer if they</span></span><br><span class="line">        <span class="comment">// did not set a buffer count</span></span><br><span class="line">        <span class="comment">//Producers 如果没有调用setBufferCount是不允许dequeue buffer的</span></span><br><span class="line">        <span class="keyword">if</span> (!mCore-&gt;mOverrideMaxBufferCount &amp;&amp; dequeuedCount) &#123;</span><br><span class="line">            BQ_LOGE(<span class="string">"%s: can't dequeue multiple buffers without setting the "</span></span><br><span class="line">                    <span class="string">"buffer count"</span>, caller);</span><br><span class="line">            <span class="keyword">return</span> INVALID_OPERATION;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// See whether a buffer has been queued since the last</span></span><br><span class="line">        <span class="comment">// setBufferCount so we know whether to perform the min undequeued</span></span><br><span class="line">        <span class="comment">// buffers check below</span></span><br><span class="line">        <span class="comment">//在queueBuffer调用后，mBufferHasBeenQueued会置为true</span></span><br><span class="line">        <span class="comment">//如果在上次setBufferCount调用后，当buffer被queue进入BufferQueue，</span></span><br><span class="line">        <span class="comment">//这时候需要检查undequeue的数量是否大于最小的临界值</span></span><br><span class="line">        <span class="keyword">if</span> (mCore-&gt;mBufferHasBeenQueued) &#123;</span><br><span class="line">            <span class="comment">// Make sure the producer is not trying to dequeue more buffers</span></span><br><span class="line">            <span class="comment">// than allowed</span></span><br><span class="line">            <span class="comment">//总count - dequeue的count = undequeue的count</span></span><br><span class="line">            <span class="keyword">const</span> <span class="keyword">int</span> newUndequeuedCount =</span><br><span class="line">                maxBufferCount - (dequeuedCount + <span class="number">1</span>);</span><br><span class="line">            <span class="keyword">const</span> <span class="keyword">int</span> minUndequeuedCount =</span><br><span class="line">                mCore-&gt;getMinUndequeuedBufferCountLocked(async);</span><br><span class="line">            <span class="keyword">if</span> (newUndequeuedCount &lt; minUndequeuedCount) &#123;</span><br><span class="line">                BQ_LOGE(<span class="string">"%s: min undequeued buffer count (%d) exceeded "</span></span><br><span class="line">                        <span class="string">"(dequeued=%d undequeued=%d)"</span>,</span><br><span class="line">                        caller, minUndequeuedCount,</span><br><span class="line">                        dequeuedCount, newUndequeuedCount);</span><br><span class="line">                <span class="keyword">return</span> INVALID_OPERATION;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// If we disconnect and reconnect quickly, we can be in a state where</span></span><br><span class="line">        <span class="comment">// our slots are empty but we have many buffers in the queue. This can</span></span><br><span class="line">        <span class="comment">// cause us to run out of memory if we outrun the consumer. Wait here if</span></span><br><span class="line">        <span class="comment">// it looks like we have too many buffers queued up.</span></span><br><span class="line">        <span class="comment">//如果我们调用disconnect后迅速的reconnect，会出现mSlot数组为空但是mQueue队列中的BufferItem不为空</span></span><br><span class="line">        <span class="comment">//所以这样会造成内存耗尽的后果</span></span><br><span class="line">        <span class="comment">//就是判断放入mQueue中BufferItem的个数是否大于mSlot中的个数</span></span><br><span class="line">        <span class="comment">//mQueue是用来存放申请的缓冲区的，是一个Vector</span></span><br><span class="line">        <span class="keyword">bool</span> tooManyBuffers = mCore-&gt;mQueue.size()</span><br><span class="line">                            &gt; <span class="keyword">static_cast</span>&lt;<span class="keyword">size_t</span>&gt;(maxBufferCount);</span><br><span class="line">        <span class="keyword">if</span> (tooManyBuffers) &#123;</span><br><span class="line">            BQ_LOGV(<span class="string">"%s: queue size is %zu, waiting"</span>, caller,</span><br><span class="line">                    mCore-&gt;mQueue.size());</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// If no buffer is found, or if the queue has too many buffers</span></span><br><span class="line">        <span class="comment">// outstanding, wait for a buffer to be acquired or released, or for the</span></span><br><span class="line">        <span class="comment">// max buffer count to change.</span></span><br><span class="line">        <span class="comment">//如果没有找到FREE的buffer，或者mQueue中有太多buffer占据内存未释放</span></span><br><span class="line">        <span class="comment">//那么等待buffer被acquired or released；</span></span><br><span class="line">        <span class="comment">//或者等待最大buffer个数改变</span></span><br><span class="line">        tryAgain = (*found == BufferQueueCore::INVALID_BUFFER_SLOT) ||</span><br><span class="line">                   tooManyBuffers;</span><br><span class="line">        <span class="keyword">if</span> (tryAgain) &#123;</span><br><span class="line">            <span class="comment">// Return an error if we're in non-blocking mode (producer and</span></span><br><span class="line">            <span class="comment">// consumer are controlled by the application).</span></span><br><span class="line">            <span class="comment">// However, the consumer is allowed to briefly acquire an extra</span></span><br><span class="line">            <span class="comment">// buffer (which could cause us to have to wait here), which is</span></span><br><span class="line">            <span class="comment">// okay, since it is only used to implement an atomic acquire +</span></span><br><span class="line">            <span class="comment">// release (e.g., in GLConsumer::updateTexImage())</span></span><br><span class="line">            <span class="keyword">if</span> (mCore-&gt;mDequeueBufferCannotBlock &amp;&amp;</span><br><span class="line">                    (acquiredCount &lt;= mCore-&gt;mMaxAcquiredBufferCount)) &#123;</span><br><span class="line">                <span class="keyword">return</span> WOULD_BLOCK;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="comment">//等待有buffer可以返回</span></span><br><span class="line">            mCore-&gt;mDequeueCondition.wait(mCore-&gt;mMutex);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="comment">// while (tryAgain)</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> NO_ERROR;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;代码虽然多，但是大多数都是处理特殊情况的。核心就是从现存maxBufferCount找出FREE状态的slot，然后根据LRU匹配，取出最老的slot，然后返回index给found指针内容。<br>&#160; &#160; &#160; &#160;这样取出来FREE的slot（如果能找到）。<br>&#160; &#160; &#160; &#160;如果所有的buffer都不是free的，则等待。</p>
+<p>&#160; &#160; &#160; &#160;2）将找到的buf所对应的状态修改为DEQUEUED；</p>
+<p>&#160; &#160; &#160; &#160;3）然后将上面查询mSlot中返回index的slot的Graphicbuffer赋给buffer变量；</p>
+<p>&#160; &#160; &#160; &#160;4）判断这个GraphicBuffer是否需要重新分配空间，判断条件就是buffer为空，因为它初始值是null，第一次使用它需要分配空间；如果不为null，但是buffer的width、height、format、usage属性跟要求的不一致，也要重新分配，并打上BUFFER_NEEDS_REALLOCATION标志位。</p>
+<p>&#160; &#160; &#160; &#160;5）如果上面的buffer为null，则需要重新分配GraphicBuffer，调用BufferQueueCore中的GraphicBufferAlloc中函数createGraphicBuffer，生成一个new GraphicBuffer。</p>
+<p>&#160; &#160; &#160; &#160;6）等待eglFence状态就绪。Fence机制我们以后会讲到。</p>
+<h2 id="创建图形缓冲区"><a href="#创建图形缓冲区" class="headerlink" title="创建图形缓冲区"></a>创建图形缓冲区</h2><h3 id="GraphicBuffer创建"><a href="#GraphicBuffer创建" class="headerlink" title="GraphicBuffer创建"></a>GraphicBuffer创建</h3><p>&#160; &#160; &#160; &#160;所以上述流程的核心是GraphicBuffer的分配，我们需要沿着上面继续分析。因此最后BufferQueueProducer中的dequeueBuffer函数中调用mCore-&gt;mAllocator的createGraphicBuffer函数就是调用了GraphicBufferAlloc的createGraphicBufferAlloc函数。mAllocator的类型为sp&lt; IGraphicBufferAlloc &gt;，要跨进程调用SurfaceFlinger的createGraphicBufferAlloc函数，上面讲过了。</p>
+<p>&#160; &#160; &#160; &#160;上面刚刚说mAllocator的类型为sp&lt; IGraphicBufferAlloc &gt;，所以创建GraphicBuffer的函数createGraphicBuffer也需要Bp/Bn 的IPC跨进程调用过程。GraphicBuffer通过Binder传递对象是Parcel类型可序列化的，所以他要从模板类Flattenable派生。因为这个牵扯到<strong>内存缓冲区的fd传递到客户进程</strong>，所以我们放到后面讲。</p>
+<p>&#160; &#160; &#160; &#160;所以我们先忽略IPC过程，直接查看生成结果，位于frameworks/native/libs/gui/GraphicBufferAlloc.cpp中：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">sp&lt;GraphicBuffer&gt; GraphicBufferAlloc::createGraphicBuffer(<span class="keyword">uint32_t</span> w, <span class="keyword">uint32_t</span> h,</span><br><span class="line">        PixelFormat format, <span class="keyword">uint32_t</span> usage, <span class="keyword">status_t</span>* error) &#123;</span><br><span class="line">    <span class="comment">//创建一个GraphicBuffer对象</span></span><br><span class="line">    sp&lt;GraphicBuffer&gt; graphicBuffer(<span class="keyword">new</span> GraphicBuffer(w, h, format, usage));</span><br><span class="line">    <span class="keyword">status_t</span> err = graphicBuffer-&gt;initCheck();</span><br><span class="line">    *error = err;</span><br><span class="line">    <span class="keyword">if</span> (err != <span class="number">0</span> || graphicBuffer-&gt;handle == <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="keyword">if</span> (err == NO_MEMORY) &#123;</span><br><span class="line">            GraphicBuffer::dumpAllocationsToSystemLog();</span><br><span class="line">        &#125;</span><br><span class="line">        ALOGE(<span class="string">"GraphicBufferAlloc::createGraphicBuffer(w=%d, h=%d) "</span></span><br><span class="line">             <span class="string">"failed (%s), handle=%p"</span>,</span><br><span class="line">                w, h, strerror(-err), graphicBuffer-&gt;handle);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> graphicBuffer;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;上面创建一个GraphicBuffer对象，我们看看GraphicBuffer的构造函数，位于frameworks/native/libs/ui/GraphicBuffer.cpp：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">GraphicBuffer::GraphicBuffer(<span class="keyword">uint32_t</span> w, <span class="keyword">uint32_t</span> h, </span><br><span class="line">        PixelFormat reqFormat, <span class="keyword">uint32_t</span> reqUsage)</span><br><span class="line">    : BASE(), mOwner(ownData), mBufferMapper(GraphicBufferMapper::get()),</span><br><span class="line">      mInitCheck(NO_ERROR), mId(getUniqueId())</span><br><span class="line">&#123;</span><br><span class="line">    width  = </span><br><span class="line">    height = </span><br><span class="line">    stride = </span><br><span class="line">    format = </span><br><span class="line">    usage  = <span class="number">0</span>;</span><br><span class="line">    handle = <span class="literal">NULL</span>;</span><br><span class="line">    <span class="comment">//这里调用了initSize函数</span></span><br><span class="line">    mInitCheck = initSize(w, h, reqFormat, reqUsage);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;构造函数给一些变量赋了初值，并调用了initSize函数，我们看看这个函数：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">status_t</span> GraphicBuffer::initSize(<span class="keyword">uint32_t</span> w, <span class="keyword">uint32_t</span> h, PixelFormat format,</span><br><span class="line">        <span class="keyword">uint32_t</span> reqUsage)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">//获取一个GraphicBufferAllocator对象，它是个单例</span></span><br><span class="line">    GraphicBufferAllocator&amp; allocator = GraphicBufferAllocator::get();</span><br><span class="line">    <span class="comment">//调用allocator 的alloc函数</span></span><br><span class="line">    <span class="keyword">status_t</span> err = allocator.alloc(w, h, format, reqUsage, &amp;handle, &amp;stride);</span><br><span class="line">    <span class="keyword">if</span> (err == NO_ERROR) &#123;</span><br><span class="line">        <span class="keyword">this</span>-&gt;width  = w;</span><br><span class="line">        <span class="keyword">this</span>-&gt;height = h;</span><br><span class="line">        <span class="keyword">this</span>-&gt;format = format;</span><br><span class="line">        <span class="keyword">this</span>-&gt;usage  = reqUsage;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> err;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;先创建一个GraphicBufferAllocator的单例对象，我们先看看它的构造函数，位于frameworks/native/libs/ui/GraphicBufferAllocator.cpp中：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">alloc_device_t</span>  *mAllocDev;</span><br><span class="line"></span><br><span class="line">GraphicBufferAllocator::GraphicBufferAllocator()</span><br><span class="line">    : mAllocDev(<span class="number">0</span>)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">hw_module_t</span> <span class="keyword">const</span>* module;</span><br><span class="line">    <span class="comment">//加载gralloc设备</span></span><br><span class="line">    <span class="keyword">int</span> err = hw_get_module(GRALLOC_HARDWARE_MODULE_ID, &amp;module);</span><br><span class="line">    ALOGE_IF(err, <span class="string">"FATAL: can't find the %s module"</span>, GRALLOC_HARDWARE_MODULE_ID);</span><br><span class="line">    <span class="keyword">if</span> (err == <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="comment">//打开gralloc设备</span></span><br><span class="line">        gralloc_open(module, &amp;mAllocDev);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;GraphicBufferAllocator构造函数里主要是加载了gralloc设备，然后打开它，因此mAllocDev指向了Gralloc模块。这一部分可以查看<a href="http://windrunnerlihuan.com/2017/03/12/Android-SurfaceFlinger-%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF-%E4%B8%80-Android%E5%9B%BE%E5%BD%A2%E6%98%BE%E7%A4%BA%E4%B9%8BHAL%E5%B1%82Gralloc%E6%A8%A1%E5%9D%97%E5%AE%9E%E7%8E%B0/">Android SurfaceFlinger 学习之路(一)—-Android图形显示之HAL层Gralloc模块实现</a>，<strong>Gralloc模块的加载过程、Gralloc设备的打开过程</strong>。</p>
+<p>&#160; &#160; &#160; &#160;加载完Gralloc模块，并打开之后，接着就是分配图形缓冲区了。我们可以继续往下看看是不是，查看GraphicBufferAllocator的alloc函数：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">status_t</span> GraphicBufferAllocator::alloc(<span class="keyword">uint32_t</span> w, <span class="keyword">uint32_t</span> h, PixelFormat format,</span><br><span class="line">        <span class="keyword">int</span> usage, <span class="keyword">buffer_handle_t</span>* handle, <span class="keyword">int32_t</span>* stride)</span><br><span class="line">&#123;</span><br><span class="line">    ATRACE_CALL();</span><br><span class="line">    <span class="comment">// make sure to not allocate a N x 0 or 0 x N buffer, since this is</span></span><br><span class="line">    <span class="comment">// allowed from an API stand-point allocate a 1x1 buffer instead.</span></span><br><span class="line">    <span class="keyword">if</span> (!w || !h)</span><br><span class="line">        w = h = <span class="number">1</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// we have a h/w allocator and h/w buffer is requested</span></span><br><span class="line">    <span class="keyword">status_t</span> err; </span><br><span class="line">    <span class="comment">//这里内部是调用Gralloc模块中的函数gralloc_alloc来分配一块图形缓冲区</span></span><br><span class="line">    err = mAllocDev-&gt;alloc(mAllocDev, w, h, format, usage, handle, stride);</span><br><span class="line"></span><br><span class="line">    ALOGW_IF(err, <span class="string">"alloc(%u, %u, %d, %08x, ...) failed %d (%s)"</span>,</span><br><span class="line">            w, h, format, usage, err, strerror(-err));</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span> (err == NO_ERROR) &#123;</span><br><span class="line">        Mutex::Autolock _l(sLock);</span><br><span class="line">        KeyedVector&lt;<span class="keyword">buffer_handle_t</span>, <span class="keyword">alloc_rec_t</span>&gt;&amp; <span class="built_in">list</span>(sAllocList);</span><br><span class="line">        <span class="keyword">int</span> bpp = bytesPerPixel(format);</span><br><span class="line">        <span class="keyword">if</span> (bpp &lt; <span class="number">0</span>) &#123;</span><br><span class="line">            <span class="comment">// probably a HAL custom format. in any case, we don't know</span></span><br><span class="line">            <span class="comment">// what its pixel size is.</span></span><br><span class="line">            bpp = <span class="number">0</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">alloc_rec_t</span> rec;</span><br><span class="line">        rec.w = w;</span><br><span class="line">        rec.h = h;</span><br><span class="line">        rec.s = *stride;</span><br><span class="line">        rec.format = format;</span><br><span class="line">        rec.usage = usage;</span><br><span class="line">        rec.size = h * stride[<span class="number">0</span>] * bpp;</span><br><span class="line">        <span class="built_in">list</span>.add(*handle, rec);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> err;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;这里调用alloc分配了一块共享的内存缓冲区，就是我们的图形缓冲区。内部是调用Gralloc模块中的函数gralloc_alloc，可以产查看<a href="http://windrunnerlihuan.com/2017/03/12/Android-SurfaceFlinger-%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF-%E4%B8%80-Android%E5%9B%BE%E5%BD%A2%E6%98%BE%E7%A4%BA%E4%B9%8BHAL%E5%B1%82Gralloc%E6%A8%A1%E5%9D%97%E5%AE%9E%E7%8E%B0/">Android SurfaceFlinger 学习之路(一)—-Android图形显示之HAL层Gralloc模块实现</a>，<strong>分配图形缓冲区</strong>。</p>
+<p>&#160; &#160; &#160; &#160;这样我们GraphicBuffer的创建工作就完成了。</p>
+<p>&#160; &#160; &#160; &#160;既然GraphicBuffer中的缓冲区是共享内存，我们知道使用共享内存需要传递共享内存的句柄fd。下面我们看看是如何传到客户进程的，填掉我们上面的坑。</p>
+<h3 id="内存缓冲区映射到应用进程"><a href="#内存缓冲区映射到应用进程" class="headerlink" title="内存缓冲区映射到应用进程"></a>内存缓冲区映射到应用进程</h3><p>&#160; &#160; &#160; &#160;GraphicBuffer类是从模板类Flattenable派生，这个派生类可以通过Parcel传递，通常派生类需要重载flatten和unflatten方法，用于对象的序列化和反序列化。</p>
+<p>&#160; &#160; &#160; &#160;为了方便分析，我们可以看看GraphicBuffer的类图：</p>
+<p><img src="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E4%B8%83%29----%E5%88%9B%E5%BB%BA%E5%9B%BE%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BAGraphicBuffer/GraphicBuffer.jpg" alt="GraphicBuffer"></p>
+<p>&#160; &#160; &#160; &#160;上面说到mAllocator的类型为sp&lt; IGraphicBufferAlloc &gt;，它的创建GraphicBuffer的函数createGraphicBuffer也需要Bp/Bn 的IPC跨进程调用过程，序列化传递和反序列话取出这里用于IPC传递数据，我们可以在这里看看客户端和服务端的工作流程。<br>&#160; &#160; &#160; &#160;我们先看看客户端Bp端，位于frameworks/native/libs/gui/IGraphicBufferAlloc.cpp中：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> BpGraphicBufferAlloc : <span class="keyword">public</span> BpInterface&lt;IGraphicBufferAlloc&gt;</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    BpGraphicBufferAlloc(<span class="keyword">const</span> sp&lt;IBinder&gt;&amp; impl)</span><br><span class="line">        : BpInterface&lt;IGraphicBufferAlloc&gt;(impl)</span><br><span class="line">    &#123;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//客户端创建图形缓冲区函数</span></span><br><span class="line">    <span class="keyword">virtual</span> sp&lt;GraphicBuffer&gt; createGraphicBuffer(<span class="keyword">uint32_t</span> w, <span class="keyword">uint32_t</span> h,</span><br><span class="line">            PixelFormat format, <span class="keyword">uint32_t</span> usage, <span class="keyword">status_t</span>* error) &#123;</span><br><span class="line">        Parcel data, reply;</span><br><span class="line">        data.writeInterfaceToken(IGraphicBufferAlloc::getInterfaceDescriptor());</span><br><span class="line">        data.writeInt32(w);</span><br><span class="line">        data.writeInt32(h);</span><br><span class="line">        data.writeInt32(format);</span><br><span class="line">        data.writeInt32(usage);</span><br><span class="line">        <span class="comment">//通过binder驱动，执行服务端对应函数。这里服务端是将创建的GraphicBuffer序列化后，塞给replay</span></span><br><span class="line">        remote()-&gt;transact(CREATE_GRAPHIC_BUFFER, data, &amp;reply);</span><br><span class="line">        sp&lt;GraphicBuffer&gt; graphicBuffer;</span><br><span class="line">        <span class="keyword">status_t</span> result = reply.readInt32();</span><br><span class="line">        <span class="keyword">if</span> (result == NO_ERROR) &#123;</span><br><span class="line">            <span class="comment">//创建一个空壳子</span></span><br><span class="line">            graphicBuffer = <span class="keyword">new</span> GraphicBuffer();</span><br><span class="line">            <span class="comment">//然后客户端从服务端（SurfaceFlinger）返回的序列化后的replay，</span></span><br><span class="line">            <span class="comment">//反序列化出Graphicbuffer，放入空壳子中</span></span><br><span class="line">            result = reply.read(*graphicBuffer);</span><br><span class="line">            <span class="comment">// reply.readStrongBinder();</span></span><br><span class="line">            <span class="comment">// here we don't even have to read the BufferReference from</span></span><br><span class="line">            <span class="comment">// the parcel, it'll die with the parcel.</span></span><br><span class="line">        &#125;</span><br><span class="line">        *error = result;</span><br><span class="line">        <span class="keyword">return</span> graphicBuffer;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;客户端这里主要通过binder驱动，取出从服务端返回的序列化后的对象replay，然后自己造一个空壳子，然后读取replay信息，反序列化出GraphicBuffer。</p>
+<p>&#160; &#160; &#160; &#160;那么服务端（SurfaceFlinger）创建GraphicBuffer并反序列化就在Bn端，我们看看Bn端实现，同样位于位于frameworks/native/libs/gui/IGraphicBufferAlloc.cpp中：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">status_t</span> BnGraphicBufferAlloc::onTransact(</span><br><span class="line">    <span class="keyword">uint32_t</span> code, <span class="keyword">const</span> Parcel&amp; data, Parcel* reply, <span class="keyword">uint32_t</span> flags)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// codes that don't require permission check</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">/* BufferReference just keeps a strong reference to a</span><br><span class="line">     * GraphicBuffer until it is destroyed (that is, until</span><br><span class="line">     * no local or remote process have a reference to it).</span><br><span class="line">     */</span></span><br><span class="line">    <span class="keyword">class</span> BufferReference : <span class="keyword">public</span> BBinder &#123;</span><br><span class="line">        sp&lt;GraphicBuffer&gt; buffer;</span><br><span class="line">    <span class="keyword">public</span>:</span><br><span class="line">        BufferReference(<span class="keyword">const</span> sp&lt;GraphicBuffer&gt;&amp; buffer) : buffer(buffer) &#123; &#125;</span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="keyword">switch</span>(code) &#123;</span><br><span class="line">        <span class="keyword">case</span> CREATE_GRAPHIC_BUFFER: &#123;</span><br><span class="line">            CHECK_INTERFACE(IGraphicBufferAlloc, data, reply);</span><br><span class="line">            <span class="keyword">uint32_t</span> w = data.readInt32();</span><br><span class="line">            <span class="keyword">uint32_t</span> h = data.readInt32();</span><br><span class="line">            PixelFormat format = data.readInt32();</span><br><span class="line">            <span class="keyword">uint32_t</span> usage = data.readInt32();</span><br><span class="line">            <span class="keyword">status_t</span> error;</span><br><span class="line">            <span class="comment">//调用GraphicBufferAlloc的createGraphicBuffer函数，创建一个GraphicBuffer实例</span></span><br><span class="line">            sp&lt;GraphicBuffer&gt; result =</span><br><span class="line">                    createGraphicBuffer(w, h, format, usage, &amp;error);</span><br><span class="line">            reply-&gt;writeInt32(error);</span><br><span class="line">            <span class="keyword">if</span> (result != <span class="number">0</span>) &#123;</span><br><span class="line">                <span class="comment">////GraphicBuffer进行序列化，传给client</span></span><br><span class="line">                reply-&gt;write(*result);</span><br><span class="line">                <span class="comment">// We add a BufferReference to this parcel to make sure the</span></span><br><span class="line">                <span class="comment">// buffer stays alive until the GraphicBuffer object on</span></span><br><span class="line">                <span class="comment">// the other side has been created.</span></span><br><span class="line">                <span class="comment">// This is needed so that the buffer handle can be</span></span><br><span class="line">                <span class="comment">// registered before the buffer is destroyed on implementations</span></span><br><span class="line">                <span class="comment">// that do not use file-descriptors to track their buffers.</span></span><br><span class="line">                reply-&gt;writeStrongBinder( <span class="keyword">new</span> BufferReference(result) );</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">return</span> NO_ERROR;</span><br><span class="line">        &#125; <span class="keyword">break</span>;</span><br><span class="line">        <span class="keyword">default</span>:</span><br><span class="line">            <span class="keyword">return</span> BBinder::onTransact(code, data, reply, flags);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;GraphicBufferAlloc的createGraphicBuffer函数我们上面分析过了。这样就将创建的GraphicBuffer实例序列化后，在通过binder驱动传给client。</p>
+<p>&#160; &#160; &#160; &#160;我们知道，一个对象要在进程间传输必须继承于Flattenable类，并且实现flatten和unflatten方法，flatten方法用于序列化该对象，unflatten方法用于反序列化对象。</p>
+<p><img src="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E4%B8%83%29----%E5%88%9B%E5%BB%BA%E5%9B%BE%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BAGraphicBuffer/flatten.jpg" alt="flatten"></p>
+<p>&#160; &#160; &#160; &#160;上面说到GraphicBuffer中的缓冲区是共享内存，使用共享内存需要传递共享内存的句柄fd，那么这个fd的传递就应该在GraphicBuffer的序列化/反序列化中，我们就来看看这个过程。</p>
+<p>&#160; &#160; &#160; &#160;这里我先回顾一下<a href="http://windrunnerlihuan.com/2017/03/12/Android-SurfaceFlinger-%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF-%E4%B8%80-Android%E5%9B%BE%E5%BD%A2%E6%98%BE%E7%A4%BA%E4%B9%8BHAL%E5%B1%82Gralloc%E6%A8%A1%E5%9D%97%E5%AE%9E%E7%8E%B0/">Android SurfaceFlinger 学习之路(一)—-Android图形显示之HAL层Gralloc模块实现</a>的内容：</p>
+<blockquote>
+<p>&#160; &#160; &#160; &#160;图形缓冲区可以从系统帧缓冲区分配也可以从内存中分配，分配一个图形缓冲区后还需要将该图形缓冲区映射到分配该buffer的进程地址空间来，在Android系统中，图形缓冲区的管理由SurfaceFlinger服务来负责。在系统帧缓冲区中分配的图形缓冲区是在SurfaceFlinger服务中使用，而在内存中分配的图形缓冲区既可以在SurfaceFlinger服务中使用，也可以在其它的应用程序中使用。当其它的应用程序需要使用图形缓冲区的时候，它们就会请求SurfaceFlinger服务为它们分配并将SurfaceFlinger服务返回来的图形缓冲区映射到应用程序进程地址空间。在从内存中分配buffer时，已经将分配的buffer映射到了SurfaceFlinger服务进程地址空间，如果该buffer是应用程序请求SurfaceFlinger服务为它们分配的，那么还需要将SurfaceFlinger服务返回来的图形缓冲区映射到应用程序进程地址空间。</p>
+</blockquote>
+<p><img src="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E4%B8%83%29----%E5%88%9B%E5%BB%BA%E5%9B%BE%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BAGraphicBuffer/gralloc.jpg" alt="gralloc"></p>
+<p>&#160; &#160; &#160; &#160;GraphicBuffer类从模板类Flattenable派生，这个派生类可以通过Parcel传递，通常派生类需要重载flatten和unflatten方法，用于对象的序列化和反序列化。</p>
+<p>&#160; &#160; &#160; &#160;1）将一个对象写入到Parcel中，需要使用flatten函数序列化该对象，我们先来看下flatten函数：<br><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line">status_t GraphicBuffer::flatten(void*&amp; buffer, size_t&amp; size, int*&amp; fds, size_t&amp; count) const &#123;</span><br><span class="line">    size_t sizeNeeded = GraphicBuffer::getFlattenedSize();</span><br><span class="line">    if (size &lt; sizeNeeded) return NO_MEMORY;</span><br><span class="line"></span><br><span class="line">    size_t fdCountNeeded = GraphicBuffer::getFdCount();</span><br><span class="line">    if (count &lt; fdCountNeeded) return NO_MEMORY;</span><br><span class="line"></span><br><span class="line">    int32_t* buf = static_cast&lt;int32_t*&gt;(buffer);</span><br><span class="line">    buf[0] = 'GBFR';</span><br><span class="line">    buf[1] = width;</span><br><span class="line">    buf[2] = height;</span><br><span class="line">    buf[3] = stride;</span><br><span class="line">    buf[4] = format;</span><br><span class="line">    buf[5] = usage;</span><br><span class="line">    buf[6] = static_cast&lt;int32_t&gt;(mId &gt;&gt; 32);</span><br><span class="line">    buf[7] = static_cast&lt;int32_t&gt;(mId &amp; 0xFFFFFFFFull);</span><br><span class="line">    buf[8] = 0;</span><br><span class="line">    buf[9] = 0;</span><br><span class="line"></span><br><span class="line">    if (handle) &#123;</span><br><span class="line">        buf[8] = handle-&gt;numFds;</span><br><span class="line">        buf[9] = handle-&gt;numInts;</span><br><span class="line">        native_handle_t const* const h = handle;</span><br><span class="line">        //把handle中的data复制到fds中 </span><br><span class="line">        memcpy(fds,     h-&gt;data,             h-&gt;numFds*sizeof(int));</span><br><span class="line">        memcpy(&amp;buf[10], h-&gt;data + h-&gt;numFds, h-&gt;numInts*sizeof(int));</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    buffer = reinterpret_cast&lt;void*&gt;(static_cast&lt;int*&gt;(buffer) + sizeNeeded);</span><br><span class="line">    size -= sizeNeeded;</span><br><span class="line">    if (handle) &#123;</span><br><span class="line">        fds += handle-&gt;numFds;</span><br><span class="line">        count -= handle-&gt;numFds;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    return NO_ERROR;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;这个handle类型为native_handle_t ，且typedef成了buffer_handle_t，如果忘记了这一部分，可以查看<a href="http://windrunnerlihuan.com/2017/03/12/Android-SurfaceFlinger-%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF-%E4%B8%80-Android%E5%9B%BE%E5%BD%A2%E6%98%BE%E7%A4%BA%E4%B9%8BHAL%E5%B1%82Gralloc%E6%A8%A1%E5%9D%97%E5%AE%9E%E7%8E%B0/">Android SurfaceFlinger 学习之路(一)—-Android图形显示之HAL层Gralloc模块实现</a>。我们贴一下它的定义：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="keyword">struct</span> native_handle  </span><br><span class="line">&#123;  </span><br><span class="line">    <span class="keyword">int</span> version; <span class="comment">//设置为结构体native_handle_t的大小，用来标识结构体native_handle_t的版本  </span></span><br><span class="line">    <span class="keyword">int</span> numFds;  <span class="comment">//表示结构体native_handle_t所包含的文件描述符的个数，这些文件描述符保存在成员变量data所指向的一块缓冲区中。  </span></span><br><span class="line">    <span class="keyword">int</span> numInts; <span class="comment">//表示结构体native_handle_t所包含的整数值的个数，这些整数保存在成员变量data所指向的一块缓冲区中。  </span></span><br><span class="line">    <span class="keyword">int</span> data[<span class="number">0</span>]; <span class="comment">//指向的一块缓冲区中  </span></span><br><span class="line">&#125; <span class="keyword">native_handle_t</span>;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;所以我们回到flatten函数中，fds参数用来传递文件句柄，函数把handle中的表示指向图形缓冲区文件描述符句柄复制到fds中，因此这些句柄就能通过binder传递到目标进程中去。</p>
+<p>&#160; &#160; &#160; &#160;2）在应用程序读取来自服务进程的GraphicBuffer对象时，也就是result = reply.read(*p)，会调用GraphicBuffer类的unflatten函数进行反序列化过程：<br><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br></pre></td><td class="code"><pre><span class="line">status_t GraphicBuffer::unflatten(</span><br><span class="line">        void const*&amp; buffer, size_t&amp; size, int const*&amp; fds, size_t&amp; count) &#123;</span><br><span class="line">    if (size &lt; 8*sizeof(int)) return NO_MEMORY;</span><br><span class="line"></span><br><span class="line">    int const* buf = static_cast&lt;int const*&gt;(buffer);</span><br><span class="line">    if (buf[0] != 'GBFR') return BAD_TYPE;</span><br><span class="line"></span><br><span class="line">    const size_t numFds  = buf[8];</span><br><span class="line">    const size_t numInts = buf[9];</span><br><span class="line"></span><br><span class="line">    const size_t sizeNeeded = (10 + numInts) * sizeof(int);</span><br><span class="line">    if (size &lt; sizeNeeded) return NO_MEMORY;</span><br><span class="line"></span><br><span class="line">    size_t fdCountNeeded = 0;</span><br><span class="line">    if (count &lt; fdCountNeeded) return NO_MEMORY;</span><br><span class="line"></span><br><span class="line">    if (handle) &#123;</span><br><span class="line">        // free previous handle if any</span><br><span class="line">        free_handle();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    if (numFds || numInts) &#123;</span><br><span class="line">        width  = buf[1];</span><br><span class="line">        height = buf[2];</span><br><span class="line">        stride = buf[3];</span><br><span class="line">        format = buf[4];</span><br><span class="line">        usage  = buf[5];</span><br><span class="line">        //创建一个native_handle对象</span><br><span class="line">        native_handle* h = native_handle_create(numFds, numInts);</span><br><span class="line">        //将fds复制到native_handle对象的data中，和flatten操作相反</span><br><span class="line">        memcpy(h-&gt;data,          fds,     numFds*sizeof(int));</span><br><span class="line">        memcpy(h-&gt;data + numFds, &amp;buf[10], numInts*sizeof(int));</span><br><span class="line">        handle = h;</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">        width = height = stride = format = usage = 0;</span><br><span class="line">        handle = NULL;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    mId = static_cast&lt;uint64_t&gt;(buf[6]) &lt;&lt; 32;</span><br><span class="line">    mId |= static_cast&lt;uint32_t&gt;(buf[7]);</span><br><span class="line"></span><br><span class="line">    mOwner = ownHandle;</span><br><span class="line"></span><br><span class="line">    if (handle != 0) &#123;</span><br><span class="line">        //使用GraphicBufferMapper将服务端创建的图形缓冲区映射到当前进程地址空间  </span><br><span class="line">        status_t err = mBufferMapper.registerBuffer(handle);</span><br><span class="line">        if (err != NO_ERROR) &#123;</span><br><span class="line">            width = height = stride = format = usage = 0;</span><br><span class="line">            handle = NULL;</span><br><span class="line">            ALOGE("unflatten: registerBuffer failed: %s (%d)",</span><br><span class="line">                    strerror(-err), err);</span><br><span class="line">            return err;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    buffer = reinterpret_cast&lt;void const*&gt;(static_cast&lt;int const*&gt;(buffer) + sizeNeeded);</span><br><span class="line">    size -= sizeNeeded;</span><br><span class="line">    fds += numFds;</span><br><span class="line">    count -= numFds;</span><br><span class="line"></span><br><span class="line">    return NO_ERROR;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;调用unflatten函数时，共享区的文件句柄已经准备好了，但是内存还没有进行映射，调用了mBufferMapper.registerBuffer函数来进行内存映射。<br>&#160; &#160; &#160; &#160;GraphicBufferMapper是单例的模板类派生的，mBufferMapper对象在GraphicBuffer的构造函数中初始化赋值了，上面我们列出过了。我们看看GraphicBufferMapper的构造函数，位于frameworks/native/libs/ui/GraphicBufferMapper.cpp：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">GraphicBufferMapper::GraphicBufferMapper()</span><br><span class="line">    : mAllocMod(<span class="number">0</span>)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">hw_module_t</span> <span class="keyword">const</span>* module;</span><br><span class="line">    <span class="comment">//加载gralloc模块</span></span><br><span class="line">    <span class="keyword">int</span> err = hw_get_module(GRALLOC_HARDWARE_MODULE_ID, &amp;module);</span><br><span class="line">    ALOGE_IF(err, <span class="string">"FATAL: can't find the %s module"</span>, GRALLOC_HARDWARE_MODULE_ID);</span><br><span class="line">    <span class="keyword">if</span> (err == <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="comment">////将hw_module_t的指针转换为gralloc_module_t类型指针 </span></span><br><span class="line">        mAllocMod = (<span class="keyword">gralloc_module_t</span> <span class="keyword">const</span> *)module;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;这里根据模块ID加载Gralloc模块，并得到Gralloc模块的HMI符号首地址，并强制转换为gralloc_module_t类型指针。</p>
+<p>&#160; &#160; &#160; &#160;我们接着看下GraphicBufferMapper::registerBuffer函数：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">status_t</span> GraphicBufferMapper::registerBuffer(<span class="keyword">buffer_handle_t</span> handle)</span><br><span class="line">&#123;</span><br><span class="line">    ATRACE_CALL();</span><br><span class="line">    <span class="keyword">status_t</span> err;</span><br><span class="line">    <span class="comment">//将服务端创建的图形缓冲区映射到当前进程地址空间</span></span><br><span class="line">    err = mAllocMod-&gt;registerBuffer(mAllocMod, handle);</span><br><span class="line"></span><br><span class="line">    ALOGW_IF(err, <span class="string">"registerBuffer(%p) failed %d (%s)"</span>,</span><br><span class="line">            handle, err, strerror(-err));</span><br><span class="line">    <span class="keyword">return</span> err;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;调用了mAllocMod的registerBuffer函数，mAllocMod同样是指向了Gralloc模块的指针，因此实际是调用了Gralloc模块的gralloc_register_buffer函数。这个函数就是调用了mmap来进行共享内存的映射。<br>&#160; &#160; &#160; &#160;这一部分仍然可以查看<a href="http://windrunnerlihuan.com/2017/03/12/Android-SurfaceFlinger-%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF-%E4%B8%80-Android%E5%9B%BE%E5%BD%A2%E6%98%BE%E7%A4%BA%E4%B9%8BHAL%E5%B1%82Gralloc%E6%A8%A1%E5%9D%97%E5%AE%9E%E7%8E%B0/">Android SurfaceFlinger 学习之路(一)—-Android图形显示之HAL层Gralloc模块实现</a>。我们仍然回顾一下以前的内容：</p>
+<blockquote>
+<p>&#160; &#160; &#160; &#160;registerBuffer和unregisterBuffer分别用来注册和注销一个指定的图形缓冲区，所谓注册图形缓冲区，实际上就是将一块图形缓冲区映射到一个进程的地址空间去，而注销图形缓冲区就是执行相反的操作。lock和unlock分别用来锁定和解锁一个指定的图形缓冲区，在访问一块图形缓冲区的时候，例如，向一块图形缓冲写入内容的时候，需要将该图形缓冲区锁定，用来避免访问冲突。在锁定一块图形缓冲区的时候，可以指定要锁定的图形绘冲区的位置以及大小，这是通过参数l、t、w和h来指定的，其中，参数l和t指定的是要访问的图形缓冲区的左上角位置，而参数w和h指定的是要访问的图形缓冲区的宽度和长度。锁定之后，就可以获得由参数参数l、t、w和h所圈定的一块缓冲区的起始地址，保存在输出参数vaddr中。另一方面，在访问完成一块图形缓冲区之后，需要解除这块图形缓冲区的锁定。</p>
+</blockquote>
+<p>&#160; &#160; &#160; &#160;这就是内存缓冲区映射到应用进程的过程。因为需要映射共享内存，所以必须要序列化和反序列Pracel对象。如下图：</p>
+<p><img src="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E4%B8%83%29----%E5%88%9B%E5%BB%BA%E5%9B%BE%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BAGraphicBuffer/unflatten.jpg" alt="unflatten"></p>
+<p>&#160; &#160; &#160; &#160;这里我们创建GraphicBuffer流程就分析完了。</p>
+<h1 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h1><p>&#160; &#160; &#160; &#160;本节主要分析GraphicBuffer的创建过程，下一节我们分析对它的管理流程。</p>
+<p><img src="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E4%B8%83%29----%E5%88%9B%E5%BB%BA%E5%9B%BE%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BAGraphicBuffer/meizi.png" alt="meizi"></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>坚持技术分享，您的支持将鼓励我继续创作！</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="/images/wechat.jpg" alt="windrunnerlihuan WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+        <div id="alipay" style="display: inline-block">
+          <img id="alipay_qr" src="/images/alipay.jpg" alt="windrunnerlihuan Alipay"/>
+          <p>支付宝打赏</p>
+        </div>
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/SurfaceFlinger/" rel="tag"># SurfaceFlinger</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/06/17/Android-SurfaceFlinger-学习之路-六-SurfaceFlinger创建Surface/" rel="next" title="Android SurfaceFlinger 学习之路(六)----SurfaceFlinger创建Surface">
+                <i class="fa fa-chevron-left"></i> Android SurfaceFlinger 学习之路(六)----SurfaceFlinger创建Surface
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+        <!-- JiaThis Button BEGIN -->
+<div class="jiathis_style">
+  <a class="jiathis_button_tsina"></a>
+  <a class="jiathis_button_tqq"></a>
+  <a class="jiathis_button_weixin"></a>
+  <a class="jiathis_button_cqq"></a>
+  <a class="jiathis_button_douban"></a>
+  <a class="jiathis_button_renren"></a>
+  <a class="jiathis_button_qzone"></a>
+  <a class="jiathis_button_kaixin001"></a>
+  <a class="jiathis_button_copy"></a>
+  <a href="http://www.jiathis.com/share" class="jiathis jiathis_txt jiathis_separator jtico jtico_jiathis" target="_blank"></a>
+  <a class="jiathis_counter_style"></a>
+</div>
+<script type="text/javascript" >
+  var jiathis_config={
+    hideMore:false
+  }
+</script>
+<script type="text/javascript" src="http://v3.jiathis.com/code/jia.js" charset="utf-8"></script>
+<!-- JiaThis Button END -->
+
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div id="cloud-tie-wrapper" class="cloud-tie-wrapper"></div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.png"
+               alt="windrunnerlihuan" />
+          <p class="site-author-name" itemprop="name">windrunnerlihuan</p>
+           
+              <p class="site-description motion-element" itemprop="description"></p>
+           
+        </div>
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives">
+                <span class="site-state-item-count">31</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-categories">
+              <a href="/categories/index.html">
+                <span class="site-state-item-count">5</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-tags">
+              <a href="/tags/index.html">
+                <span class="site-state-item-count">18</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="mailto:937874128@qq.com" target="_blank" title="Email">
+                  
+                    <i class="fa fa-fw fa-envelope-o"></i>
+                  
+                  Email
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/windrunnerlihuan" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+          <div class="links-of-blogroll motion-element links-of-blogroll-inline">
+            <div class="links-of-blogroll-title">
+              <i class="fa  fa-fw fa-globe"></i>
+              Links
+            </div>
+            <ul class="links-of-blogroll-list">
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://gank.io/" title="干货集中营" target="_blank">干货集中营</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.jcodecraeer.com/" title="泡在网上的日子" target="_blank">泡在网上的日子</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://trinea.cn/" title="Trinea" target="_blank">Trinea</a>
+                </li>
+              
+            </ul>
+          </div>
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#角色扮演"><span class="nav-number">1.</span> <span class="nav-text">角色扮演</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#生产-消费-模型"><span class="nav-number">1.1.</span> <span class="nav-text">生产-消费 模型</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#生产者模型"><span class="nav-number">1.1.1.</span> <span class="nav-text">生产者模型</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#消费者模型"><span class="nav-number">1.1.2.</span> <span class="nav-text">消费者模型</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#模型实现"><span class="nav-number">2.</span> <span class="nav-text">模型实现</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Core"><span class="nav-number">2.1.</span> <span class="nav-text">Core</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Producer"><span class="nav-number">2.2.</span> <span class="nav-text">Producer</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Consumer"><span class="nav-number">2.3.</span> <span class="nav-text">Consumer</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#分配图形缓冲区"><span class="nav-number">3.</span> <span class="nav-text">分配图形缓冲区</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#申请图形缓冲区"><span class="nav-number">3.1.</span> <span class="nav-text">申请图形缓冲区</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#创建图形缓冲区"><span class="nav-number">3.2.</span> <span class="nav-text">创建图形缓冲区</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#GraphicBuffer创建"><span class="nav-number">3.2.1.</span> <span class="nav-text">GraphicBuffer创建</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#内存缓冲区映射到应用进程"><span class="nav-number">3.2.2.</span> <span class="nav-text">内存缓冲区映射到应用进程</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#小结"><span class="nav-number">4.</span> <span class="nav-text">小结</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy;  2016 - 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">windrunnerlihuan</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+
+        
+<div class="busuanzi-count">
+  <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="site-uv">
+      <i class="fa fa-user"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_uv"></span>
+      
+    </span>
+  
+
+  
+    <span class="site-pv">
+      <i class="fa fa-eye"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_pv"></span>
+      
+    </span>
+  
+</div>
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+  
+  <script type="text/javascript" src="/lib/canvas-nest/canvas-nest.min.js"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.1"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+    
+    <script>
+      var cloudTieConfig = {
+        url: document.location.href, 
+        sourceId: "",
+        productKey: "8d52b6e0ec984fd8aa832e1dd0341885",
+        target: "cloud-tie-wrapper"
+      };
+    </script>
+    <script src="https://img1.ws.126.net/f2e/tie/yun/sdk/loader.js"></script>
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (search_path.endsWith("json")) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("bJlEg1N9ed75pssz1m514avl-gzGzoHsz", "Swtq2cOp8A7KYeJ9lpD5nKAy");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
