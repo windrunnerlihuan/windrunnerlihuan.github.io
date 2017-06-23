@@ -4,6 +4,26 @@
 
     
   <url>
+    <loc>http://windrunnerlihuan.com/2017/04/07/Android%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%E4%B9%8B%E5%86%85%E5%AD%98%E4%BC%98%E5%8C%96%E5%AE%9E%E6%88%98/</loc>
+    <lastmod>2017-06-23T14:18:36.943Z</lastmod>
+    <data>
+        <display>
+        <title>Android性能优化之内存优化实战</title>
+        <pubTime>2017-04-07T11:10:11.000Z</pubTime>
+        
+        <tag>性能优化</tag>
+         
+         
+           
+             
+              <breadCrumb title="Android技术点" url="http://windrunnerlihuan.com/categories/Android%E6%8A%80%E6%9C%AF%E7%82%B9/"/>
+          
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
     <loc>http://windrunnerlihuan.com/2017/06/22/Android-SurfaceFlinger-%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF-%E4%B8%83-%E5%88%9B%E5%BB%BA%E5%9B%BE%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BAGraphicBuffer/</loc>
     <lastmod>2017-06-22T14:34:50.463Z</lastmod>
     <data>
@@ -134,26 +154,6 @@
         <pubTime>2017-04-27T09:28:11.000Z</pubTime>
         
         <tag>SurfaceFlinger</tag>
-         
-         
-           
-             
-              <breadCrumb title="Android技术点" url="http://windrunnerlihuan.com/categories/Android%E6%8A%80%E6%9C%AF%E7%82%B9/"/>
-          
-        </display>
-    </data>
-    </url>
-
-    
-  <url>
-    <loc>http://windrunnerlihuan.com/2017/04/07/Android%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%E4%B9%8B%E5%86%85%E5%AD%98%E4%BC%98%E5%8C%96%E5%AE%9E%E6%88%98/</loc>
-    <lastmod>2017-04-08T03:24:05.863Z</lastmod>
-    <data>
-        <display>
-        <title>Android性能优化之内存优化实战</title>
-        <pubTime>2017-04-07T11:10:11.000Z</pubTime>
-        
-        <tag>性能优化</tag>
          
          
            
