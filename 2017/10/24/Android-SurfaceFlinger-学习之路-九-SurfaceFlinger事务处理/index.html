@@ -1,0 +1,1479 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+  <meta name="google-site-verification" content="3Gndr5oonivG3ajghQU1MgL0IHoMHT4esMsPKjnbeis" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+    
+    
+    <link href="//fonts.lug.ustc.edu.cn/css?family=Monda:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Lobster Two:300,300italic,400,400italic,700,700italic|PT Mono:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="SurfaceFlinger," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="April is your lie" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/images/favicon.ico?v=5.1.1" />
+
+
+
+
+
+
+<meta name="description" content="&amp;#160; &amp;#160; &amp;#160; &amp;#160;荒废三个月，终于更新了~这期间事情巨多，一言难尽~不过对SurfaceFlinger的研究不能停啊，还是要一点一点钻研。&amp;#160; &amp;#160; &amp;#160; &amp;#160;这次继续顺着上次末尾，分析一下SurfaceFlinger事务处理。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android SurfaceFlinger 学习之路(九)----SurfaceFlinger事务处理">
+<meta property="og:url" content="http://windrunnerlihuan.com/2017/10/24/Android-SurfaceFlinger-学习之路-九-SurfaceFlinger事务处理/index.html">
+<meta property="og:site_name" content="April is your lie">
+<meta property="og:description" content="&amp;#160; &amp;#160; &amp;#160; &amp;#160;荒废三个月，终于更新了~这期间事情巨多，一言难尽~不过对SurfaceFlinger的研究不能停啊，还是要一点一点钻研。&amp;#160; &amp;#160; &amp;#160; &amp;#160;这次继续顺着上次末尾，分析一下SurfaceFlinger事务处理。">
+<meta property="og:image" content="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E4%B9%9D%29----SurfaceFlinger%E4%BA%8B%E5%8A%A1%E5%A4%84%E7%90%86/Transation.jpg">
+<meta property="og:image" content="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E4%B9%9D%29----SurfaceFlinger%E4%BA%8B%E5%8A%A1%E5%A4%84%E7%90%86/meizi.jpg">
+<meta property="og:updated_time" content="2017-10-24T12:01:23.189Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Android SurfaceFlinger 学习之路(九)----SurfaceFlinger事务处理">
+<meta name="twitter:description" content="&amp;#160; &amp;#160; &amp;#160; &amp;#160;荒废三个月，终于更新了~这期间事情巨多，一言难尽~不过对SurfaceFlinger的研究不能停啊，还是要一点一点钻研。&amp;#160; &amp;#160; &amp;#160; &amp;#160;这次继续顺着上次末尾，分析一下SurfaceFlinger事务处理。">
+<meta name="twitter:image" content="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E4%B9%9D%29----SurfaceFlinger%E4%BA%8B%E5%8A%A1%E5%A4%84%E7%90%86/Transation.jpg">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    sidebar: {"position":"right","display":"post","offset":12,"offset_float":0,"b2t":false,"scrollpercent":false},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://windrunnerlihuan.com/2017/10/24/Android-SurfaceFlinger-学习之路-九-SurfaceFlinger事务处理/"/>
+
+
+
+
+
+  <title>Android SurfaceFlinger 学习之路(九)----SurfaceFlinger事务处理 | April is your lie</title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-100464707-1', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?bb4df6db80a16ce54c1fb2c6e1767e18";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+  <script type="text/javascript">
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//tajs.qq.com/stats?sId=62459705";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+<script>
+  	var _mtac = {};
+  	(function() {
+  		var mta = document.createElement("script");
+  		mta.src = "https://pingjs.qq.com/h5/stats.js?v2.0.4";
+  		mta.setAttribute("name", "MTAH5");
+  		mta.setAttribute("sid", "500465801");
+
+  		var s = document.getElementsByTagName("script")[0];
+  		s.parentNode.insertBefore(mta, s);
+  	})();
+</script>
+
+
+
+
+  <div style="display: none;">
+    <script src="//s95.cnzz.com/z_stat.php?id=1262111741&web_id=1262111741" language="JavaScript"></script>
+  </div>
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-right page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">April is your lie</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <h1 class="site-subtitle" itemprop="description">四月是你的谎言</h1>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off"
+             placeholder="搜索..." spellcheck="false"
+             type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://windrunnerlihuan.com/2017/10/24/Android-SurfaceFlinger-学习之路-九-SurfaceFlinger事务处理/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="windrunnerlihuan">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="April is your lie">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">Android SurfaceFlinger 学习之路(九)----SurfaceFlinger事务处理</h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-24T16:27:02+08:00">
+                2017-10-24
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Android技术点/" itemprop="url" rel="index">
+                    <span itemprop="name">Android技术点</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+             <span id="/2017/10/24/Android-SurfaceFlinger-学习之路-九-SurfaceFlinger事务处理/" class="leancloud_visitors" data-flag-title="Android SurfaceFlinger 学习之路(九)----SurfaceFlinger事务处理">
+               <span class="post-meta-divider">|</span>
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               
+                 <span class="post-meta-item-text">阅读次数 </span>
+               
+                 <span class="leancloud-visitors-count"></span>
+             </span>
+          
+
+          
+            <span class="post-meta-divider">|</span>
+            <span class="page-pv"><i class="fa fa-file-o"></i>
+            <span class="busuanzi-value" id="busuanzi_value_page_pv" ></span>
+            </span>
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>&#160; &#160; &#160; &#160;荒废三个月，终于更新了~这期间事情巨多，一言难尽~不过对SurfaceFlinger的研究不能停啊，还是要一点一点钻研。<br>&#160; &#160; &#160; &#160;这次继续顺着上次末尾，分析一下SurfaceFlinger事务处理。<br><a id="more"></a></p>
+<h1 id="事务概述"><a href="#事务概述" class="headerlink" title="事务概述"></a>事务概述</h1><p>&#160; &#160; &#160; &#160;Transaction是“事务”的意思。在我脑海中，关于事务的知识来自于数据库。在数据库操作中，事务意味着一次可以提交多个SQL语句，然后一个commit就可让它们集中执行，而且数据库中的事务还可以回滚，即恢复到事务提交前的状态。<br>&#160; &#160; &#160; &#160;SurfaceFlinger为什么需要事务呢？从上面对数据库事务的描述来看，是不是意味着一次执行多个请求呢？我们从数据库事务概念大致可以看出一点端倪, 它的其中一个很重要的信息就是说”<strong>将一组相关操作组合成一个单元去处理</strong>“。这个思路也运用在了SurfaceFlinger中。我们先举个没有事务的例子，再一个Vsync周期里，Layer的属性改变了很多，比如有大小、位置、透明度、z-order都改变了，并且还不是一个Layer变了，如果每个都改变了，那么如果我们没改变一个属性就去触发相关操作，让SurfaceFlinger去重新合成，这样他岂不是累死了？所以正确的做法是，每当Layer属性改变，先记下来，将所有改变何如一条事务当中，最后在合成前handleTransaction 一次处理掉，这样就省事多了。</p>
+<h2 id="事务标志"><a href="#事务标志" class="headerlink" title="事务标志"></a>事务标志</h2><p>&#160; &#160; &#160; &#160;我们之前分析java层Surface创建的时候，使用过SurfaceControl这个类，它里面有两个方法，openTransaction和closeTransaction，这就是对Surface操作开事务的方法。不过我们这里先不分析这个，我们先看看C++层这一侧的事务。<br>&#160; &#160; &#160; &#160;事务的标志有以下几种，位于frameworks/native/services/surfaceflinger/SurfaceFlinger.h中：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">enum</span> &#123;</span><br><span class="line">    eTransactionNeeded        = <span class="number">0x01</span>,<span class="comment">//Layer的属性发生变化了，表示需要处理事务</span></span><br><span class="line">    eTraversalNeeded          = <span class="number">0x02</span>,<span class="comment">//遍历的是SurfaceFlinger中所有的Layer</span></span><br><span class="line">    eDisplayTransactionNeeded = <span class="number">0x04</span>,<span class="comment">//这个是显示器相关的事务,如显示器hotplug</span></span><br><span class="line">    eTransactionMask          = <span class="number">0x07</span><span class="comment">//掩码</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;事务标志也可以是多种组合，也很好理解，十六进制位，每种标志占一位，掩码占全位。<br>&#160; &#160; &#160; &#160;每种的意义在注释写的比较清楚。</p>
+<h2 id="设置和处理flags"><a href="#设置和处理flags" class="headerlink" title="设置和处理flags"></a>设置和处理flags</h2><p>&#160; &#160; &#160; &#160;mTransactionFlags是surface flinger中的一个成员，注意在layer中也存在一个同名的mTransactionFlags，通过下面的函数设置该flag，位于frameworks/native/services/surfaceflinger/SurfaceFlinger.cpp中：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">uint32_t</span> SurfaceFlinger::setTransactionFlags(<span class="keyword">uint32_t</span> flags) &#123;</span><br><span class="line">    <span class="comment">//或返回的是mTransactionFlags旧的值</span></span><br><span class="line">    <span class="keyword">uint32_t</span> old = android_atomic_or(flags, &amp;mTransactionFlags);</span><br><span class="line">    <span class="comment">//如果旧值和flags没有bit是相同的?</span></span><br><span class="line">    <span class="keyword">if</span> ((old &amp; flags)==<span class="number">0</span>) &#123; <span class="comment">// wake the server up,触发一次invalidate</span></span><br><span class="line">        signalTransaction();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> old;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;在surfaceflinger中，</p>
+<ul>
+<li>createLayer()，removeLayer()，setClientStateLocked都会去设置事务flag为eTransactionNeeded；</li>
+<li>setClientStateLocked()会去设置eTraversalNeeded；</li>
+<li>createDisplay()，destroyDisplay()，onHotplugReceived()，setDisplayStateLocked()会去设置eDisplayTransactionNeeded。</li>
+</ul>
+<p>&#160; &#160; &#160; &#160;然后就是调用SurfaceFlinger的signalTransaction，我们看看它：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">void</span> SurfaceFlinger::signalTransaction() &#123;</span><br><span class="line">    mEventQueue.invalidate();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;这个我们之前分析过，调用MessageQueue的invalidate函数，位于frameworks/native/services/surfaceflinger/MessageQueue.cpp中：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">define</span> INVALIDATE_ON_VSYNC 1</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">void</span> MessageQueue::invalidate() &#123;</span><br><span class="line"><span class="comment">// INVALIDATE_ON_VSYNC宏默认为true</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">if</span> INVALIDATE_ON_VSYNC</span></span><br><span class="line">    mEvents-&gt;requestNextVsync();</span><br><span class="line"><span class="meta">#<span class="meta-keyword">else</span></span></span><br><span class="line">    mHandler-&gt;dispatchInvalidate();</span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;mEvents就是EventThread类中的Connection类，第五篇分析vsync的时候介绍过，位于frameworks/native/services/surfaceflinger/EventThread.cpp中：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">void</span> EventThread::Connection::requestNextVsync() &#123;</span><br><span class="line">    mEventThread-&gt;requestNextVsync(<span class="keyword">this</span>);</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 关于Connection中的count，当为0时为一次性的事件，即触发一次sync信号</span></span><br><span class="line"><span class="comment">// count &gt;= 1 : continuous event. count is the vsync rate</span></span><br><span class="line"><span class="comment">// count == 0 : one-shot event that has not fired</span></span><br><span class="line"><span class="comment">// count ==-1 : one-shot event that fired this round / disabled</span></span><br><span class="line"><span class="keyword">void</span> EventThread::requestNextVsync(</span><br><span class="line">        <span class="keyword">const</span> sp&lt;EventThread::Connection&gt;&amp; connection) &#123;</span><br><span class="line">    Mutex::Autolock _l(mLock);</span><br><span class="line">    <span class="keyword">if</span> (connection-&gt;count &lt; <span class="number">0</span>) &#123;</span><br><span class="line">        connection-&gt;count = <span class="number">0</span>;</span><br><span class="line">        mCondition.broadcast();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;这里将mCondition wait的地方释放，在<a href="http://windrunnerlihuan.com/2017/05/25/Android-SurfaceFlinger-%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF-%E4%BA%94-VSync-%E5%B7%A5%E4%BD%9C%E5%8E%9F%E7%90%86/">Android SurfaceFlinger 学习之路(五)—-VSync 工作原理</a>我们分析过，各种事务都会去触发一次vsync，前面文章分析过，在每次vsync信号到来时，处理这个vsync事件会去调用SurfaceFlinger的onMessageReceived函数，我们看看它的实现:<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">void</span> SurfaceFlinger::onMessageReceived(<span class="keyword">int32_t</span> what) &#123;</span><br><span class="line">    ATRACE_CALL();</span><br><span class="line">    <span class="keyword">switch</span> (what) &#123;</span><br><span class="line">    <span class="keyword">case</span> MessageQueue::TRANSACTION:</span><br><span class="line">        handleMessageTransaction();</span><br><span class="line">        <span class="keyword">break</span>;</span><br><span class="line">        <span class="comment">//我们走的是这个case</span></span><br><span class="line">    <span class="keyword">case</span> MessageQueue::INVALIDATE:</span><br><span class="line">        handleMessageTransaction();</span><br><span class="line">        handleMessageInvalidate();</span><br><span class="line">        signalRefresh();</span><br><span class="line">        <span class="keyword">break</span>;</span><br><span class="line">    <span class="keyword">case</span> MessageQueue::REFRESH:</span><br><span class="line">        handleMessageRefresh();</span><br><span class="line">        <span class="keyword">break</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;我们走的是第二个case。这里先分析这个case第一个函数调用，后面的部分是SurfaceFlinger合成步骤，我们后续在分析。进而调用handleMessageTransaction，根据mTransactionFlags中设置的bit值做相应的处理。<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">void</span> SurfaceFlinger::handleMessageTransaction() &#123;</span><br><span class="line">    <span class="keyword">uint32_t</span> transactionFlags = peekTransactionFlags(eTransactionMask);</span><br><span class="line">    <span class="keyword">if</span> (transactionFlags) &#123;</span><br><span class="line">        handleTransaction(transactionFlags);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;这样就回到我们今天的主题了，对事务的处理，我们接下来会逐步分析。</p>
+<h1 id="SurfaceFlinger处理事务"><a href="#SurfaceFlinger处理事务" class="headerlink" title="SurfaceFlinger处理事务"></a>SurfaceFlinger处理事务</h1><p>&#160; &#160; &#160; &#160;我们首先要看SurfaceFlinger几个重要的变量：</p>
+<ul>
+<li>State mCurrentState<br>SurfaceFlinger下一帧的状态，即表示即将绘制的下一帧的状态。</li>
+<li>State mDrawingState<br>当前正在绘制的状态，即表示上一帧处理完事务后更新出来的状态，是最终的状态。</li>
+<li>mVisibleRegionsDirty<br>表示当前可见区域是否脏了，如果脏了的话，比如(layer added/removed, Display added/remove相关)在最后合成的时候会对每个屏幕重建layer stack, 但是一般都为false。</li>
+</ul>
+<p>&#160; &#160; &#160; &#160;这两个状态是SurfaceFlinger中的State，在Layer当中也有一个State，我们后面会讲到，我们看看这个State的定义，位于frameworks/native/services/surfaceflinger/SurfaceFlinger.h：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> State &#123;</span><br><span class="line">    LayerVector layersSortedByZ;<span class="comment">//SurfaceFlinger中所有的按照Z order排序的 Layer</span></span><br><span class="line">    DefaultKeyedVector&lt; wp&lt;IBinder&gt;, DisplayDeviceState&gt; displays;<span class="comment">//外接的显示屏</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;前者是上一次“drawing”时的状态，而后者则是当前状态。这样我们只要通过对比这两个State，就知道系统中发生了什么变化，然后采取相应的措施。它们内部都包含了一个LayerVector类型的layersSortedByZ成员变量，从变量名可以看出是所有layers按照Z-order顺序排列的Vector。<br>&#160; &#160; &#160; &#160;所以我们可以从mCurrentState.layersSortedByZ来访问到所有layer，然后对有需要执行transaction的图层再调用内部的doTransaction()。显然，并不是每个layer在每次handleTransactionLocked中都需要调用doTransaction，判断的标准就是Layer::getTransactionFlags返回的标志中是否要求了eTransactionNeeded。大家要注意SurfaceFlinger和各Layer都有一个mTransactionFlags变量，不过含义不同。另外，Layer中也同样有mCurrentState和mDrawingState，虽然它们也分别表示上一次和当前的状态，但所属的State结构体是完全不同的。</p>
+<h2 id="handleTransaction"><a href="#handleTransaction" class="headerlink" title="handleTransaction"></a>handleTransaction</h2><p>&#160; &#160; &#160; &#160;我们顺着上一节末位，处理vsync信号之后要去合成，之前先处理事务。因此走到了SurfaceFlinger的handleTransaction函数：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">void</span> SurfaceFlinger::handleTransaction(<span class="keyword">uint32_t</span> transactionFlags)</span><br><span class="line">&#123;</span><br><span class="line">    ATRACE_CALL();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// here we keep a copy of the drawing state (that is the state that's</span></span><br><span class="line">    <span class="comment">// going to be overwritten by handleTransactionLocked()) outside of</span></span><br><span class="line">    <span class="comment">// mStateLock so that the side-effects of the State assignment</span></span><br><span class="line">    <span class="comment">// don't happen with mStateLock held (which can cause deadlocks).</span></span><br><span class="line">    <span class="comment">//保存mDrawingState，但是却没有使用，are you kidding me？</span></span><br><span class="line">    <span class="function">State <span class="title">drawingState</span><span class="params">(mDrawingState)</span></span>;</span><br><span class="line"></span><br><span class="line">    Mutex::Autolock _l(mStateLock);</span><br><span class="line">    <span class="keyword">const</span> <span class="keyword">nsecs_t</span> now = systemTime();</span><br><span class="line">    mDebugInTransaction = now;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Here we're guaranteed that some transaction flags are set</span></span><br><span class="line">    <span class="comment">// so we can call handleTransactionLocked() unconditionally.</span></span><br><span class="line">    <span class="comment">// We call getTransactionFlags(), which will also clear the flags,</span></span><br><span class="line">    <span class="comment">// with mStateLock held to guarantee that mCurrentState won't change</span></span><br><span class="line">    <span class="comment">// until the transaction is committed.</span></span><br><span class="line">    <span class="comment">////获得SurfaceFlinger中的Transaction标志位</span></span><br><span class="line">    transactionFlags = getTransactionFlags(eTransactionMask);</span><br><span class="line">    <span class="comment">//在这里处理Transaction</span></span><br><span class="line">    handleTransactionLocked(transactionFlags);</span><br><span class="line"></span><br><span class="line">    mLastTransactionTime = systemTime() - now;</span><br><span class="line">    mDebugInTransaction = <span class="number">0</span>;</span><br><span class="line">    invalidateHwcGeometry();</span><br><span class="line">    <span class="comment">// here the transaction has been committed</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;先获取了SurfaceFlinger的transactionFlags ，然后调用handleTransactionLocked处理这些事务。这个函数很长，我们需要分步查看。</p>
+<h3 id="Part-1-遍历所有的Layer-让Layer去执行自己的事务"><a href="#Part-1-遍历所有的Layer-让Layer去执行自己的事务" class="headerlink" title="Part.1 遍历所有的Layer, 让Layer去执行自己的事务"></a>Part.1 遍历所有的Layer, 让Layer去执行自己的事务</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">void</span> SurfaceFlinger::handleTransactionLocked(<span class="keyword">uint32_t</span> transactionFlags)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">//获取当前所有Layer</span></span><br><span class="line">    <span class="function"><span class="keyword">const</span> LayerVector&amp; <span class="title">currentLayers</span><span class="params">(mCurrentState.layersSortedByZ)</span></span>;</span><br><span class="line">    <span class="keyword">const</span> <span class="keyword">size_t</span> count = currentLayers.size();</span><br><span class="line"></span><br><span class="line">    <span class="comment">/*</span><br><span class="line">     * Traversal of the children</span><br><span class="line">     * (perform the transaction for each of them if needed)</span><br><span class="line">     */</span></span><br><span class="line">    <span class="comment">//先判断有没有eTraversalNeeded标志位</span></span><br><span class="line">    <span class="keyword">if</span> (transactionFlags &amp; eTraversalNeeded) &#123;</span><br><span class="line">        <span class="comment">//然后遍历所有Layer,让Layer去执行自己的事务</span></span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">size_t</span> i=<span class="number">0</span> ; i&lt;count ; i++) &#123;</span><br><span class="line">            <span class="keyword">const</span> sp&lt;Layer&gt;&amp; layer(currentLayers[i]);</span><br><span class="line">            <span class="comment">//获取Layer的transaction flags</span></span><br><span class="line">            <span class="keyword">uint32_t</span> trFlags = layer-&gt;getTransactionFlags(eTransactionNeeded);</span><br><span class="line">            <span class="keyword">if</span> (!trFlags) <span class="keyword">continue</span>;</span><br><span class="line">            <span class="comment">// Layer处理自己的事务</span></span><br><span class="line">            <span class="keyword">const</span> <span class="keyword">uint32_t</span> flags = layer-&gt;doTransaction(<span class="number">0</span>);</span><br><span class="line">            <span class="comment">//如果Layer的可见区域改变了，则SurfaceFlinger就标注出当前可视区域改变了</span></span><br><span class="line">            <span class="keyword">if</span> (flags &amp; Layer::eVisibleRegion)</span><br><span class="line">                mVisibleRegionsDirty = <span class="literal">true</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    ......</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>&#160; &#160; &#160; &#160;先获取下一帧状态State所有的Layer,然后判断SF有没有eTraversalNeeded标志位，如果有，则遍历所有的Layer，让Layer去执行自己的事务，如果Layer的可见区域改变了，则SurfaceFlinger就标注出当前可视区域改变了，将mVisibleRegionsDirty 置为true。</p>
+<h3 id="Part-2-处理显示屏相关事务"><a href="#Part-2-处理显示屏相关事务" class="headerlink" title="Part.2 处理显示屏相关事务"></a>Part.2 处理显示屏相关事务</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">void</span> SurfaceFlinger::handleTransactionLocked(<span class="keyword">uint32_t</span> transactionFlags)</span><br><span class="line">&#123;</span><br><span class="line">    ...Part<span class="number">.1</span>...</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/*</span><br><span class="line">     * Perform display own transactions if needed</span><br><span class="line">     */</span></span><br><span class="line">    <span class="comment">//如果有eDisplayTransactionNeeded标志位</span></span><br><span class="line">    <span class="keyword">if</span> (transactionFlags &amp; eDisplayTransactionNeeded) &#123;</span><br><span class="line">        <span class="comment">// here we take advantage of Vector's copy-on-write semantics to</span></span><br><span class="line">        <span class="comment">// improve performance by skipping the transaction entirely when</span></span><br><span class="line">        <span class="comment">// know that the lists are identical</span></span><br><span class="line">        <span class="comment">//当我们知道上一次绘制状态和当前需要去绘制状态的显示屏信息相同时，</span></span><br><span class="line">        <span class="comment">//通过完全跳过事务，我们利用Vector的copy-on-write的特点去提高性能</span></span><br><span class="line">        </span><br><span class="line">        <span class="comment">//下一帧State的显示屏信息</span></span><br><span class="line">        <span class="keyword">const</span> KeyedVector&lt;  wp&lt;IBinder&gt;, DisplayDeviceState&gt;&amp; curr(mCurrentState.displays);</span><br><span class="line">        <span class="comment">//上一次绘制状态State的显示屏信息</span></span><br><span class="line">        <span class="keyword">const</span> KeyedVector&lt;  wp&lt;IBinder&gt;, DisplayDeviceState&gt;&amp; draw(mDrawingState.displays);</span><br><span class="line">        <span class="comment">//如果下一帧State的显示屏信息和上一次绘制状态State的显示屏信息不同</span></span><br><span class="line">        <span class="keyword">if</span> (!curr.isIdenticalTo(draw)) &#123;</span><br><span class="line">            <span class="comment">//表示当前可见区域脏了</span></span><br><span class="line">            mVisibleRegionsDirty = <span class="literal">true</span>;</span><br><span class="line">            <span class="comment">//下一帧需要显示状态</span></span><br><span class="line">            <span class="keyword">const</span> <span class="keyword">size_t</span> cc = curr.size();</span><br><span class="line">                  <span class="comment">//上一帧绘制状态</span></span><br><span class="line">                  <span class="keyword">size_t</span> dc = draw.size();</span><br><span class="line"></span><br><span class="line">            <span class="comment">// find the displays that were removed</span></span><br><span class="line">            <span class="comment">// (ie: in drawing state but not in current state)</span></span><br><span class="line">            <span class="comment">// also handle displays that changed</span></span><br><span class="line">            <span class="comment">// (ie: displays that are in both lists)</span></span><br><span class="line">            <span class="comment">//对比上一帧绘制状态，找到我们移除的显示屏</span></span><br><span class="line">            <span class="keyword">for</span> (<span class="keyword">size_t</span> i=<span class="number">0</span> ; i&lt;dc ; i++) &#123;</span><br><span class="line">                <span class="keyword">const</span> <span class="keyword">ssize_t</span> j = curr.indexOfKey(draw.keyAt(i));</span><br><span class="line">                <span class="comment">//移除显示屏的index</span></span><br><span class="line">                <span class="keyword">if</span> (j &lt; <span class="number">0</span>) &#123;</span><br><span class="line">                    <span class="comment">// in drawing state but not in current state</span></span><br><span class="line">                    <span class="comment">//移除的不是主显示屏</span></span><br><span class="line">                    <span class="keyword">if</span> (!draw[i].isMainDisplay()) &#123;</span><br><span class="line">                        <span class="comment">// Call makeCurrent() on the primary display so we can</span></span><br><span class="line">                        <span class="comment">// be sure that nothing associated with this display</span></span><br><span class="line">                        <span class="comment">// is current.</span></span><br><span class="line">                        <span class="comment">//主显示屏调用makeCurrent函数确保移除的显示屏和它没有联系了</span></span><br><span class="line">                        <span class="keyword">const</span> sp&lt;<span class="keyword">const</span> DisplayDevice&gt; defaultDisplay(getDefaultDisplayDevice());</span><br><span class="line">                        defaultDisplay-&gt;makeCurrent(mEGLDisplay, mEGLContext);</span><br><span class="line">                        sp&lt;DisplayDevice&gt; hw(getDisplayDevice(draw.keyAt(i)));</span><br><span class="line">                        <span class="comment">//断开连接</span></span><br><span class="line">                        <span class="keyword">if</span> (hw != <span class="literal">NULL</span>)</span><br><span class="line">                            hw-&gt;disconnect(getHwComposer());</span><br><span class="line">                        <span class="keyword">if</span> (draw[i].type &lt; DisplayDevice::NUM_BUILTIN_DISPLAY_TYPES)</span><br><span class="line">                            <span class="comment">//并回调热插拔接口onHotplugReceived，用于触发下一次vsync信号相应事件</span></span><br><span class="line">                            mEventThread-&gt;onHotplugReceived(draw[i].type, <span class="literal">false</span>);</span><br><span class="line">                        mDisplays.removeItem(draw.keyAt(i));</span><br><span class="line">                    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                        ALOGW(<span class="string">"trying to remove the main display"</span>);</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                    <span class="comment">//如果这个显示屏没有被移除，看看它是否改变了</span></span><br><span class="line">                    <span class="comment">// this display is in both lists. see if something changed.</span></span><br><span class="line">                    <span class="keyword">const</span> DisplayDeviceState&amp; state(curr[j]);</span><br><span class="line">                    <span class="keyword">const</span> wp&lt;IBinder&gt;&amp; display(curr.keyAt(j));</span><br><span class="line">                    <span class="keyword">if</span> (state.surface-&gt;asBinder() != draw[i].surface-&gt;asBinder()) &#123;</span><br><span class="line">                        <span class="comment">// changing the surface is like destroying and</span></span><br><span class="line">                        <span class="comment">// recreating the DisplayDevice, so we just remove it</span></span><br><span class="line">                        <span class="comment">// from the drawing state, so that it get re-added</span></span><br><span class="line">                        <span class="comment">// below.</span></span><br><span class="line">                        <span class="comment">//如果显示屏是销毁又重建的，所以没有被移除，</span></span><br><span class="line">                        <span class="comment">//那么我们要移除并重新添加他</span></span><br><span class="line">                        sp&lt;DisplayDevice&gt; hw(getDisplayDevice(display));</span><br><span class="line">                        <span class="keyword">if</span> (hw != <span class="literal">NULL</span>)</span><br><span class="line">                            hw-&gt;disconnect(getHwComposer());</span><br><span class="line">                        mDisplays.removeItem(display);</span><br><span class="line">                        mDrawingState.displays.removeItemsAt(i);</span><br><span class="line">                        dc--; i--;</span><br><span class="line">                        <span class="comment">// at this point we must loop to the next item</span></span><br><span class="line">                        <span class="keyword">continue</span>;</span><br><span class="line">                    &#125;</span><br><span class="line"></span><br><span class="line">                    <span class="keyword">const</span> sp&lt;DisplayDevice&gt; disp(getDisplayDevice(display));</span><br><span class="line">                    <span class="comment">//查看显示屏信息是否改变了，如果变了，</span></span><br><span class="line">                    <span class="comment">//就要重新将drawing信息赋值为current</span></span><br><span class="line">                    <span class="keyword">if</span> (disp != <span class="literal">NULL</span>) &#123;</span><br><span class="line">                        <span class="comment">//z-order排布的layer层改变了</span></span><br><span class="line">                        <span class="keyword">if</span> (state.layerStack != draw[i].layerStack) &#123;</span><br><span class="line">                            disp-&gt;setLayerStack(state.layerStack);</span><br><span class="line">                        &#125;</span><br><span class="line">                        <span class="comment">//方向、视角、帧结构改变了</span></span><br><span class="line">                        <span class="keyword">if</span> ((state.orientation != draw[i].orientation)</span><br><span class="line">                                || (state.viewport != draw[i].viewport)</span><br><span class="line">                                || (state.frame != draw[i].frame))</span><br><span class="line">                        &#123;</span><br><span class="line">                            disp-&gt;setProjection(state.orientation,</span><br><span class="line">                                    state.viewport, state.frame);</span><br><span class="line">                        &#125;</span><br><span class="line">                        <span class="comment">//大小改变了</span></span><br><span class="line">                        <span class="keyword">if</span> (state.width != draw[i].width || state.height != draw[i].height) &#123;</span><br><span class="line">                            disp-&gt;setDisplaySize(state.width, state.height);</span><br><span class="line">                        &#125;</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="comment">// find displays that were added</span></span><br><span class="line">            <span class="comment">// (ie: in current state but not in drawing state)</span></span><br><span class="line">            <span class="comment">//找到我们新增加的显示屏信息</span></span><br><span class="line">            <span class="keyword">for</span> (<span class="keyword">size_t</span> i=<span class="number">0</span> ; i&lt;cc ; i++) &#123;</span><br><span class="line">                <span class="keyword">if</span> (draw.indexOfKey(curr.keyAt(i)) &lt; <span class="number">0</span>) &#123;</span><br><span class="line">                    <span class="function"><span class="keyword">const</span> DisplayDeviceState&amp; <span class="title">state</span><span class="params">(curr[i])</span></span>;</span><br><span class="line">                    <span class="comment">//新增显示屏，需要一些变量属性：</span></span><br><span class="line">                    <span class="comment">//FrameBufferSurface、BufferQueueProducer、</span></span><br><span class="line">                    <span class="comment">//BufferQueueConsumer等</span></span><br><span class="line">                    sp&lt;DisplaySurface&gt; dispSurface;</span><br><span class="line">                    sp&lt;IGraphicBufferProducer&gt; producer;</span><br><span class="line">                    sp&lt;IGraphicBufferProducer&gt; bqProducer;</span><br><span class="line">                    sp&lt;IGraphicBufferConsumer&gt; bqConsumer;</span><br><span class="line">                    BufferQueue::createBufferQueue(&amp;bqProducer, &amp;bqConsumer,</span><br><span class="line">                            <span class="keyword">new</span> GraphicBufferAlloc());</span><br><span class="line"></span><br><span class="line">                    <span class="keyword">int32_t</span> hwcDisplayId = <span class="number">-1</span>;</span><br><span class="line">                    <span class="comment">//如果是虚拟设备</span></span><br><span class="line">                    <span class="keyword">if</span> (state.isVirtualDisplay()) &#123;</span><br><span class="line">                        <span class="comment">// Virtual displays without a surface are dormant:</span></span><br><span class="line">                        <span class="comment">// they have external state (layer stack, projection,</span></span><br><span class="line">                        <span class="comment">// etc.) but no internal state (i.e. a DisplayDevice).</span></span><br><span class="line">                        <span class="keyword">if</span> (state.surface != <span class="literal">NULL</span>) &#123;</span><br><span class="line"></span><br><span class="line">                            hwcDisplayId = allocateHwcDisplayId(state.type);</span><br><span class="line">                            sp&lt;VirtualDisplaySurface&gt; vds = <span class="keyword">new</span> VirtualDisplaySurface(</span><br><span class="line">                                    *mHwc, hwcDisplayId, state.surface,</span><br><span class="line">                                    bqProducer, bqConsumer, state.displayName);</span><br><span class="line"></span><br><span class="line">                            dispSurface = vds;</span><br><span class="line">                            producer = vds;</span><br><span class="line">                        &#125;</span><br><span class="line">                    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                        <span class="comment">//如果不是虚拟设备</span></span><br><span class="line">                        ALOGE_IF(state.surface!=<span class="literal">NULL</span>,</span><br><span class="line">                                <span class="string">"adding a supported display, but rendering "</span></span><br><span class="line">                                <span class="string">"surface is provided (%p), ignoring it"</span>,</span><br><span class="line">                                state.surface.get());</span><br><span class="line">                        <span class="comment">//申请设备id</span></span><br><span class="line">                        hwcDisplayId = allocateHwcDisplayId(state.type);</span><br><span class="line">                        <span class="comment">// for supported (by hwc) displays we provide our</span></span><br><span class="line">                        <span class="comment">// own rendering surface</span></span><br><span class="line">                        <span class="comment">//创建FrameBufferSurface用于渲染显示</span></span><br><span class="line">                        dispSurface = <span class="keyword">new</span> FramebufferSurface(*mHwc, state.type,</span><br><span class="line">                                bqConsumer);</span><br><span class="line">                        producer = bqProducer;</span><br><span class="line">                    &#125;</span><br><span class="line"></span><br><span class="line">                    <span class="keyword">const</span> wp&lt;IBinder&gt;&amp; display(curr.keyAt(i));</span><br><span class="line">                    <span class="comment">//设置显示屏相关属性</span></span><br><span class="line">                    <span class="keyword">if</span> (dispSurface != <span class="literal">NULL</span>) &#123;</span><br><span class="line">                        <span class="comment">//创建显示屏信息</span></span><br><span class="line">                        sp&lt;DisplayDevice&gt; hw = <span class="keyword">new</span> DisplayDevice(<span class="keyword">this</span>,</span><br><span class="line">                                state.type, hwcDisplayId,</span><br><span class="line">                                mHwc-&gt;getFormat(hwcDisplayId), state.isSecure,</span><br><span class="line">                                display, dispSurface, producer,</span><br><span class="line">                                mRenderEngine-&gt;getEGLConfig());</span><br><span class="line">                        hw-&gt;setLayerStack(state.layerStack);</span><br><span class="line">                        hw-&gt;setProjection(state.orientation,</span><br><span class="line">                                state.viewport, state.frame);</span><br><span class="line">                        hw-&gt;setDisplayName(state.displayName);</span><br><span class="line">                        mDisplays.add(display, hw);</span><br><span class="line">                        <span class="keyword">if</span> (state.isVirtualDisplay()) &#123;</span><br><span class="line">                            <span class="keyword">if</span> (hwcDisplayId &gt;= <span class="number">0</span>) &#123;</span><br><span class="line">                                mHwc-&gt;setVirtualDisplayProperties(hwcDisplayId,</span><br><span class="line">                                        hw-&gt;getWidth(), hw-&gt;getHeight(),</span><br><span class="line">                                        hw-&gt;getFormat());</span><br><span class="line">                            &#125;</span><br><span class="line">                        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                            mEventThread-&gt;onHotplugReceived(state.type, <span class="literal">true</span>);</span><br><span class="line">                        &#125;</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    ......</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>&#160; &#160; &#160; &#160;代码虽然多，但是逻辑很清晰，做的事情主要如下：<br>&#160; &#160; &#160; &#160;1）对比上一帧绘制状态，找到我们移除的显示屏。如果找到移除的就要断开连接，并且remove；如果没有移除，则判断是否为destroy-recreate的，如果是，则要移除重新add进来，如果不是，则看看是否状态发生改变，然后设置current状态；<br>&#160; &#160; &#160; &#160;2）找到我们新增加的显示屏信息。新增显示屏，则要创建DisplayDevice描述对象，构建这个对象又需要FrameBufferSurface用于渲染显示，构建FrameBufferSurface又需要BufferQueue一套对象，因此一一创建。</p>
+<h3 id="Part-3-找到Layer所在显示屏并更新旋转方向"><a href="#Part-3-找到Layer所在显示屏并更新旋转方向" class="headerlink" title="Part.3 找到Layer所在显示屏并更新旋转方向"></a>Part.3 找到Layer所在显示屏并更新旋转方向</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">void</span> SurfaceFlinger::handleTransactionLocked(<span class="keyword">uint32_t</span> transactionFlags)</span><br><span class="line">&#123;</span><br><span class="line">    ...Part<span class="number">.1</span>...</span><br><span class="line">    ...Part<span class="number">.2</span>...</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (transactionFlags &amp; (eTraversalNeeded|eDisplayTransactionNeeded)) &#123;</span><br><span class="line">        <span class="comment">// The transform hint might have changed for some layers</span></span><br><span class="line">        <span class="comment">// (either because a display has changed, or because a layer</span></span><br><span class="line">        <span class="comment">// as changed).</span></span><br><span class="line">        <span class="comment">//</span></span><br><span class="line">        <span class="comment">// Walk through all the layers in currentLayers,</span></span><br><span class="line">        <span class="comment">// and update their transform hint.</span></span><br><span class="line">        <span class="comment">//</span></span><br><span class="line">        <span class="comment">// If a layer is visible only on a single display, then that</span></span><br><span class="line">        <span class="comment">// display is used to calculate the hint, otherwise we use the</span></span><br><span class="line">        <span class="comment">// default display.</span></span><br><span class="line">        <span class="comment">//</span></span><br><span class="line">        <span class="comment">// <span class="doctag">NOTE:</span> we do this here, rather than in rebuildLayerStacks() so that</span></span><br><span class="line">        <span class="comment">// the hint is set before we acquire a buffer from the surface texture.</span></span><br><span class="line">        <span class="comment">//</span></span><br><span class="line">        <span class="comment">// <span class="doctag">NOTE:</span> layer transactions have taken place already, so we use their</span></span><br><span class="line">        <span class="comment">// drawing state. However, SurfaceFlinger's own transaction has not</span></span><br><span class="line">        <span class="comment">// happened yet, so we must use the current state layer list</span></span><br><span class="line">        <span class="comment">// (soon to become the drawing state list).</span></span><br><span class="line">        <span class="comment">//</span></span><br><span class="line">        sp&lt;<span class="keyword">const</span> DisplayDevice&gt; disp;</span><br><span class="line">        <span class="keyword">uint32_t</span> currentlayerStack = <span class="number">0</span>;</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">size_t</span> i=<span class="number">0</span>; i&lt;count; i++) &#123;</span><br><span class="line">            <span class="comment">// <span class="doctag">NOTE:</span> we rely on the fact that layers are sorted by</span></span><br><span class="line">            <span class="comment">// layerStack first (so we don't have to traverse the list</span></span><br><span class="line">            <span class="comment">// of displays for every layer).</span></span><br><span class="line">            <span class="keyword">const</span> sp&lt;Layer&gt;&amp; layer(currentLayers[i]);</span><br><span class="line">            <span class="keyword">uint32_t</span> layerStack = layer-&gt;getDrawingState().layerStack;</span><br><span class="line">            </span><br><span class="line">            <span class="comment">//通过遍历所有的Display来找到Layer所在的显示屏</span></span><br><span class="line">            <span class="keyword">if</span> (i==<span class="number">0</span> || currentlayerStack != layerStack) &#123;</span><br><span class="line">                currentlayerStack = layerStack;</span><br><span class="line">                <span class="comment">// figure out if this layerstack is mirrored</span></span><br><span class="line">                <span class="comment">// (more than one display) if so, pick the default display,</span></span><br><span class="line">                <span class="comment">// if not, pick the only display it's on.</span></span><br><span class="line">                disp.clear();</span><br><span class="line">                <span class="keyword">for</span> (<span class="keyword">size_t</span> dpy=<span class="number">0</span> ; dpy&lt;mDisplays.size() ; dpy++) &#123;</span><br><span class="line">                    sp&lt;<span class="keyword">const</span> DisplayDevice&gt; hw(mDisplays[dpy]);</span><br><span class="line">                    <span class="keyword">if</span> (hw-&gt;getLayerStack() == currentlayerStack) &#123;</span><br><span class="line">                        <span class="keyword">if</span> (disp == <span class="literal">NULL</span>) &#123;</span><br><span class="line">                            disp = hw;</span><br><span class="line">                        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                            disp = <span class="literal">NULL</span>;</span><br><span class="line">                            <span class="keyword">break</span>;</span><br><span class="line">                        &#125;</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">if</span> (disp == <span class="literal">NULL</span>) &#123;</span><br><span class="line">                <span class="comment">// <span class="doctag">NOTE:</span> TEMPORARY FIX ONLY. Real fix should cause layers to</span></span><br><span class="line">                <span class="comment">// redraw after transform hint changes. See bug 8508397.</span></span><br><span class="line"></span><br><span class="line">                <span class="comment">// could be null when this layer is using a layerStack</span></span><br><span class="line">                <span class="comment">// that is not visible on any display. Also can occur at</span></span><br><span class="line">                <span class="comment">// screen off/on times.</span></span><br><span class="line">                disp = getDefaultDisplayDevice();</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="comment">//更新Layer的旋转方向，最终会体现在 BufferQueueCore中的mTransformHint变量</span></span><br><span class="line">            layer-&gt;updateTransformHint(disp);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    ......</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>&#160; &#160; &#160; &#160;Part3做的事情主要是找到Layer所在显示屏并更新旋转方向，也是layer的事务。</p>
+<h3 id="Part-4-处理Layer移除逻辑"><a href="#Part-4-处理Layer移除逻辑" class="headerlink" title="Part.4 处理Layer移除逻辑"></a>Part.4 处理Layer移除逻辑</h3><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line">void SurfaceFlinger::handleTransactionLocked(uint32_t transactionFlags)</span><br><span class="line">&#123;</span><br><span class="line">    ...Part.1...</span><br><span class="line">    ...Part.2...</span><br><span class="line">    ...Part.3...</span><br><span class="line"></span><br><span class="line">    /*</span><br><span class="line">     * Perform our own transaction if needed</span><br><span class="line">     */</span><br><span class="line">    //如果需要合成的layer小于上一次绘制状态的layer个数，</span><br><span class="line">    //则有Layer需要去移除</span><br><span class="line">    const LayerVector&amp; layers(mDrawingState.layersSortedByZ);</span><br><span class="line">    if (currentLayers.size() &gt; layers.size()) &#123;</span><br><span class="line">        // layers have been added</span><br><span class="line">        mVisibleRegionsDirty = true;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    // some layers might have been removed, so</span><br><span class="line">    // we need to update the regions they're exposing.</span><br><span class="line">    //下面有layer移除的情况</span><br><span class="line">    if (mLayersRemoved) &#123;</span><br><span class="line">        mLayersRemoved = false;</span><br><span class="line">        mVisibleRegionsDirty = true;</span><br><span class="line">        const size_t count = layers.size();</span><br><span class="line">        for (size_t i=0 ; i&lt;count ; i++) &#123;</span><br><span class="line">            const sp&lt;Layer&gt;&amp; layer(layers[i]);</span><br><span class="line">            //找到移除的layer</span><br><span class="line">            if (currentLayers.indexOf(layer) &lt; 0) &#123;</span><br><span class="line">                // this layer is not visible anymore</span><br><span class="line">                // TODO: we could traverse the tree from front to back and</span><br><span class="line">                //       compute the actual visible region</span><br><span class="line">                // TODO: we could cache the transformed region</span><br><span class="line">                const Layer::State&amp; s(layer-&gt;getDrawingState());</span><br><span class="line">                //获得移除的Layer的可见区域, 这块可见区域就是dirty的</span><br><span class="line">                Region visibleReg = s.transform.transform(</span><br><span class="line">                        Region(Rect(s.active.w, s.active.h)));</span><br><span class="line">                //找到被移除掉的Layer所在的Display, 然后更新Diplay的dirty 区域，也就是对region做或运算</span><br><span class="line">                invalidateLayerStack(s.layerStack, visibleReg);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    //提交事务</span><br><span class="line">    commitTransaction();</span><br><span class="line">    //更新显示屏中的光标</span><br><span class="line">    updateCursorAsync();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>&#160; &#160; &#160; &#160;这一段主要处理Layer的移除逻辑。如果需要合成的layer小于上一次绘制状态的layer个数，则有layer需要去移除。找到需要移除的Layer，获得可见区域，然后更新Display的dirty区域，也就是对region做或运算。</p>
+<h2 id="提交事务"><a href="#提交事务" class="headerlink" title="提交事务"></a>提交事务</h2><p>&#160; &#160; &#160; &#160;剩下就是提交事务和更新显示屏的光标了，我们看看提交事务。<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">void</span> SurfaceFlinger::commitTransaction()</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">//mLayersPendingRemoval是保存的是pending 着需要移除的Layer. </span></span><br><span class="line">    <span class="comment">//比如APP调用destroySurface</span></span><br><span class="line">    <span class="keyword">if</span> (!mLayersPendingRemoval.isEmpty()) &#123;</span><br><span class="line">        <span class="comment">// Notify removed layers now that they can't be drawn from</span></span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">size_t</span> i = <span class="number">0</span>; i &lt; mLayersPendingRemoval.size(); i++) &#123;</span><br><span class="line">            mLayersPendingRemoval[i]-&gt;onRemoved();</span><br><span class="line">        &#125;</span><br><span class="line">        mLayersPendingRemoval.clear();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// If this transaction is part of a window animation then the next frame</span></span><br><span class="line">    <span class="comment">// we composite should be considered an animation as well.</span></span><br><span class="line">    mAnimCompositionPending = mAnimTransactionPending;</span><br><span class="line">    <span class="comment">//更新 mDrawingState</span></span><br><span class="line">    mDrawingState = mCurrentState;</span><br><span class="line">    mTransactionPending = <span class="literal">false</span>;</span><br><span class="line">    mAnimTransactionPending = <span class="literal">false</span>;</span><br><span class="line">    <span class="comment">//释放mTransactionCV, 如果SurfaceFlinger正在处理事务，</span></span><br><span class="line">    <span class="comment">//而这时如果调用setTransactionState就可能会一直等着mTransactionCV, </span></span><br><span class="line">    <span class="comment">//因为setTransactionState可能会改变SurfaceFlinger的Transaction标志位，导致前后不一致</span></span><br><span class="line">    mTransactionCV.broadcast();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;这就是提交事务的操作，先处理pendingRemove的layer，回调onRemove接口；然后更新mDrawingState状态；最后释放mTransactionCV条件锁。    </p>
+<p>&#160; &#160; &#160; &#160;以上就是SurfaceFlinger处理事务的流程，接下来我们分析Layer怎么处理事务。</p>
+<h1 id="Layer处理事务"><a href="#Layer处理事务" class="headerlink" title="Layer处理事务"></a>Layer处理事务</h1><p>&#160; &#160; &#160; &#160;在handleTransactionLocked函数中的Part1中，我们我们简要分析了layer处理自己事务的流程，接下来我们详细分析这个过程。</p>
+<h2 id="Layer的重要变量"><a href="#Layer的重要变量" class="headerlink" title="Layer的重要变量"></a>Layer的重要变量</h2><p>&#160; &#160; &#160; &#160;我们在<a href="http://windrunnerlihuan.com/2017/06/17/Android-SurfaceFlinger-%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF-%E5%85%AD-SurfaceFlinger%E5%88%9B%E5%BB%BASurface/">Android SurfaceFlinger 学习之路(六)—-SurfaceFlinger创建Surface</a>中提到过，每一个Layer都有很多属性。</p>
+<p> &#160; &#160; &#160; &#160;Each Layer has：</p>
+<ul>
+<li>Z-order</li>
+<li>Alpha value from 0 to 255</li>
+<li>visibleRegion</li>
+<li>crop region</li>
+<li>transformation: rotate 0, 90, 180, 270: flip H, V: scale</li>
+</ul>
+<p>&#160; &#160; &#160; &#160;当多个Layer进行合成的时候，并不是整个Layer的空间都会被完全显示，根据这个Layer最终的显示效果，一个Layer可以被划分成很多的Region, Android SurfaceFlinger 定义了以下一些Region类型：</p>
+<ul>
+<li>TransparantRegion： 完全透明的区域，在它之下的区域将被显示出来。</li>
+<li>OpaqueRegion: 完全不透明的区域，是否显示取决于它上面是否有遮挡或是否透明。</li>
+<li>VisibleRegion: 可见区域，包括完全不透明无遮挡区域或半透明区域。</li>
+<li>visibleRegion = Region - above OpaqueRegion.</li>
+<li>CoveredRegion: 被遮挡区域，在它之上，有不透明或半透明区域。</li>
+<li>DirtyRegion: 可见部分改变区域，包括新的被遮挡区域，和新的露出区域。</li>
+</ul>
+<p>&#160; &#160; &#160; &#160;我们这里先看看以下几个重要属性：</p>
+<ul>
+<li><p>State mCurrentState;<br>表示Layer下一帧的属性状态，当某个属性变化时，直接操作该变量</p>
+</li>
+<li><p>State mDrawingState;<br>表示当前正在绘制的帧的属性状态。Layer处理完事务后，最终的用于绘制的状态</p>
+</li>
+</ul>
+<p>&#160; &#160; &#160; &#160;我们再次看看Layer::State结构体的定义：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> State &#123;</span><br><span class="line">    Geometry active;<span class="comment">//当前Layer的可见区域</span></span><br><span class="line">    Geometry requested;<span class="comment">//请求的Layer的可见区域, 在Layer做doTransaction时会将 requested赋值给active. setSize/setMatrix/setPosition</span></span><br><span class="line">    <span class="keyword">uint32_t</span> z;<span class="comment">//z-order</span></span><br><span class="line">    <span class="keyword">uint32_t</span> layerStack;<span class="comment">//layerStack指明当前Layer属于哪个Display，Display的layer stack可以用 hw-&gt;getLayerStack获得</span></span><br><span class="line">    <span class="keyword">uint8_t</span> alpha;</span><br><span class="line">    <span class="keyword">uint8_t</span> flags;</span><br><span class="line">    <span class="keyword">uint8_t</span> reserved[<span class="number">2</span>];</span><br><span class="line">    <span class="comment">////当Layer的属性变化时， sequence就会加1</span></span><br><span class="line">    <span class="keyword">int32_t</span> sequence; <span class="comment">// changes when visible regions can change</span></span><br><span class="line">    <span class="comment">//更新region的传输矩阵</span></span><br><span class="line">    Transform transform;</span><br><span class="line">    <span class="comment">// the transparentRegion hint is a bit special, it's latched only</span></span><br><span class="line">    <span class="comment">// when we receive a buffer -- this is because it's "content"</span></span><br><span class="line">    <span class="comment">// dependent.</span></span><br><span class="line">    Region activeTransparentRegion;</span><br><span class="line">    Region requestedTransparentRegion;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></p>
+<h2 id="doTransaction"><a href="#doTransaction" class="headerlink" title="doTransaction"></a>doTransaction</h2><p>&#160; &#160; &#160; &#160;我们继续分析Layer处理事务的逻辑，看看Layer的doTransaction函数。</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br></pre></td><td class="code"><pre><span class="line">uint32_t Layer::doTransaction(uint32_t flags) &#123;// 0</span><br><span class="line">    ATRACE_CALL();</span><br><span class="line">    //上一次绘制状态</span><br><span class="line">    const Layer::State&amp; s(getDrawingState());</span><br><span class="line">    //下一帧状态</span><br><span class="line">    const Layer::State&amp; c(getCurrentState());</span><br><span class="line">    //如果requested的可见区域与旧的可见区域不同了，则size changed</span><br><span class="line">    const bool sizeChanged = (c.requested.w != s.requested.w) ||</span><br><span class="line">                             (c.requested.h != s.requested.h);</span><br><span class="line"></span><br><span class="line">    if (sizeChanged) &#123;</span><br><span class="line">        // the size changed, we need to ask our client to request a new buffer</span><br><span class="line">        </span><br><span class="line">        //省略一些log信息</span><br><span class="line"></span><br><span class="line">        // record the new size, form this point on, when the client request</span><br><span class="line">        // a buffer, it'll get the new size.</span><br><span class="line">                // 如果size changed, 把新的 w|h 设置到 BufferQueueCore中的 mDefaultWidth|mDefaultHeight中去</span><br><span class="line">        mSurfaceFlingerConsumer-&gt;setDefaultBufferSize(</span><br><span class="line">                c.requested.w, c.requested.h);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    //如果新的请求的 w|h 与新的原本要显示的区域不同，表明是  resize了</span><br><span class="line">    if (!isFixedSize()) &#123;</span><br><span class="line"></span><br><span class="line">        const bool resizePending = (c.requested.w != c.active.w) ||</span><br><span class="line">                                   (c.requested.h != c.active.h);</span><br><span class="line"></span><br><span class="line">        if (resizePending) &#123;</span><br><span class="line">            //resize只发生在非固定模式下</span><br><span class="line">            // don't let Layer::doTransaction update the drawing state</span><br><span class="line">            // if we have a pending resize, unless we are in fixed-size mode.</span><br><span class="line">            // the drawing state will be updated only once we receive a buffer</span><br><span class="line">            // with the correct size.</span><br><span class="line">            //</span><br><span class="line">            // in particular, we want to make sure the clip (which is part</span><br><span class="line">            // of the geometry state) is latched together with the size but is</span><br><span class="line">            // latched immediately when no resizing is involved.</span><br><span class="line">            //如果resize了，则打上eDontUpdateGeometryState的flag</span><br><span class="line">            flags |= eDontUpdateGeometryState;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    // always set active to requested, unless we're asked not to</span><br><span class="line">    // this is used by Layer, which special cases resizes.</span><br><span class="line">    if (flags &amp; eDontUpdateGeometryState)  &#123;//skip</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">        //这里是允许更新 可见区域</span><br><span class="line">        Layer::State&amp; editCurrentState(getCurrentState());</span><br><span class="line">        editCurrentState.active = c.requested;</span><br><span class="line">    &#125;</span><br><span class="line">    //如果可见区域发生改变，刷新并重新计算可见区域</span><br><span class="line">    if (s.active != c.active) &#123;</span><br><span class="line">        // invalidate and recompute the visible regions if needed</span><br><span class="line">        flags |= Layer::eVisibleRegion;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    // 只要Layer有属性发生变化了，sequence就会加1,</span><br><span class="line">    //这样可以很直观判断是否当前的state和旧的state是否发生变化了</span><br><span class="line">    // 但是这样并不能保证sequence相同，但是属性变化的这种情况</span><br><span class="line">    if (c.sequence != s.sequence) &#123;</span><br><span class="line">        // invalidate and recompute the visible regions if needed</span><br><span class="line">        flags |= eVisibleRegion;</span><br><span class="line">        this-&gt;contentDirty = true;</span><br><span class="line"></span><br><span class="line">        // we may use linear filtering, if the matrix scales us</span><br><span class="line">        const uint8_t type = c.transform.getType();</span><br><span class="line">        mNeedsFiltering = (!c.transform.preserveRects() ||</span><br><span class="line">                (type &gt;= Transform::SCALE));</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    // Commit the transaction</span><br><span class="line">    //提交事务</span><br><span class="line">    commitTransaction();</span><br><span class="line">    return flags;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>&#160; &#160; &#160; &#160;这个函数长度还行，看着也不负责，流程如下：<br>&#160; &#160; &#160; &#160;1）如果requested的可见区域与旧的可见区域不同了，则size changed。如果size changed, 把新的 w|h 设置到 BufferQueueCore中的 mDefaultWidth|mDefaultHeight中去。<br>&#160; &#160; &#160; &#160;这里mSurfaceFlingerConsumer-&gt;setDefaultBufferSize去设置变化后的大小，我们在<a href="http://windrunnerlihuan.com/2017/06/17/Android-SurfaceFlinger-%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF-%E5%85%AD-SurfaceFlinger%E5%88%9B%E5%BB%BASurface/">Android SurfaceFlinger 学习之路(六)—-SurfaceFlinger创建Surface</a>分析过mSurfaceFlingerConsumer的创建，位于Layer的onFirstRef函数中。<br>&#160; &#160; &#160; &#160;2）如果可见区域发生改变，刷新并重新计算可见区域。<br>&#160; &#160; &#160; &#160;3）sequence发生改变，重新获取大小。Sequence是个什么东西？当Layer的position，Zorder，alpha,matrix,transparent region,flags,crops.等发生变化的时候，sequence就会自增。也就是，当这些属性发生变化是，页面在Vsync信号触发的时候，根据sequence来判断是否需要属性页面。<br>&#160; &#160; &#160; &#160;4）提交事务。主要就是同步2个state，将current state赋值给drawing state。看看代码如下：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">void</span> Layer::commitTransaction() &#123;</span><br><span class="line">    mDrawingState = mCurrentState;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;以上就是SurfaceFlinger和Layer处理事务的逻辑。通俗的奖就是三句话：</p>
+<ul>
+<li>新增layer，对比2个state中的layer队列，就可以知道新增的layer。</li>
+<li>移除layer，也是比较2个layer队列，就可以找到移除的layer。</li>
+<li>提交transaction，主要就是同步2个state。然后currentstate继续跟踪layer变化，如此往复。</li>
+</ul>
+<p>&#160; &#160; &#160; &#160;贴个时序图就是下面的逻辑。</p>
+<p><img src="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E4%B9%9D%29----SurfaceFlinger%E4%BA%8B%E5%8A%A1%E5%A4%84%E7%90%86/Transation.jpg" alt="transation"></p>
+<h1 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h1><p>&#160; &#160; &#160; &#160;以上就是SurfaceFlinger处理事务的简要流程。回顾开始的内容，我们说过SurfaceControl的openTransation和closeTransaction底层实现也是SurfaceFlinger处理事务的操作，不过这个我们以后在分析。下一篇就应该去讲Layer的合成了，也是个十分复杂的过程。<br>&#160; &#160; &#160; &#160;断更三个月，期间也是尝尽辛酸苦辣，痛苦和悔恨只能自己默默下咽。只希望以后能够少点折腾，多一些安逸。</p>
+<p><img src="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E4%B9%9D%29----SurfaceFlinger%E4%BA%8B%E5%8A%A1%E5%A4%84%E7%90%86/meizi.jpg" alt="meizi"></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>坚持技术分享，您的支持将鼓励我继续创作！</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="/images/wechat.jpg" alt="windrunnerlihuan WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+        <div id="alipay" style="display: inline-block">
+          <img id="alipay_qr" src="/images/alipay.jpg" alt="windrunnerlihuan Alipay"/>
+          <p>支付宝打赏</p>
+        </div>
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/SurfaceFlinger/" rel="tag"># SurfaceFlinger</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/07/03/Android-SurfaceFlinger-学习之路-八-Surface管理图形缓冲区/" rel="next" title="Android SurfaceFlinger 学习之路(八)----Surface管理图形缓冲区">
+                <i class="fa fa-chevron-left"></i> Android SurfaceFlinger 学习之路(八)----Surface管理图形缓冲区
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+        <!-- JiaThis Button BEGIN -->
+<div class="jiathis_style">
+  <a class="jiathis_button_tsina"></a>
+  <a class="jiathis_button_tqq"></a>
+  <a class="jiathis_button_weixin"></a>
+  <a class="jiathis_button_cqq"></a>
+  <a class="jiathis_button_douban"></a>
+  <a class="jiathis_button_renren"></a>
+  <a class="jiathis_button_qzone"></a>
+  <a class="jiathis_button_kaixin001"></a>
+  <a class="jiathis_button_copy"></a>
+  <a href="http://www.jiathis.com/share" class="jiathis jiathis_txt jiathis_separator jtico jtico_jiathis" target="_blank"></a>
+  <a class="jiathis_counter_style"></a>
+</div>
+<script type="text/javascript" >
+  var jiathis_config={
+    hideMore:false
+  }
+</script>
+<script type="text/javascript" src="http://v3.jiathis.com/code/jia.js" charset="utf-8"></script>
+<!-- JiaThis Button END -->
+
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div id="uyan_frame"></div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.png"
+               alt="windrunnerlihuan" />
+          <p class="site-author-name" itemprop="name">windrunnerlihuan</p>
+           
+              <p class="site-description motion-element" itemprop="description"></p>
+           
+        </div>
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives">
+                <span class="site-state-item-count">33</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-categories">
+              <a href="/categories/index.html">
+                <span class="site-state-item-count">5</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-tags">
+              <a href="/tags/index.html">
+                <span class="site-state-item-count">18</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="mailto:937874128@qq.com" target="_blank" title="Email">
+                  
+                    <i class="fa fa-fw fa-envelope-o"></i>
+                  
+                  Email
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/windrunnerlihuan" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+          <div class="links-of-blogroll motion-element links-of-blogroll-inline">
+            <div class="links-of-blogroll-title">
+              <i class="fa  fa-fw fa-globe"></i>
+              Links
+            </div>
+            <ul class="links-of-blogroll-list">
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://gank.io/" title="干货集中营" target="_blank">干货集中营</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.jcodecraeer.com/" title="泡在网上的日子" target="_blank">泡在网上的日子</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://trinea.cn/" title="Trinea" target="_blank">Trinea</a>
+                </li>
+              
+            </ul>
+          </div>
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#事务概述"><span class="nav-number">1.</span> <span class="nav-text">事务概述</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#事务标志"><span class="nav-number">1.1.</span> <span class="nav-text">事务标志</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#设置和处理flags"><span class="nav-number">1.2.</span> <span class="nav-text">设置和处理flags</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#SurfaceFlinger处理事务"><span class="nav-number">2.</span> <span class="nav-text">SurfaceFlinger处理事务</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#handleTransaction"><span class="nav-number">2.1.</span> <span class="nav-text">handleTransaction</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Part-1-遍历所有的Layer-让Layer去执行自己的事务"><span class="nav-number">2.1.1.</span> <span class="nav-text">Part.1 遍历所有的Layer, 让Layer去执行自己的事务</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Part-2-处理显示屏相关事务"><span class="nav-number">2.1.2.</span> <span class="nav-text">Part.2 处理显示屏相关事务</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Part-3-找到Layer所在显示屏并更新旋转方向"><span class="nav-number">2.1.3.</span> <span class="nav-text">Part.3 找到Layer所在显示屏并更新旋转方向</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Part-4-处理Layer移除逻辑"><span class="nav-number">2.1.4.</span> <span class="nav-text">Part.4 处理Layer移除逻辑</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#提交事务"><span class="nav-number">2.2.</span> <span class="nav-text">提交事务</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Layer处理事务"><span class="nav-number">3.</span> <span class="nav-text">Layer处理事务</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Layer的重要变量"><span class="nav-number">3.1.</span> <span class="nav-text">Layer的重要变量</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#doTransaction"><span class="nav-number">3.2.</span> <span class="nav-text">doTransaction</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#小结"><span class="nav-number">4.</span> <span class="nav-text">小结</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy;  2016 - 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">windrunnerlihuan</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+
+        
+<div class="busuanzi-count">
+  <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="site-uv">
+      <i class="fa fa-user"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_uv"></span>
+      
+    </span>
+  
+
+  
+    <span class="site-pv">
+      <i class="fa fa-eye"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_pv"></span>
+      
+    </span>
+  
+</div>
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+  
+  <script type="text/javascript" src="/lib/canvas-nest/canvas-nest.min.js"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.1"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+    
+
+    
+      <!-- UY BEGIN -->
+      <script type="text/javascript" src="http://v2.uyan.cc/code/uyan.js?uid=MTAyMC8zMTQwMC83OTYz"></script>
+      <!-- UY END -->
+    
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (search_path.endsWith("json")) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("bJlEg1N9ed75pssz1m514avl-gzGzoHsz", "Swtq2cOp8A7KYeJ9lpD5nKAy");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
