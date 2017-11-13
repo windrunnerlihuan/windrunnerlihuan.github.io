@@ -1,0 +1,1448 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+  <meta name="google-site-verification" content="3Gndr5oonivG3ajghQU1MgL0IHoMHT4esMsPKjnbeis" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+    
+    
+    <link href="//fonts.lug.ustc.edu.cn/css?family=Monda:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Lobster Two:300,300italic,400,400italic,700,700italic|PT Mono:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="SurfaceFlinger," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="April is your lie" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/images/favicon.ico?v=5.1.1" />
+
+
+
+
+
+
+<meta name="description" content="&amp;#160; &amp;#160; &amp;#160; &amp;#160;上次我们分析了SurfaceFlinger的事务处理，对合成前接受上层改变SF和Layer的状态的事务做了统一处理，这节就沿着上次的末尾，继续分析Layer的更新流程。（又断了很久了，实在惭愧，很多事情总是身不由己～）">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android SurfaceFlinger 学习之路(十)----SurfaceFlinger处理Layer更新">
+<meta property="og:url" content="http://windrunnerlihuan.com/2017/11/09/Android-SurfaceFlinger-学习之路-十-SurfaceFlinger处理Layer更新/index.html">
+<meta property="og:site_name" content="April is your lie">
+<meta property="og:description" content="&amp;#160; &amp;#160; &amp;#160; &amp;#160;上次我们分析了SurfaceFlinger的事务处理，对合成前接受上层改变SF和Layer的状态的事务做了统一处理，这节就沿着上次的末尾，继续分析Layer的更新流程。（又断了很久了，实在惭愧，很多事情总是身不由己～）">
+<meta property="og:image" content="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E5%8D%81%29----SurfaceFlinger%E5%A4%84%E7%90%86Layer%E6%9B%B4%E6%96%B0/bufferstatechange.png">
+<meta property="og:image" content="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E5%8D%81%29----SurfaceFlinger%E5%A4%84%E7%90%86Layer%E6%9B%B4%E6%96%B0/bufferchange2.png">
+<meta property="og:image" content="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E5%8D%81%29----SurfaceFlinger%E5%A4%84%E7%90%86Layer%E6%9B%B4%E6%96%B0/handlePageFlip.jpg">
+<meta property="og:image" content="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E5%8D%81%29----SurfaceFlinger%E5%A4%84%E7%90%86Layer%E6%9B%B4%E6%96%B0/daqiao.jpg">
+<meta property="og:updated_time" content="2017-11-13T14:44:31.762Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Android SurfaceFlinger 学习之路(十)----SurfaceFlinger处理Layer更新">
+<meta name="twitter:description" content="&amp;#160; &amp;#160; &amp;#160; &amp;#160;上次我们分析了SurfaceFlinger的事务处理，对合成前接受上层改变SF和Layer的状态的事务做了统一处理，这节就沿着上次的末尾，继续分析Layer的更新流程。（又断了很久了，实在惭愧，很多事情总是身不由己～）">
+<meta name="twitter:image" content="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E5%8D%81%29----SurfaceFlinger%E5%A4%84%E7%90%86Layer%E6%9B%B4%E6%96%B0/bufferstatechange.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    sidebar: {"position":"right","display":"post","offset":12,"offset_float":0,"b2t":false,"scrollpercent":false},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://windrunnerlihuan.com/2017/11/09/Android-SurfaceFlinger-学习之路-十-SurfaceFlinger处理Layer更新/"/>
+
+
+
+
+
+  <title>Android SurfaceFlinger 学习之路(十)----SurfaceFlinger处理Layer更新 | April is your lie</title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-100464707-1', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?bb4df6db80a16ce54c1fb2c6e1767e18";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+  <script type="text/javascript">
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//tajs.qq.com/stats?sId=62459705";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+<script>
+  	var _mtac = {};
+  	(function() {
+  		var mta = document.createElement("script");
+  		mta.src = "https://pingjs.qq.com/h5/stats.js?v2.0.4";
+  		mta.setAttribute("name", "MTAH5");
+  		mta.setAttribute("sid", "500465801");
+
+  		var s = document.getElementsByTagName("script")[0];
+  		s.parentNode.insertBefore(mta, s);
+  	})();
+</script>
+
+
+
+
+  <div style="display: none;">
+    <script src="//s95.cnzz.com/z_stat.php?id=1262111741&web_id=1262111741" language="JavaScript"></script>
+  </div>
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-right page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">April is your lie</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <h1 class="site-subtitle" itemprop="description">四月是你的谎言</h1>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off"
+             placeholder="搜索..." spellcheck="false"
+             type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://windrunnerlihuan.com/2017/11/09/Android-SurfaceFlinger-学习之路-十-SurfaceFlinger处理Layer更新/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="windrunnerlihuan">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="April is your lie">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">Android SurfaceFlinger 学习之路(十)----SurfaceFlinger处理Layer更新</h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-11-09T17:11:11+08:00">
+                2017-11-09
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Android技术点/" itemprop="url" rel="index">
+                    <span itemprop="name">Android技术点</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+             <span id="/2017/11/09/Android-SurfaceFlinger-学习之路-十-SurfaceFlinger处理Layer更新/" class="leancloud_visitors" data-flag-title="Android SurfaceFlinger 学习之路(十)----SurfaceFlinger处理Layer更新">
+               <span class="post-meta-divider">|</span>
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               
+                 <span class="post-meta-item-text">阅读次数 </span>
+               
+                 <span class="leancloud-visitors-count"></span>
+             </span>
+          
+
+          
+            <span class="post-meta-divider">|</span>
+            <span class="page-pv"><i class="fa fa-file-o"></i>
+            <span class="busuanzi-value" id="busuanzi_value_page_pv" ></span>
+            </span>
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>&#160; &#160; &#160; &#160;上次我们分析了SurfaceFlinger的事务处理，对合成前接受上层改变SF和Layer的状态的事务做了统一处理，这节就沿着上次的末尾，继续分析Layer的更新流程。（又断了很久了，实在惭愧，很多事情总是身不由己～）<br><a id="more"></a></p>
+<h1 id="更新Layer-Buffer"><a href="#更新Layer-Buffer" class="headerlink" title="更新Layer Buffer"></a>更新Layer Buffer</h1><p>&#160; &#160; &#160; &#160;前几节分析Vsync信号还没有分析完，这一节顺着处理事务的尾巴，处理Layer中Buffer的更新。顺着代码走的，就到了SurfaceFlinger的<code>handlePageFlip</code>函数。</p>
+<h2 id="handlePageFlip函数"><a href="#handlePageFlip函数" class="headerlink" title="handlePageFlip函数"></a>handlePageFlip函数</h2><p>&#160; &#160; &#160; &#160;page flip是翻页的意思，就是说翻过所有的页面，检查每个Layer的更新。依然位于frameworks/native/serivice/surfaceflinger/SurfaceFlinger.cpp中：<br><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line">void SurfaceFlinger::handlePageFlip()</span><br><span class="line">&#123;</span><br><span class="line">    Region dirtyRegion;</span><br><span class="line"></span><br><span class="line">    bool visibleRegions = false;</span><br><span class="line">    const LayerVector&amp; layers(mDrawingState.layersSortedByZ);</span><br><span class="line"></span><br><span class="line">    // Store the set of layers that need updates. This set must not change as</span><br><span class="line">    // buffers are being latched, as this could result in a deadlock.</span><br><span class="line">    // Example: Two producers share the same command stream and:</span><br><span class="line">    // 1.) Layer 0 is latched</span><br><span class="line">    // 2.) Layer 0 gets a new frame</span><br><span class="line">    // 2.) Layer 1 gets a new frame</span><br><span class="line">    // 3.) Layer 1 is latched.</span><br><span class="line">    // Display is now waiting on Layer 1's frame, which is behind layer 0's</span><br><span class="line">    // second frame. But layer 0's second frame could be waiting on display.</span><br><span class="line">    Vector&lt;Layer*&gt; layersWithQueuedFrames;</span><br><span class="line">    //检查Layer是否需要更新</span><br><span class="line">    for (size_t i = 0, count = layers.size(); i&lt;count ; i++) &#123;</span><br><span class="line">        const sp&lt;Layer&gt;&amp; layer(layers[i]);</span><br><span class="line">        //该Layer是否有 QUEUED buffer，上上一篇讲过，</span><br><span class="line">        //每当有queued buffer，Layer的onFrameAvailable函数会回调，然后将mQueuedFrames加1</span><br><span class="line">        if (layer-&gt;hasQueuedFrame())</span><br><span class="line">            //将需要更新的Layer存入这个数组</span><br><span class="line">            layersWithQueuedFrames.push_back(layer.get());</span><br><span class="line">    &#125;</span><br><span class="line">    //遍历每一个需要更新的Layer，</span><br><span class="line">    //调用Layer的latchBuffer函数计算Layer的脏区域，</span><br><span class="line">    //最后修改Layer所在的Display上的脏区域</span><br><span class="line">    for (size_t i = 0, count = layersWithQueuedFrames.size() ; i&lt;count ; i++) &#123;</span><br><span class="line">        Layer* layer = layersWithQueuedFrames[i];</span><br><span class="line">        const Region dirty(layer-&gt;latchBuffer(visibleRegions));</span><br><span class="line">        const Layer::State&amp; s(layer-&gt;getDrawingState());</span><br><span class="line">        invalidateLayerStack(s.layerStack, dirty);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    mVisibleRegionsDirty |= visibleRegions;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;只看这个函数还是挺简单的：<br>&#160; &#160; &#160; &#160;1）检查每个Layer，找出需要更新Layer的，并存入数组。我们在<a href="http://windrunnerlihuan.com/2017/07/03/Android-SurfaceFlinger-%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF-%E5%85%AB-Surface%E7%AE%A1%E7%90%86%E5%9B%BE%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/">Android SurfaceFlinger 学习之路(八)—-Surface管理图形缓冲区</a>中讲过，当把Graphic Buffer 在app侧绘制完后会queue给BufferQueue，此时buffer状态为QUEUED，同时会通知Layer的onFrameAvailable回调去通知SF消费。Layer的onFrameAvailable函数如下，位于rameworks/native/services/surfaceflinger/Layer.cpp：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">void</span> Layer::onFrameAvailable() &#123;</span><br><span class="line">    android_atomic_inc(&amp;mQueuedFrames);<span class="comment">//会将mQueuedFrames加1</span></span><br><span class="line">    mFlinger-&gt;signalLayerUpdate();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;相应的Layer的hasQueuedFrame函数位于frameworks/native/services/surfaceflinger/Layer.h中：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span><br><span class="line"> * Returns if a frame is queued.</span><br><span class="line"> */</span></span><br><span class="line"><span class="function"><span class="keyword">bool</span> <span class="title">hasQueuedFrame</span><span class="params">()</span> <span class="keyword">const</span> </span>&#123; <span class="keyword">return</span> mQueuedFrames &gt; <span class="number">0</span> || mSidebandStreamChanged; &#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;因此可以找出需要更新的Layer，然后存入layersWithQueuedFrames这个数组中。</p>
+<p>&#160; &#160; &#160; &#160;2）遍历每一个需要更新的Layer，用Layer的latchBuffer函数计算Layer的脏区域。这一步是核心，我们接下来会仔细分析。</p>
+<p>&#160; &#160; &#160; &#160;3）最后修改Layer所在的Display上的脏区域。这一步调用了invalidateLayerStack函数：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">void</span> SurfaceFlinger::invalidateLayerStack(<span class="keyword">uint32_t</span> layerStack,</span><br><span class="line">        <span class="keyword">const</span> Region&amp; dirty) &#123;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">size_t</span> dpy=<span class="number">0</span> ; dpy&lt;mDisplays.size() ; dpy++) &#123;</span><br><span class="line">        <span class="keyword">const</span> sp&lt;DisplayDevice&gt;&amp; hw(mDisplays[dpy]);</span><br><span class="line">        <span class="keyword">if</span> (hw-&gt;getLayerStack() == layerStack) &#123;</span><br><span class="line">            hw-&gt;dirtyRegion.orSelf(dirty);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;先遍历所有的设备，然后找到和Layer的layerstack一样的设备，然后通过“或“运算，将Layer的更新区域加到DisplayDevice的dirtyRegion区域上。</p>
+<p>&#160; &#160; &#160; &#160;所以这个函数的核心就是Layer的latchBuffer函数调用，计算需要更新的苍区域。</p>
+<h2 id="计算Layer的脏区域"><a href="#计算Layer的脏区域" class="headerlink" title="计算Layer的脏区域"></a>计算Layer的脏区域</h2><p>&#160; &#160; &#160; &#160;latchBuffer函数比较长，我们分部查看：</p>
+<h3 id="Part-1-处理SidebandStream"><a href="#Part-1-处理SidebandStream" class="headerlink" title="Part.1 处理SidebandStream"></a>Part.1 处理SidebandStream</h3><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line">Region Layer::latchBuffer(bool&amp; recomputeVisibleRegions)</span><br><span class="line">&#123;</span><br><span class="line">    ATRACE_CALL();</span><br><span class="line">    //如果sideband surface改变了，表该Layer为视频的边频带，需要硬件合成器作特殊处理，</span><br><span class="line">    //然后将 mSidebandStreamChanged置为false</span><br><span class="line">    if (android_atomic_acquire_cas(true, false, &amp;mSidebandStreamChanged) == 0) &#123;</span><br><span class="line">        // mSidebandStreamChanged was true</span><br><span class="line">        mSidebandStream = mSurfaceFlingerConsumer-&gt;getSidebandStream();</span><br><span class="line">        // sideband的情况，需要重新 计算可视区域</span><br><span class="line">        recomputeVisibleRegions = true;</span><br><span class="line"></span><br><span class="line">        const State&amp; s(getDrawingState());</span><br><span class="line">        return s.transform.transform(Region(Rect(s.active.w, s.active.h)));</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    Region outDirtyRegion;</span><br><span class="line">    //如果Layer中有QUEUED帧</span><br><span class="line">    if (mQueuedFrames &gt; 0) &#123;</span><br><span class="line"></span><br><span class="line">        // if we've already called updateTexImage() without going through</span><br><span class="line">        // a composition step, we have to skip this layer at this point</span><br><span class="line">        // because we cannot call updateTeximage() without a corresponding</span><br><span class="line">        // compositionComplete() call.</span><br><span class="line">        // we'll trigger an update in onPreComposition().</span><br><span class="line">        if (mRefreshPending) &#123;</span><br><span class="line">            return outDirtyRegion;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        // Capture the old state of the layer for comparisons later</span><br><span class="line">        //注意这里使用的是DrawingState</span><br><span class="line">        const State&amp; s(getDrawingState());</span><br><span class="line">        const bool oldOpacity = isOpaque(s);</span><br><span class="line">        sp&lt;GraphicBuffer&gt; oldActiveBuffer = mActiveBuffer;</span><br><span class="line"></span><br><span class="line">        //。。。。。。</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>&#160; &#160; &#160; &#160;这一部分处理了如果是sidebandstream的逻辑，该Layer为视频的边频带，需要硬件合成器作特殊处理，若不支持，OpenGL方式只能以一个色块替代，这个标志是外界（应用/驱动）调用窗口系统的perform方法配置的。</p>
+<h3 id="Part-2-定义Reject结构体"><a href="#Part-2-定义Reject结构体" class="headerlink" title="Part.2 定义Reject结构体"></a>Part.2 定义Reject结构体</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> Reject : <span class="keyword">public</span> SurfaceFlingerConsumer::BufferRejecter &#123;</span><br><span class="line">            Layer::State&amp; front;<span class="comment">//drawingState</span></span><br><span class="line">            Layer::State&amp; current;<span class="comment">//currentState</span></span><br><span class="line">            <span class="keyword">bool</span>&amp; recomputeVisibleRegions;</span><br><span class="line">            <span class="keyword">bool</span> stickyTransformSet;</span><br><span class="line">            Reject(Layer::State&amp; front, Layer::State&amp; current,</span><br><span class="line">                    <span class="keyword">bool</span>&amp; recomputeVisibleRegions, <span class="keyword">bool</span> stickySet)</span><br><span class="line">                : front(front), current(current),</span><br><span class="line">                  recomputeVisibleRegions(recomputeVisibleRegions),</span><br><span class="line">                  stickyTransformSet(stickySet) &#123;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="function"><span class="keyword">virtual</span> <span class="keyword">bool</span> <span class="title">reject</span><span class="params">(<span class="keyword">const</span> sp&lt;GraphicBuffer&gt;&amp; buf,</span><br><span class="line">                    <span class="keyword">const</span> IGraphicBufferConsumer::BufferItem&amp; item)</span> </span>&#123;</span><br><span class="line">                <span class="keyword">if</span> (buf == <span class="literal">NULL</span>) &#123;</span><br><span class="line">                    <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">                &#125;</span><br><span class="line"></span><br><span class="line">                <span class="keyword">uint32_t</span> bufWidth  = buf-&gt;getWidth();</span><br><span class="line">                <span class="keyword">uint32_t</span> bufHeight = buf-&gt;getHeight();</span><br><span class="line"></span><br><span class="line">                <span class="comment">// check that we received a buffer of the right size</span></span><br><span class="line">                <span class="comment">// (Take the buffer's orientation into account)</span></span><br><span class="line">                <span class="comment">//旋转90度</span></span><br><span class="line">                <span class="keyword">if</span> (item.mTransform &amp; Transform::ROT_90) &#123;</span><br><span class="line">                    swap(bufWidth, bufHeight);</span><br><span class="line">                &#125;</span><br><span class="line"></span><br><span class="line">                <span class="keyword">bool</span> isFixedSize = item.mScalingMode != NATIVE_WINDOW_SCALING_MODE_FREEZE;</span><br><span class="line">                <span class="keyword">if</span> (front.active != front.requested) &#123;</span><br><span class="line">                    <span class="comment">//当app请求SF分配图形缓冲区时候，会传入requestWidth和requestHeight</span></span><br><span class="line">                    <span class="comment">//如果请求的w和h为0，则isFixedSize为true，此时就要用窗口的大小</span></span><br><span class="line">                    <span class="comment">//或者请求的w／h和传入的buffer的w／h相等</span></span><br><span class="line">                    <span class="keyword">if</span> (isFixedSize ||</span><br><span class="line">                            (bufWidth == front.requested.w &amp;&amp;</span><br><span class="line">                             bufHeight == front.requested.h))</span><br><span class="line">                    &#123;</span><br><span class="line">                        <span class="comment">// Here we pretend the transaction happened by updating the</span></span><br><span class="line">                        <span class="comment">// current and drawing states. Drawing state is only accessed</span></span><br><span class="line">                        <span class="comment">// in this thread, no need to have it locked</span></span><br><span class="line">                        <span class="comment">//我们假设事务已经提交更新了，current已经赋值给drawing，</span></span><br><span class="line">                        <span class="comment">//所以我们不用再去给DrawingState加锁</span></span><br><span class="line">                        <span class="comment">//将request的Geometry区域赋值给active</span></span><br><span class="line">                        front.active = front.requested;</span><br><span class="line"></span><br><span class="line">                        <span class="comment">// We also need to update the current state so that</span></span><br><span class="line">                        <span class="comment">// we don't end-up overwriting the drawing state with</span></span><br><span class="line">                        <span class="comment">// this stale current state during the next transaction</span></span><br><span class="line">                        <span class="comment">//</span></span><br><span class="line">                        <span class="comment">// <span class="doctag">NOTE:</span> We don't need to hold the transaction lock here</span></span><br><span class="line">                        <span class="comment">// because State::active is only accessed from this thread.</span></span><br><span class="line">                        <span class="comment">//下一次事务提交更新时候，还会讲下一次的current与drawing交换赋值，</span></span><br><span class="line">                        <span class="comment">//所以本次我们这里不终止用对这次drawing state对current的覆盖</span></span><br><span class="line">                        current.active = front.active;</span><br><span class="line"></span><br><span class="line">                        <span class="comment">// recompute visible region</span></span><br><span class="line">                        <span class="comment">//重新计算可视区域</span></span><br><span class="line">                        recomputeVisibleRegions = <span class="literal">true</span>;</span><br><span class="line">                    &#125;</span><br><span class="line"></span><br><span class="line">                    <span class="comment">//打印些许log</span></span><br><span class="line">                <span class="comment">//如果传入了请求的w／h，并且不是粘性的（往后一直遗留的）转换    </span></span><br><span class="line">                <span class="keyword">if</span> (!isFixedSize &amp;&amp; !stickyTransformSet) &#123;</span><br><span class="line">                    <span class="comment">//但是请求的w/h和传入buffer的w/hb不一致</span></span><br><span class="line">                    <span class="comment">//那么就需要拒绝掉这个buffer</span></span><br><span class="line">                    <span class="keyword">if</span> (front.active.w != bufWidth ||</span><br><span class="line">                        front.active.h != bufHeight) &#123;</span><br><span class="line">                        <span class="comment">// reject this buffer</span></span><br><span class="line">                        ALOGE(<span class="string">"rejecting buffer: bufWidth=%d, bufHeight=%d, front.active.&#123;w=%d, h=%d&#125;"</span>,</span><br><span class="line">                                bufWidth, bufHeight, front.active.w, front.active.h);</span><br><span class="line">                        <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line"></span><br><span class="line">                <span class="comment">// if the transparent region has changed (this test is</span></span><br><span class="line">                <span class="comment">// conservative, but that's fine, worst case we're doing</span></span><br><span class="line">                <span class="comment">// a bit of extra work), we latch the new one and we</span></span><br><span class="line">                <span class="comment">// trigger a visible-region recompute.</span></span><br><span class="line">                <span class="comment">//如果透明区域也改变了，也需要更新current的透明区域region，原因同上</span></span><br><span class="line">                <span class="keyword">if</span> (!front.activeTransparentRegion.isTriviallyEqual(</span><br><span class="line">                        front.requestedTransparentRegion)) &#123;</span><br><span class="line">                    front.activeTransparentRegion = front.requestedTransparentRegion;</span><br><span class="line"></span><br><span class="line">                    <span class="comment">// We also need to update the current state so that</span></span><br><span class="line">                    <span class="comment">// we don't end-up overwriting the drawing state with</span></span><br><span class="line">                    <span class="comment">// this stale current state during the next transaction</span></span><br><span class="line">                    <span class="comment">//</span></span><br><span class="line">                    <span class="comment">// <span class="doctag">NOTE:</span> We don't need to hold the transaction lock here</span></span><br><span class="line">                    <span class="comment">// because State::active is only accessed from this thread.</span></span><br><span class="line">                    current.activeTransparentRegion = front.activeTransparentRegion;</span><br><span class="line"></span><br><span class="line">                    <span class="comment">// recompute visible region</span></span><br><span class="line">                    <span class="comment">//重新计算可视区域</span></span><br><span class="line">                    recomputeVisibleRegions = <span class="literal">true</span>;</span><br><span class="line">                &#125;</span><br><span class="line"></span><br><span class="line">                <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;;</span><br></pre></td></tr></table></figure>
+<p>&#160; &#160; &#160; &#160;Reject结构体的定义，reject方法判断是否拒绝掉传入的buffer，详细都在注释中写道。<br>&#160; &#160; &#160; &#160;核心就是如果请求的w／h和传入buffer的w／h不一致，就会拒绝掉这个buffer。<br>&#160; &#160; &#160; &#160;如果不拒绝，就更新current和drawing的状态，方便下一次transation处理状态更新，左后将recomputeVisibleRegions置为true，表示重新计算可视区域。</p>
+<h3 id="Part-3-更新纹理并处理结果"><a href="#Part-3-更新纹理并处理结果" class="headerlink" title="Part.3 更新纹理并处理结果"></a>Part.3 更新纹理并处理结果</h3><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br></pre></td><td class="code"><pre><span class="line">//创建一个Reject对象</span><br><span class="line">Reject r(mDrawingState, getCurrentState(), recomputeVisibleRegions,</span><br><span class="line">                getProducerStickyTransform() != 0);</span><br><span class="line">        //更新纹理</span><br><span class="line">        status_t updateResult = mSurfaceFlingerConsumer-&gt;updateTexImage(&amp;r,</span><br><span class="line">                mFlinger-&gt;mPrimaryDispSync);</span><br><span class="line">        //延迟显示        </span><br><span class="line">        if (updateResult == BufferQueue::PRESENT_LATER) &#123;</span><br><span class="line">            // Producer doesn't want buffer to be displayed yet.  Signal a</span><br><span class="line">            // layer update so we check again at the next opportunity.</span><br><span class="line">            //延迟显示，触发下一个VSYNC， 即Buffer显示的时间还没到</span><br><span class="line">            mFlinger-&gt;signalLayerUpdate();</span><br><span class="line">            return outDirtyRegion;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        // Decrement the queued-frames count.  Signal another event if we</span><br><span class="line">        // have more frames pending.</span><br><span class="line">        //减少mQueuedFrames的值 </span><br><span class="line">        //如果还有Queued的Buffer，那么通知 SurfaceFlinger在下一个VSYNC时进行更新</span><br><span class="line">        if (android_atomic_dec(&amp;mQueuedFrames) &gt; 1) &#123;</span><br><span class="line">            mFlinger-&gt;signalLayerUpdate();</span><br><span class="line">        &#125;</span><br><span class="line">        //发生了异常</span><br><span class="line">        if (updateResult != NO_ERROR) &#123;</span><br><span class="line">            // something happened!</span><br><span class="line">            recomputeVisibleRegions = true;</span><br><span class="line">            return outDirtyRegion;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        // update the active buffer</span><br><span class="line">        //mActiveBuffer表示马上要显示的buffer</span><br><span class="line">        //更新mActiveBuffer，得到现在需要输出的图像数据</span><br><span class="line">        mActiveBuffer = mSurfaceFlingerConsumer-&gt;getCurrentBuffer();</span><br><span class="line">        if (mActiveBuffer == NULL) &#123;</span><br><span class="line">            ／／异常发生</span><br><span class="line">            // this can only happen if the very first buffer was rejected.</span><br><span class="line">            return outDirtyRegion;</span><br><span class="line">        &#125;</span><br><span class="line">        //即将进入 refresh的阶段</span><br><span class="line">        mRefreshPending = true;</span><br><span class="line">        mFrameLatencyNeeded = true;</span><br><span class="line">        //如果是第一次接收到Buffer, 需要重新计算可视区域</span><br><span class="line">        if (oldActiveBuffer == NULL) &#123;</span><br><span class="line">             // the first time we receive a buffer, we need to trigger a</span><br><span class="line">             // geometry invalidation.</span><br><span class="line">            recomputeVisibleRegions = true;</span><br><span class="line">         &#125;</span><br><span class="line"></span><br><span class="line">        Rect crop(mSurfaceFlingerConsumer-&gt;getCurrentCrop());</span><br><span class="line">        const uint32_t transform(mSurfaceFlingerConsumer-&gt;getCurrentTransform());</span><br><span class="line">        const uint32_t scalingMode(mSurfaceFlingerConsumer-&gt;getCurrentScalingMode());</span><br><span class="line">        if ((crop != mCurrentCrop) ||</span><br><span class="line">            (transform != mCurrentTransform) ||</span><br><span class="line">            (scalingMode != mCurrentScalingMode))</span><br><span class="line">        &#123;</span><br><span class="line">            //保存最新的 crop 与transform 这些变量</span><br><span class="line">            mCurrentCrop = crop;</span><br><span class="line">            mCurrentTransform = transform;</span><br><span class="line">            mCurrentScalingMode = scalingMode;</span><br><span class="line">            recomputeVisibleRegions = true;</span><br><span class="line">        &#125;</span><br><span class="line">        //最新的buffer和上一个渲染的buffer的尺寸不一样的，这时需要重新计算可视化区域</span><br><span class="line">        if (oldActiveBuffer != NULL) &#123;</span><br><span class="line">            uint32_t bufWidth  = mActiveBuffer-&gt;getWidth();</span><br><span class="line">            uint32_t bufHeight = mActiveBuffer-&gt;getHeight();</span><br><span class="line">            if (bufWidth != uint32_t(oldActiveBuffer-&gt;width) ||</span><br><span class="line">                bufHeight != uint32_t(oldActiveBuffer-&gt;height)) &#123;</span><br><span class="line">                recomputeVisibleRegions = true;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        //透明度相关</span><br><span class="line">        mCurrentOpacity = getOpacityForFormat(mActiveBuffer-&gt;format);</span><br><span class="line">        if (oldOpacity != isOpaque(s)) &#123;</span><br><span class="line">            recomputeVisibleRegions = true;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        // FIXME: postedRegion should be dirty &amp; bounds</span><br><span class="line">        //计算出脏区域</span><br><span class="line">        Region dirtyRegion(Rect(s.active.w, s.active.h));</span><br><span class="line"></span><br><span class="line">        // transform the dirty region to window-manager space</span><br><span class="line">        outDirtyRegion = (s.transform.transform(dirtyRegion));</span><br><span class="line">    &#125;</span><br><span class="line">    return outDirtyRegion;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>&#160; &#160; &#160; &#160;part3最核心的就是更新纹理，之后就是对于返回结果的处理。所以步骤就分两步：<br>&#160; &#160; &#160; &#160;1）updateTexImage更新纹理。这一步比较重要，我们接下来单独分析。<br>&#160; &#160; &#160; &#160;2）处理更新纹理的结果。<br>&#160; &#160; &#160; &#160;延迟显示，触发下一个VSYNC， 即Buffer显示的时间还没到；减少mQueuedFrames的值，如果还有Queued的Buffer，那么通知 SurfaceFlinger在下一个VSYNC时进行更新。<br>&#160; &#160; &#160; &#160;如果更新纹理发生了异常、第一次接收到buffer、crop和transform区域发生改变、最新的buffer和上一个渲染的buffer的尺寸不一样的、透明度区域发生改变，都需要重新可视化区域。<br>&#160; &#160; &#160; &#160;最后返回计算出的脏区域。</p>
+<h1 id="更新纹理"><a href="#更新纹理" class="headerlink" title="更新纹理"></a>更新纹理</h1><p>&#160; &#160; &#160; &#160;我们单独分析更新纹理，SurfaceFlingerConsumer的updateTexImage函数，位于frameworks/native/services/surfaceflinger/SurfaceFlingerConsumer.cpp:<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">status_t</span> SurfaceFlingerConsumer::updateTexImage(BufferRejecter* rejecter,</span><br><span class="line">        <span class="keyword">const</span> DispSync&amp; dispSync)</span><br><span class="line">&#123;</span><br><span class="line">    ATRACE_CALL();</span><br><span class="line">    ALOGV(<span class="string">"updateTexImage"</span>);</span><br><span class="line">    Mutex::<span class="function">Autolock <span class="title">lock</span><span class="params">(mMutex)</span></span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (mAbandoned) &#123;<span class="comment">//EGL没有初始化</span></span><br><span class="line">        ALOGE(<span class="string">"updateTexImage: GLConsumer is abandoned!"</span>);</span><br><span class="line">        <span class="keyword">return</span> NO_INIT;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Make sure the EGL state is the same as in previous calls.</span></span><br><span class="line">    <span class="comment">//检查EGL的状态是否ok</span></span><br><span class="line">    <span class="keyword">status_t</span> err = checkAndUpdateEglStateLocked();</span><br><span class="line">    <span class="keyword">if</span> (err != NO_ERROR) &#123;</span><br><span class="line">        <span class="keyword">return</span> err;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    BufferQueue::BufferItem item;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Acquire the next buffer.</span></span><br><span class="line">    <span class="comment">// In asynchronous mode the list is guaranteed to be one buffer</span></span><br><span class="line">    <span class="comment">// deep, while in synchronous mode we use the oldest buffer.</span></span><br><span class="line">    <span class="comment">//获得要显示出来的Buffer</span></span><br><span class="line">    <span class="comment">//a, 如果上层canvas绘图，获取到的fencefd为-1</span></span><br><span class="line">    <span class="comment">//b, 上层opengl绘图，获取到的fencefd不为-1</span></span><br><span class="line">    err = acquireBufferLocked(&amp;item, computeExpectedPresent(dispSync));</span><br><span class="line">    <span class="comment">//处理获取buffer异常的状况</span></span><br><span class="line">    <span class="keyword">if</span> (err != NO_ERROR) &#123;</span><br><span class="line">        <span class="keyword">if</span> (err == BufferQueue::NO_BUFFER_AVAILABLE) &#123;</span><br><span class="line">            err = NO_ERROR;</span><br><span class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span> (err == BufferQueue::PRESENT_LATER) &#123;</span><br><span class="line">            <span class="comment">// return the error, without logging</span></span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            ALOGE(<span class="string">"updateTexImage: acquire failed: %s (%d)"</span>,</span><br><span class="line">                strerror(-err), err);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> err;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="comment">// We call the rejecter here, in case the caller has a reason to</span></span><br><span class="line">    <span class="comment">// not accept this buffer.  This is used by SurfaceFlinger to</span></span><br><span class="line">    <span class="comment">// reject buffers which have the wrong size</span></span><br><span class="line">    <span class="keyword">int</span> buf = item.mBuf;</span><br><span class="line">    <span class="comment">// 检查是否需要 reject buffer，如果尺寸大小不对，就拒绝掉这个buffer</span></span><br><span class="line">    <span class="keyword">if</span> (rejecter &amp;&amp; rejecter-&gt;reject(mSlots[buf].mGraphicBuffer, item)) &#123;</span><br><span class="line">        <span class="comment">//如果拒绝了这个buffer，就要释放它</span></span><br><span class="line">        releaseBufferLocked(buf, mSlots[buf].mGraphicBuffer, EGL_NO_SYNC_KHR);</span><br><span class="line">        <span class="keyword">return</span> NO_ERROR;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Release the previous buffer.</span></span><br><span class="line">    <span class="comment">// 每次只能处理一个graphic buffer，要将上一次对应的buffer先release了，供别人使用</span></span><br><span class="line">    <span class="comment">//首先创建一个release fence，</span></span><br><span class="line">    <span class="comment">//将release fence传递给BufferQueue中的slot对应的mSlots[slot]的mFence</span></span><br><span class="line">    <span class="comment">// 创建GLConsumer里新的EGLImage</span></span><br><span class="line">    err = updateAndReleaseLocked(item);</span><br><span class="line">    <span class="keyword">if</span> (err != NO_ERROR) &#123;</span><br><span class="line">        <span class="keyword">return</span> err;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//4.4和以后已经不走这个if了，会在Layer::onDraw中去创建纹理</span></span><br><span class="line">    <span class="keyword">if</span> (!SyncFeatures::getInstance().useNativeFenceSync()) &#123;</span><br><span class="line">        <span class="comment">// Bind the new buffer to the GL texture.</span></span><br><span class="line">        <span class="comment">//</span></span><br><span class="line">        <span class="comment">// Older devices require the "implicit" synchronization provided</span></span><br><span class="line">        <span class="comment">// by glEGLImageTargetTexture2DOES, which this method calls.  Newer</span></span><br><span class="line">        <span class="comment">// devices will either call this in Layer::onDraw, or (if it's not</span></span><br><span class="line">        <span class="comment">// a GL-composited layer) not at all.</span></span><br><span class="line">        <span class="comment">//绑定EglImage到GL texture</span></span><br><span class="line">        err = bindTextureImageLocked();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> err;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;在这里面会去acquire buffer，然后acquire到的buffer就会去用来合成。主要做的事情：<br>&#160; &#160; &#160; &#160;1）acquire一个新的buffer；<br>&#160; &#160; &#160; &#160;2）将上一次对应的buffer先release了，并为上次的buffer创建一个release fence，将该release fence传递给BufferQueue中的slot对应的mSlots[slot]的mFence；<br>&#160; &#160; &#160; &#160;3）更新mCurrentTexture和mCurrentTextureBuf为这次acquire到的buffer以及slot。<br>&#160; &#160; &#160; &#160;目前acquire fencefd还没使用，因为还未去合成这个layer，没到用layer中数据的时候。</p>
+<p>&#160; &#160; &#160; &#160;这里有几个重要的步骤，我们分模块分析。</p>
+<h2 id="获取buffer"><a href="#获取buffer" class="headerlink" title="获取buffer"></a>获取buffer</h2><p>&#160; &#160; &#160; &#160;之前我们讲过buffer的状态迁移，又如下一幅图：</p>
+<p><img src="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E5%8D%81%29----SurfaceFlinger%E5%A4%84%E7%90%86Layer%E6%9B%B4%E6%96%B0/bufferstatechange.png" alt="buffer状态迁移"></p>
+<p>&#160; &#160; &#160; &#160;之前讲buffer queued进入BufferQueue，然后等等待SF消费。所以SF本次acquire buffer，buffer状态迁移为ACQUIRED。</p>
+<p>&#160; &#160; &#160; &#160;顺着上面的步骤，查看acquireBufferLocked函数。不过之前我们先看看参数中computeExpectedPresent函数计算下一次vsync信号到来的时间：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">nsecs_t</span> SurfaceFlingerConsumer::computeExpectedPresent(<span class="keyword">const</span> DispSync&amp; dispSync)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// The HWC doesn't currently have a way to report additional latency.</span></span><br><span class="line">    <span class="comment">// Assume that whatever we submit now will appear right after the flip.</span></span><br><span class="line">    <span class="comment">// For a smart panel this might be 1.  This is expressed in frames,</span></span><br><span class="line">    <span class="comment">// rather than time, because we expect to have a constant frame delay</span></span><br><span class="line">    <span class="comment">// regardless of the refresh rate.</span></span><br><span class="line">    <span class="keyword">const</span> <span class="keyword">uint32_t</span> hwcLatency = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Ask DispSync when the next refresh will be (CLOCK_MONOTONIC).</span></span><br><span class="line">    <span class="comment">//调用DispSync的dispSync.computeNextRefresh计算下一次刷新时间</span></span><br><span class="line">    <span class="keyword">const</span> <span class="keyword">nsecs_t</span> nextRefresh = dispSync.computeNextRefresh(hwcLatency);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// The DispSync time is already adjusted for the difference between</span></span><br><span class="line">    <span class="comment">// vsync and reported-vsync (PRESENT_TIME_OFFSET_FROM_VSYNC_NS), so</span></span><br><span class="line">    <span class="comment">// we don't need to factor that in here.  Pad a little to avoid</span></span><br><span class="line">    <span class="comment">// weird effects if apps might be requesting times right on the edge.</span></span><br><span class="line">    <span class="keyword">nsecs_t</span> extraPadding = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">if</span> (VSYNC_EVENT_PHASE_OFFSET_NS == <span class="number">0</span>) &#123;</span><br><span class="line">        extraPadding = <span class="number">1000000</span>;        <span class="comment">// 1ms (6% of 60Hz)</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> nextRefresh + extraPadding;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;计算下一次vsync_sf时间，位于frameworks/native/services/surfaceflinger/DispSync.cpp中：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">nsecs_t</span> DispSync::computeNextRefresh(<span class="keyword">int</span> periodOffset) <span class="keyword">const</span> &#123;</span><br><span class="line">    Mutex::<span class="function">Autolock <span class="title">lock</span><span class="params">(mMutex)</span></span>;</span><br><span class="line">    <span class="keyword">nsecs_t</span> now = systemTime(SYSTEM_TIME_MONOTONIC);</span><br><span class="line">    <span class="keyword">return</span> (((now - mPhase) / mPeriod) + periodOffset + <span class="number">1</span>) * mPeriod + mPhase;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;就是一个屏幕刷新周期之后的时间。</p>
+<p>&#160; &#160; &#160; &#160;获得了这个实参，然后就查看获取buffer的函数acquireBufferLocked：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">status_t</span> SurfaceFlingerConsumer::acquireBufferLocked(</span><br><span class="line">        BufferQueue::BufferItem *item, <span class="keyword">nsecs_t</span> presentWhen) &#123;</span><br><span class="line">    <span class="keyword">status_t</span> result = GLConsumer::acquireBufferLocked(item, presentWhen);</span><br><span class="line">    <span class="keyword">if</span> (result == NO_ERROR) &#123;</span><br><span class="line">        mTransformToDisplayInverse = item-&gt;mTransformToDisplayInverse;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> result;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;这里调用了GLConsumer的acquireBufferLocked函数，位于frameworks/native/libs/gui/GLConsumer.cpp：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">status_t</span> GLConsumer::acquireBufferLocked(BufferQueue::BufferItem *item,</span><br><span class="line">        <span class="keyword">nsecs_t</span> presentWhen) &#123;</span><br><span class="line">    <span class="comment">//调用ConsumerBase的acquireBufferLocked函数</span></span><br><span class="line">    <span class="keyword">status_t</span> err = ConsumerBase::acquireBufferLocked(item, presentWhen);</span><br><span class="line">    <span class="keyword">if</span> (err != NO_ERROR) &#123;</span><br><span class="line">        <span class="keyword">return</span> err;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// If item-&gt;mGraphicBuffer is not null, this buffer has not been acquired</span></span><br><span class="line">    <span class="comment">// before, so any prior EglImage created is using a stale buffer. This</span></span><br><span class="line">    <span class="comment">// replaces any old EglImage with a new one (using the new buffer).</span></span><br><span class="line">    <span class="comment">//如果这个buffer已经被acquired，它的图形缓冲区buffer不为空，</span></span><br><span class="line">    <span class="comment">//那么一些以前的EglImage就会使用过时的buffer</span></span><br><span class="line">    <span class="comment">//因此创建GLConsumer里新的EGLImage</span></span><br><span class="line">    <span class="keyword">if</span> (item-&gt;mGraphicBuffer != <span class="literal">NULL</span>) &#123;</span><br><span class="line">        <span class="keyword">int</span> slot = item-&gt;mBuf;</span><br><span class="line">        mEglSlots[slot].mEglImage = <span class="keyword">new</span> EglImage(item-&gt;mGraphicBuffer);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> NO_ERROR;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;这里又调用ConsumerBase的acquireBufferLocked函数去获取buffer。之后，如果这个buffer已经被acquired，它的图形缓冲区buffer不为空，那么一些以前的EglImage就会使用过时的buffer，因此创建GLConsumer里新的EGLImage。<br>&#160; &#160; &#160; &#160;我们继续查看ConsumerBase的acquireBufferLocked函数，位于rameworks/native/libs/gui/ConsumerBase.cpp：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">status_t</span> ConsumerBase::acquireBufferLocked(BufferQueue::BufferItem *item,</span><br><span class="line">        <span class="keyword">nsecs_t</span> presentWhen) &#123;</span><br><span class="line">    <span class="comment">//又通过binder IPC调用了BufferQueueConsumer的acquireBuffer函数</span></span><br><span class="line">    <span class="keyword">status_t</span> err = mConsumer-&gt;acquireBuffer(item, presentWhen);</span><br><span class="line">    <span class="keyword">if</span> (err != NO_ERROR) &#123;</span><br><span class="line">        <span class="keyword">return</span> err;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//获取到buffer之后，然后赋值给对应mSlots数组中index的BufferSlot</span></span><br><span class="line">    <span class="keyword">if</span> (item-&gt;mGraphicBuffer != <span class="literal">NULL</span>) &#123;</span><br><span class="line">        mSlots[item-&gt;mBuf].mGraphicBuffer = item-&gt;mGraphicBuffer;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    mSlots[item-&gt;mBuf].mFrameNumber = item-&gt;mFrameNumber;</span><br><span class="line">    mSlots[item-&gt;mBuf].mFence = item-&gt;mFence;</span><br><span class="line"></span><br><span class="line">    CB_LOGV(<span class="string">"acquireBufferLocked: -&gt; slot=%d/%"</span> PRIu64,</span><br><span class="line">            item-&gt;mBuf, item-&gt;mFrameNumber);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> OK;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;这里又通过binder IPC调用了BufferQueueConsumer的acquireBuffer函数，位于frameworks/native/libs/gui/BufferQueueConsumer.cpp:<br><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br></pre></td><td class="code"><pre><span class="line">status_t BufferQueueConsumer::acquireBuffer(BufferItem* outBuffer,</span><br><span class="line">        nsecs_t expectedPresent) &#123;</span><br><span class="line">    ATRACE_CALL();</span><br><span class="line">    Mutex::Autolock lock(mCore-&gt;mMutex);</span><br><span class="line"></span><br><span class="line">    // Check that the consumer doesn't currently have the maximum number of</span><br><span class="line">    // buffers acquired. We allow the max buffer count to be exceeded by one</span><br><span class="line">    // buffer so that the consumer can successfully set up the newly acquired</span><br><span class="line">    // buffer before releasing the old one.</span><br><span class="line">    //统计mActiveBuffers中已经是 ACQUIRED 的Frame 个数</span><br><span class="line">    int numAcquiredBuffers = 0;</span><br><span class="line">    for (int s = 0; s &lt; BufferQueueDefs::NUM_BUFFER_SLOTS; ++s) &#123;</span><br><span class="line">        //是否已经是 ACQUIRED 的Buffer</span><br><span class="line">        if (mSlots[s].mBufferState == BufferSlot::ACQUIRED) &#123;</span><br><span class="line">            ++numAcquiredBuffers;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    //异常检测 </span><br><span class="line">    if (numAcquiredBuffers &gt;= mCore-&gt;mMaxAcquiredBufferCount + 1) &#123;</span><br><span class="line">        BQ_LOGE("acquireBuffer: max acquired buffer count reached: %d (max %d)",</span><br><span class="line">                numAcquiredBuffers, mCore-&gt;mMaxAcquiredBufferCount);</span><br><span class="line">        return INVALID_OPERATION;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    // Check if the queue is empty.</span><br><span class="line">    // In asynchronous mode the list is guaranteed to be one buffer deep,</span><br><span class="line">    // while in synchronous mode we use the oldest buffer.</span><br><span class="line">    if (mCore-&gt;mQueue.empty()) &#123;</span><br><span class="line">        return NO_BUFFER_AVAILABLE;</span><br><span class="line">    &#125;</span><br><span class="line">    //queue中的第一个 buffer</span><br><span class="line">    BufferQueueCore::Fifo::iterator front(mCore-&gt;mQueue.begin());</span><br><span class="line"></span><br><span class="line">    // If expectedPresent is specified, we may not want to return a buffer yet.</span><br><span class="line">    // If it's specified and there's more than one buffer queued, we may want</span><br><span class="line">    // to drop a buffer.</span><br><span class="line">    if (expectedPresent != 0) &#123;</span><br><span class="line">        //一秒作为选择显示的buffer的范围条件</span><br><span class="line">        const int MAX_REASONABLE_NSEC = 1000000000ULL; // 1 second</span><br><span class="line"></span><br><span class="line">        // The 'expectedPresent' argument indicates when the buffer is expected</span><br><span class="line">        // to be presented on-screen. If the buffer's desired present time is</span><br><span class="line">        // earlier (less) than expectedPresent -- meaning it will be displayed</span><br><span class="line">        // on time or possibly late if we show it as soon as possible -- we</span><br><span class="line">        // acquire and return it. If we don't want to display it until after the</span><br><span class="line">        // expectedPresent time, we return PRESENT_LATER without acquiring it.</span><br><span class="line">        //expectedPresent参数表示的是buffer被我们期望的显示时间。</span><br><span class="line">        //如果buffer自己的渴望显示时间早于被期望的时间，意味着它可以按自己渴望时间显示，</span><br><span class="line">        //但是也会迟到，比如我们获取了它去迅速返回了，这时候它显示就要迟到了，</span><br><span class="line">        //此时我们就要返回一个PRESENT_LATER标志让它在下一次vsync信号去处理。</span><br><span class="line">        //</span><br><span class="line">        // To be safe, we don't defer acquisition if expectedPresent is more</span><br><span class="line">        // than one second in the future beyond the desired present time</span><br><span class="line">        // (i.e., we'd be holding the buffer for a long time).</span><br><span class="line">        //安全起见，我们就不推迟采集被期望的时间大于buffer渴望显示时间超过1秒的buffer了，</span><br><span class="line">        //例如，我们长时间持有一个buffer不释放，就会让expectedPresent很大</span><br><span class="line">        //</span><br><span class="line">        // NOTE: Code assumes monotonic time values from the system clock</span><br><span class="line">        // are positive.</span><br><span class="line"></span><br><span class="line">        // Start by checking to see if we can drop frames. We skip this check if</span><br><span class="line">        // the timestamps are being auto-generated by Surface. If the app isn't</span><br><span class="line">        // generating timestamps explicitly, it probably doesn't want frames to</span><br><span class="line">        // be discarded based on them.</span><br><span class="line">        // 检查后面的 Queue, 找到最近需要显示的Buffer</span><br><span class="line">        while (mCore-&gt;mQueue.size() &gt; 1 &amp;&amp; !mCore-&gt;mQueue[0].mIsAutoTimestamp) &#123;</span><br><span class="line">            // If entry[1] is timely, drop entry[0] (and repeat). We apply an</span><br><span class="line">            // additional criterion here: we only drop the earlier buffer if our</span><br><span class="line">            // desiredPresent falls within +/- 1 second of the expected present.</span><br><span class="line">            // Otherwise, bogus desiredPresent times (e.g., 0 or a small</span><br><span class="line">            // relative timestamp), which normally mean "ignore the timestamp</span><br><span class="line">            // and acquire immediately", would cause us to drop frames.</span><br><span class="line">            //如果entry[1]是及时的，就出drop掉entry[0]的buffer，然后继续往后面选。</span><br><span class="line">            //我们额外应用一个准则在这里：如果entry[1]的buffer的 desired time落在期望显示时间误差1秒内，那么我们drop掉entry[0]</span><br><span class="line">            //</span><br><span class="line">            // We may want to add an additional criterion: don't drop the</span><br><span class="line">            // earlier buffer if entry[1]'s fence hasn't signaled yet.</span><br><span class="line">            //还有一个准则：如果entry[1]的fence还没有到来，不drop entry[1]的buffer</span><br><span class="line">            const BufferItem&amp; bufferItem(mCore-&gt;mQueue[1]);</span><br><span class="line">            nsecs_t desiredPresent = bufferItem.mTimestamp;</span><br><span class="line">            //如果这个buffer显示的时间在expected之后（garbage），或者将来的1s内会，那么不drop掉上一个. </span><br><span class="line">                // break掉直接显示上一个buffer</span><br><span class="line">            if (desiredPresent &lt; expectedPresent - MAX_REASONABLE_NSEC ||</span><br><span class="line">                    desiredPresent &gt; expectedPresent) &#123;</span><br><span class="line">                // This buffer is set to display in the near future, or</span><br><span class="line">                // desiredPresent is garbage. Either way we don't want to drop</span><br><span class="line">                // the previous buffer just to get this on the screen sooner.</span><br><span class="line">                BQ_LOGV("acquireBuffer: nodrop desire=%" PRId64 " expect=%"</span><br><span class="line">                        PRId64 " (%" PRId64 ") now=%" PRId64,</span><br><span class="line">                        desiredPresent, expectedPresent,</span><br><span class="line">                        desiredPresent - expectedPresent,</span><br><span class="line">                        systemTime(CLOCK_MONOTONIC));</span><br><span class="line">                break;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            BQ_LOGV("acquireBuffer: drop desire=%" PRId64 " expect=%" PRId64</span><br><span class="line">                    " size=%zu",</span><br><span class="line">                    desiredPresent, expectedPresent, mCore-&gt;mQueue.size());</span><br><span class="line">            //如果上一个需要drop的buffer仍然在slots中，那么标记他为FREE状态        </span><br><span class="line">            if (mCore-&gt;stillTracking(front)) &#123;</span><br><span class="line">                // Front buffer is still in mSlots, so mark the slot as free</span><br><span class="line">                mSlots[front-&gt;mSlot].mBufferState = BufferSlot::FREE;</span><br><span class="line">            &#125;</span><br><span class="line">            //上一个已经没有必要显示了, 重新找一个显示的</span><br><span class="line">            mCore-&gt;mQueue.erase(front);</span><br><span class="line">            front = mCore-&gt;mQueue.begin();</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        // See if the front buffer is due</span><br><span class="line">        buffer要显示的时间还没到，那么标记为PRESENT_LATER，下一帧处理</span><br><span class="line">        nsecs_t desiredPresent = front-&gt;mTimestamp;</span><br><span class="line">        if (desiredPresent &gt; expectedPresent &amp;&amp;</span><br><span class="line">                desiredPresent &lt; expectedPresent + MAX_REASONABLE_NSEC) &#123;</span><br><span class="line">            BQ_LOGV("acquireBuffer: defer desire=%" PRId64 " expect=%" PRId64</span><br><span class="line">                    " (%" PRId64 ") now=%" PRId64,</span><br><span class="line">                    desiredPresent, expectedPresent,</span><br><span class="line">                    desiredPresent - expectedPresent,</span><br><span class="line">                    systemTime(CLOCK_MONOTONIC));</span><br><span class="line">            return PRESENT_LATER;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        BQ_LOGV("acquireBuffer: accept desire=%" PRId64 " expect=%" PRId64 " "</span><br><span class="line">                "(%" PRId64 ") now=%" PRId64, desiredPresent, expectedPresent,</span><br><span class="line">                desiredPresent - expectedPresent,</span><br><span class="line">                systemTime(CLOCK_MONOTONIC));</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    int slot = front-&gt;mSlot;</span><br><span class="line">    *outBuffer = *front;</span><br><span class="line">    ATRACE_BUFFER_INDEX(slot);</span><br><span class="line"></span><br><span class="line">    BQ_LOGV("acquireBuffer: acquiring &#123; slot=%d/%" PRIu64 " buffer=%p &#125;",</span><br><span class="line">            slot, front-&gt;mFrameNumber, front-&gt;mGraphicBuffer-&gt;handle);</span><br><span class="line">    // If the front buffer is still being tracked, update its slot state</span><br><span class="line">    //即将要显示的Buffer没有过期，就要更新状态变为 ACQUIRED</span><br><span class="line">    if (mCore-&gt;stillTracking(front)) &#123;</span><br><span class="line">        mSlots[slot].mAcquireCalled = true;//BUFFER的状态已经是 ACQUIRED 的了</span><br><span class="line">        mSlots[slot].mNeedsCleanupOnRelease = false;</span><br><span class="line">        mSlots[slot].mBufferState = BufferSlot::ACQUIRED;</span><br><span class="line">        mSlots[slot].mFence = Fence::NO_FENCE;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    // If the buffer has previously been acquired by the consumer, set</span><br><span class="line">    // mGraphicBuffer to NULL to avoid unnecessarily remapping this buffer</span><br><span class="line">    // on the consumer side</span><br><span class="line">    //如果buffer之前已经被获取了，设置mGraphicBuffer变量为NULL，避免consumer不必要的二次映射</span><br><span class="line">    if (outBuffer-&gt;mAcquireCalled) &#123;</span><br><span class="line">        outBuffer-&gt;mGraphicBuffer = NULL;</span><br><span class="line">    &#125;</span><br><span class="line">    //将Buffer从 BufferQueueCore列队里移除</span><br><span class="line">    mCore-&gt;mQueue.erase(front);</span><br><span class="line"></span><br><span class="line">    // We might have freed a slot while dropping old buffers, or the producer</span><br><span class="line">    // may be blocked waiting for the number of buffers in the queue to</span><br><span class="line">    // decrease.</span><br><span class="line">    //我们在第七节讲过，当dequeue buffer时候，slots有可能没有free的buffer可用，</span><br><span class="line">    //因此会在producer那儿等待，所以我们这里释放一个slot时候就要去唤醒那儿的lock</span><br><span class="line">    mCore-&gt;mDequeueCondition.broadcast();</span><br><span class="line"></span><br><span class="line">    ATRACE_INT(mCore-&gt;mConsumerName.string(), mCore-&gt;mQueue.size());</span><br><span class="line"></span><br><span class="line">    return NO_ERROR;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;这也就是我们Buffer迁移状态中ACQUIRED状态的流程，Acquire一个需要处理的Buffer。根据前面对Buffer状态迁移的分析，当消费者想处理一块buffer时，它首先要向BufferQueue做acquire申请。那么BufferQueue怎么知道当前要处理哪一个Buffer呢？这是因为其内部维护有一个Fifo先入先出队列。一旦有buffer被enqueue后，就会压入队尾;每次acquire就从队头取最前面的元素进行处理，完成之后就将其从队列移除。<br>&#160; &#160; &#160; &#160;代码流程如下：<br>&#160; &#160; &#160; &#160;1）统计mActiveBuffers中已经是 ACQUIRED 的Frame 个数，并且检测异常；<br>&#160; &#160; &#160; &#160;2）queue中的第一个 buffer，一秒作为选择显示的buffer的范围条件。如果这个entry[1]显示的时间在expected之后（garbage），或者将来的1s内会，那么不drop掉上一个，直接break掉，显示entry[0]；<br>&#160; &#160; &#160; &#160;3）如果entry[1]是及时的，就出drop掉entry[0]的buffer，然后继续往后面选；<br>&#160; &#160; &#160; &#160;4）buffer要显示的时间还没到，那么标记为PRESENT_LATER，下一帧处理；<br>&#160; &#160; &#160; &#160;5）更新buffer状态，并从队列中移除。</p>
+<h2 id="释放buffer并更新状态"><a href="#释放buffer并更新状态" class="headerlink" title="释放buffer并更新状态"></a>释放buffer并更新状态</h2><p>&#160; &#160; &#160; &#160;Acquire到的buffer封装在BufferItem中，item.mBuf代表它在BufferSlot中的序号。正常情况下item.mGraphicBuffer都不为空，我们将它记录到mEGLSlots[buf].mGraphicBuffer中，以便后续操作。<br>&#160; &#160; &#160; &#160;消费者一旦处理完Buffer后，就可以将其release了。此后这个buffer就又恢复FREE状态，以供生产者再次dequeue使用。<br>&#160; &#160; &#160; &#160;那么我们就看看这个释放过程，更新纹理中释放过程，updateAndReleaseLocked函数，实现位于GLConsumer中：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">status_t</span> GLConsumer::updateAndReleaseLocked(<span class="keyword">const</span> BufferQueue::BufferItem&amp; item)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">status_t</span> err = NO_ERROR;</span><br><span class="line">    <span class="comment">//招呼slot</span></span><br><span class="line">    <span class="keyword">int</span> buf = item.mBuf;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (!mAttached) &#123;<span class="comment">//Open GL ES 是否attach</span></span><br><span class="line">        ST_LOGE(<span class="string">"updateAndRelease: GLConsumer is not attached to an OpenGL "</span></span><br><span class="line">                <span class="string">"ES context"</span>);</span><br><span class="line">        releaseBufferLocked(buf, mSlots[buf].mGraphicBuffer,</span><br><span class="line">                mEglDisplay, EGL_NO_SYNC_KHR);</span><br><span class="line">        <span class="keyword">return</span> INVALID_OPERATION;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Confirm state.</span></span><br><span class="line">    <span class="comment">//检测EGL状态</span></span><br><span class="line">    err = checkAndUpdateEglStateLocked();</span><br><span class="line">    <span class="keyword">if</span> (err != NO_ERROR) &#123;</span><br><span class="line">        releaseBufferLocked(buf, mSlots[buf].mGraphicBuffer,</span><br><span class="line">                mEglDisplay, EGL_NO_SYNC_KHR);</span><br><span class="line">        <span class="keyword">return</span> err;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Ensure we have a valid EglImageKHR for the slot, creating an EglImage</span></span><br><span class="line">    <span class="comment">// if nessessary, for the gralloc buffer currently in the slot in</span></span><br><span class="line">    <span class="comment">// ConsumerBase.</span></span><br><span class="line">    <span class="comment">// We may have to do this even when item.mGraphicBuffer == NULL (which</span></span><br><span class="line">    <span class="comment">// means the buffer was previously acquired).</span></span><br><span class="line">    <span class="comment">//创建 EGLImage ，此时 mEglImage 已经有了</span></span><br><span class="line">    <span class="comment">//acquireBufferLocked中找到的即将要显示的 BufferItem 的 GraphicBuffer</span></span><br><span class="line">    err = mEglSlots[buf].mEglImage-&gt;createIfNeeded(mEglDisplay, item.mCrop);</span><br><span class="line">    <span class="keyword">if</span> (err != NO_ERROR) &#123;</span><br><span class="line">        ST_LOGW(<span class="string">"updateAndRelease: unable to createImage on display=%p slot=%d"</span>,</span><br><span class="line">                mEglDisplay, buf);</span><br><span class="line">        releaseBufferLocked(buf, mSlots[buf].mGraphicBuffer,</span><br><span class="line">                mEglDisplay, EGL_NO_SYNC_KHR);</span><br><span class="line">        <span class="keyword">return</span> UNKNOWN_ERROR;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Do whatever sync ops we need to do before releasing the old slot.</span></span><br><span class="line">    <span class="comment">// 在释放老的buffer前，先给添加一个release fence，有可能还在使用</span></span><br><span class="line">    err = syncForReleaseLocked(mEglDisplay);</span><br><span class="line">    <span class="keyword">if</span> (err != NO_ERROR) &#123;</span><br><span class="line">        <span class="comment">// Release the buffer we just acquired.  It's not safe to</span></span><br><span class="line">        <span class="comment">// release the old buffer, so instead we just drop the new frame.</span></span><br><span class="line">        <span class="comment">// As we are still under lock since acquireBuffer, it is safe to</span></span><br><span class="line">        <span class="comment">// release by slot.</span></span><br><span class="line">        releaseBufferLocked(buf, mSlots[buf].mGraphicBuffer,</span><br><span class="line">                mEglDisplay, EGL_NO_SYNC_KHR);</span><br><span class="line">        <span class="keyword">return</span> err;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    ST_LOGV(<span class="string">"updateAndRelease: (slot=%d buf=%p) -&gt; (slot=%d buf=%p)"</span>,</span><br><span class="line">            mCurrentTexture, mCurrentTextureImage != <span class="literal">NULL</span> ?</span><br><span class="line">                    mCurrentTextureImage-&gt;graphicBufferHandle() : <span class="number">0</span>,</span><br><span class="line">            buf, mSlots[buf].mGraphicBuffer-&gt;handle);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// release old buffer</span></span><br><span class="line">    <span class="comment">// 先把老的buffer，release了</span></span><br><span class="line">    <span class="comment">// 如果是第一次为mCurrentTexture为BufferQueue::INVALID_BUFFER_SLOT，-1</span></span><br><span class="line">    <span class="comment">// 将release fence传递给BufferQueue中的slot对应的mSlots[slot]的mFence</span></span><br><span class="line">    <span class="keyword">if</span> (mCurrentTexture != BufferQueue::INVALID_BUFFER_SLOT) &#123;</span><br><span class="line">        <span class="comment">//释放buffer  </span></span><br><span class="line">        <span class="keyword">status_t</span> status = releaseBufferLocked(</span><br><span class="line">                mCurrentTexture, mCurrentTextureImage-&gt;graphicBuffer(),</span><br><span class="line">                mEglDisplay, mEglSlots[mCurrentTexture].mEglFence);</span><br><span class="line">        <span class="keyword">if</span> (status &lt; NO_ERROR) &#123;</span><br><span class="line">            ST_LOGE(<span class="string">"updateAndRelease: failed to release buffer: %s (%d)"</span>,</span><br><span class="line">                   strerror(-status), status);</span><br><span class="line">            err = status;</span><br><span class="line">            <span class="comment">// keep going, with error raised [?]</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Update the GLConsumer state.</span></span><br><span class="line">    <span class="comment">// 更新 GLConsumer 状态</span></span><br><span class="line">    <span class="comment">//更新这次acquire到的buffer到mCurrentTexture和mCurrentTextureImage</span></span><br><span class="line">    mCurrentTexture = buf;</span><br><span class="line">    mCurrentTextureImage = mEglSlots[buf].mEglImage;</span><br><span class="line">    mCurrentCrop = item.mCrop;</span><br><span class="line">    mCurrentTransform = item.mTransform;</span><br><span class="line">    mCurrentScalingMode = item.mScalingMode;</span><br><span class="line">    mCurrentTimestamp = item.mTimestamp;</span><br><span class="line">    mCurrentFence = item.mFence;</span><br><span class="line">    mCurrentFrameNumber = item.mFrameNumber;</span><br><span class="line">    <span class="comment">//对当前的buffer进行矩阵变换处理</span></span><br><span class="line">    computeCurrentTransformMatrixLocked();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> err;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;updateAndReleaseLocked这个函数释放了buffer，然后更新了mCurrentTexture mCurrentTextureImage等。步骤如下：<br>&#160; &#160; &#160; &#160;1）检测Open GL是否连接，EGL状态是否OK；<br>&#160; &#160; &#160; &#160;2）创建 EGLImage （此时 mEglImage 已经有了，acquireBufferLocked中找到的即将要显示的 BufferItem 的 GraphicBuffer）；<br>&#160; &#160; &#160; &#160;3）释放老的buffer前，先给添加一个release fence，有可能还在使用（<strong>我们本届不讨论Fence相关内容，以后有机会会仔细研究</strong>）；<br>&#160; &#160; &#160; &#160;4）释放buffer（<strong>这个接下来仔细分析</strong>）；<br>&#160; &#160; &#160; &#160;5）更新 GLConsumer 状态，更新这次acquire到的buffer到mCurrentTexture和mCurrentTextureImage。 </p>
+<p>&#160; &#160; &#160; &#160;核心是释放buffer，因此我们看看releaseBufferLocked函数：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">status_t</span> GLConsumer::releaseBufferLocked(<span class="keyword">int</span> buf,</span><br><span class="line">        sp&lt;GraphicBuffer&gt; graphicBuffer,</span><br><span class="line">        EGLDisplay display, EGLSyncKHR eglFence) &#123;</span><br><span class="line">    <span class="comment">// release the buffer if it hasn't already been discarded by the</span></span><br><span class="line">    <span class="comment">// BufferQueue. This can happen, for example, when the producer of this</span></span><br><span class="line">    <span class="comment">// buffer has reallocated the original buffer slot after this buffer</span></span><br><span class="line">    <span class="comment">// was acquired.</span></span><br><span class="line">    <span class="keyword">status_t</span> err = ConsumerBase::releaseBufferLocked(</span><br><span class="line">            buf, graphicBuffer, display, eglFence);</span><br><span class="line">    mEglSlots[buf].mEglFence = EGL_NO_SYNC_KHR;</span><br><span class="line">    <span class="keyword">return</span> err;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;这里又调用了ConsumerBase的releaseBufferLocked函数：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">status_t</span> ConsumerBase::releaseBufferLocked(</span><br><span class="line">        <span class="keyword">int</span> slot, <span class="keyword">const</span> sp&lt;GraphicBuffer&gt; graphicBuffer,</span><br><span class="line">        EGLDisplay display, EGLSyncKHR eglFence) &#123;</span><br><span class="line">    <span class="comment">// If consumer no longer tracks this graphicBuffer (we received a new</span></span><br><span class="line">    <span class="comment">// buffer on the same slot), the buffer producer is definitely no longer</span></span><br><span class="line">    <span class="comment">// tracking it.</span></span><br><span class="line">    <span class="keyword">if</span> (!stillTracking(slot, graphicBuffer)) &#123;</span><br><span class="line">        <span class="keyword">return</span> OK;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    CB_LOGV(<span class="string">"releaseBufferLocked: slot=%d/%"</span> PRIu64,</span><br><span class="line">            slot, mSlots[slot].mFrameNumber);</span><br><span class="line">    <span class="comment">//release 老buffer的时候，会传入一个mSlots[slot].mFence,即release fence</span></span><br><span class="line">    ／／调用BufferQueueConsumer的releaseBuffer函数</span><br><span class="line">    <span class="keyword">status_t</span> err = mConsumer-&gt;releaseBuffer(slot, mSlots[slot].mFrameNumber,</span><br><span class="line">            display, eglFence, mSlots[slot].mFence);</span><br><span class="line">    <span class="comment">//如果buffer已经过时了但还位于slot中，那么释放他        </span></span><br><span class="line">    <span class="keyword">if</span> (err == IGraphicBufferConsumer::STALE_BUFFER_SLOT) &#123;</span><br><span class="line">        freeBufferLocked(slot);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    mSlots[slot].mFence = Fence::NO_FENCE;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> err;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">void</span> ConsumerBase::freeBufferLocked(<span class="keyword">int</span> slotIndex) &#123;</span><br><span class="line">    CB_LOGV(<span class="string">"freeBufferLocked: slotIndex=%d"</span>, slotIndex);</span><br><span class="line">    mSlots[slotIndex].mGraphicBuffer = <span class="number">0</span>;</span><br><span class="line">    mSlots[slotIndex].mFence = Fence::NO_FENCE;</span><br><span class="line">    mSlots[slotIndex].mFrameNumber = <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;继而又调用了BufferQueueConsumer的releaseBuffer函数：<br><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br></pre></td><td class="code"><pre><span class="line">status_t BufferQueueConsumer::releaseBuffer(int slot, uint64_t frameNumber,</span><br><span class="line">        const sp&lt;Fence&gt;&amp; releaseFence, EGLDisplay eglDisplay,</span><br><span class="line">        EGLSyncKHR eglFence) &#123;</span><br><span class="line">    ATRACE_CALL();</span><br><span class="line">    ATRACE_BUFFER_INDEX(slot);</span><br><span class="line"></span><br><span class="line">    if (slot &lt; 0 || slot &gt;= BufferQueueDefs::NUM_BUFFER_SLOTS ||</span><br><span class="line">            releaseFence == NULL) &#123;</span><br><span class="line">        return BAD_VALUE;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    sp&lt;IProducerListener&gt; listener;</span><br><span class="line">    &#123; // Autolock scope</span><br><span class="line">        Mutex::Autolock lock(mCore-&gt;mMutex);</span><br><span class="line"></span><br><span class="line">        // If the frame number has changed because the buffer has been reallocated,</span><br><span class="line">        // we can ignore this releaseBuffer for the old buffer</span><br><span class="line">        //如果frameNumber改变了，意味着buffer被重新申请了，</span><br><span class="line">        //所以我们要要标记这个老的buffer为STABLE，然后释放掉老的buffer</span><br><span class="line">        if (frameNumber != mSlots[slot].mFrameNumber) &#123;</span><br><span class="line">            return STALE_BUFFER_SLOT;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        // Make sure this buffer hasn't been queued while acquired by the consumer</span><br><span class="line">        //当consumer去acquire buffer时候，确保这个buffer不在BufferQueue当中</span><br><span class="line">        BufferQueueCore::Fifo::iterator current(mCore-&gt;mQueue.begin());</span><br><span class="line">        while (current != mCore-&gt;mQueue.end()) &#123;</span><br><span class="line">            if (current-&gt;mSlot == slot) &#123;</span><br><span class="line">                BQ_LOGE("releaseBuffer: buffer slot %d pending release is "</span><br><span class="line">                        "currently queued", slot);</span><br><span class="line">                return BAD_VALUE;</span><br><span class="line">            &#125;</span><br><span class="line">            ++current;</span><br><span class="line">        &#125;</span><br><span class="line">        //如果这个buffer被Acquired过了，那么释放他为FREE</span><br><span class="line">        if (mSlots[slot].mBufferState == BufferSlot::ACQUIRED) &#123;</span><br><span class="line">            mSlots[slot].mEglDisplay = eglDisplay;</span><br><span class="line">            mSlots[slot].mEglFence = eglFence;</span><br><span class="line">            mSlots[slot].mFence = releaseFence;</span><br><span class="line">            mSlots[slot].mBufferState = BufferSlot::FREE;</span><br><span class="line">            listener = mCore-&gt;mConnectedProducerListener;</span><br><span class="line">            BQ_LOGV("releaseBuffer: releasing slot %d", slot);</span><br><span class="line">        &#125; else if (mSlots[slot].mNeedsCleanupOnRelease) &#123;//如果还存于slot中，是旧的buffer，那么释放他</span><br><span class="line">            BQ_LOGV("releaseBuffer: releasing a stale buffer slot %d "</span><br><span class="line">                    "(state = %d)", slot, mSlots[slot].mBufferState);</span><br><span class="line">            mSlots[slot].mNeedsCleanupOnRelease = false;</span><br><span class="line">            return STALE_BUFFER_SLOT;</span><br><span class="line">        &#125; else &#123;//异常</span><br><span class="line">            BQ_LOGV("releaseBuffer: attempted to release buffer slot %d "</span><br><span class="line">                    "but its state was %d", slot, mSlots[slot].mBufferState);</span><br><span class="line">            return BAD_VALUE;</span><br><span class="line">        &#125;</span><br><span class="line">        //同上面逻辑，dequeue buffer时候可能会wait，这里唤醒wait锁</span><br><span class="line">        mCore-&gt;mDequeueCondition.broadcast();</span><br><span class="line">    &#125; // Autolock scope</span><br><span class="line"></span><br><span class="line">    // Call back without lock held</span><br><span class="line">    //回调onBufferReleased函数，调用ConsumerBase::onBuffersReleased</span><br><span class="line">    if (listener != NULL) &#123;</span><br><span class="line">        listener-&gt;onBufferReleased();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    return NO_ERROR;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;释放buffer的逻辑如下：<br>&#160; &#160; &#160; &#160;1）异常检测。slot 的index是否合法，是否因为reallocate buffer导致frameNumber改变，当consumer去acquire buffer时候它是否在不在BufferQueue当中；<br>&#160; &#160; &#160; &#160;2）释放buffer。如果这个buffer被Acquired过了，那么释放他为FREE；如果还存于slot中，是旧的buffer，那么释放他；异常或者状态异常；<br>&#160; &#160; &#160; &#160;3）唤醒dequeue buffer时候的wait lock，回调ConsumerBase::onBuffersReleased，通知buffer释放。</p>
+<p>&#160; &#160; &#160; &#160;以上就释放buffer的流程。</p>
+<p>&#160; &#160; &#160; &#160;结合上一节内容，经过handleTransaction handlePageFlip两个函数处理，SurfaceFlinger中无论是Layer属性的变化还是图像的变化都处理好了，只等VSync信号到来就可以输出了。<br>&#160; &#160; &#160; &#160;Layer更新中比较重要的就是Buffer状态的迁移，本节主要涉及了Buffer的ACQUIRED和RELEASED状态，这也正好完善了下图的剩下两个流程。</p>
+<p><img src="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E5%8D%81%29----SurfaceFlinger%E5%A4%84%E7%90%86Layer%E6%9B%B4%E6%96%B0/bufferchange2.png" alt="buffer状态迁移"></p>
+<p>&#160; &#160; &#160; &#160;本节内容画一幅时序图如下：</p>
+<p><img src="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E5%8D%81%29----SurfaceFlinger%E5%A4%84%E7%90%86Layer%E6%9B%B4%E6%96%B0/handlePageFlip.jpg" alt="handlePageFlip"></p>
+<h1 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h1><p>&#160; &#160; &#160; &#160;本节主要处理Layer的更新逻辑，先计算layer的脏区域，再更新纹理。更新纹理又包含获取了buffer状态迁移的剩下两环：ACQUIRED、RELEADED。<br>&#160; &#160; &#160; &#160;至此，处理Vsync信号到来时候的前两环已经处理完结了，即SurfaceFlinger中onMessageReceived回调函数的INVALIDATE CASE。下一节开始就是真正的合成阶段——REFRESH，这是个很复杂的流程，我们仍然会一一分析。</p>
+<p><img src="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E5%8D%81%29----SurfaceFlinger%E5%A4%84%E7%90%86Layer%E6%9B%B4%E6%96%B0/daqiao.jpg" alt="妹子"></p>
+<p>&#160; &#160; &#160; &#160;（不如意事常八九，可与语人无二三。）</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>坚持技术分享，您的支持将鼓励我继续创作！</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="/images/wechat.jpg" alt="windrunnerlihuan WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+        <div id="alipay" style="display: inline-block">
+          <img id="alipay_qr" src="/images/alipay.jpg" alt="windrunnerlihuan Alipay"/>
+          <p>支付宝打赏</p>
+        </div>
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/SurfaceFlinger/" rel="tag"># SurfaceFlinger</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/10/24/Android-SurfaceFlinger-学习之路-九-SurfaceFlinger事务处理/" rel="next" title="Android SurfaceFlinger 学习之路(九)----SurfaceFlinger事务处理">
+                <i class="fa fa-chevron-left"></i> Android SurfaceFlinger 学习之路(九)----SurfaceFlinger事务处理
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+        <!-- JiaThis Button BEGIN -->
+<div class="jiathis_style">
+  <a class="jiathis_button_tsina"></a>
+  <a class="jiathis_button_tqq"></a>
+  <a class="jiathis_button_weixin"></a>
+  <a class="jiathis_button_cqq"></a>
+  <a class="jiathis_button_douban"></a>
+  <a class="jiathis_button_renren"></a>
+  <a class="jiathis_button_qzone"></a>
+  <a class="jiathis_button_kaixin001"></a>
+  <a class="jiathis_button_copy"></a>
+  <a href="http://www.jiathis.com/share" class="jiathis jiathis_txt jiathis_separator jtico jtico_jiathis" target="_blank"></a>
+  <a class="jiathis_counter_style"></a>
+</div>
+<script type="text/javascript" >
+  var jiathis_config={
+    hideMore:false
+  }
+</script>
+<script type="text/javascript" src="http://v3.jiathis.com/code/jia.js" charset="utf-8"></script>
+<!-- JiaThis Button END -->
+
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div id="uyan_frame"></div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.png"
+               alt="windrunnerlihuan" />
+          <p class="site-author-name" itemprop="name">windrunnerlihuan</p>
+           
+              <p class="site-description motion-element" itemprop="description"></p>
+           
+        </div>
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives">
+                <span class="site-state-item-count">34</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-categories">
+              <a href="/categories/index.html">
+                <span class="site-state-item-count">5</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-tags">
+              <a href="/tags/index.html">
+                <span class="site-state-item-count">18</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="mailto:937874128@qq.com" target="_blank" title="Email">
+                  
+                    <i class="fa fa-fw fa-envelope-o"></i>
+                  
+                  Email
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/windrunnerlihuan" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+          <div class="links-of-blogroll motion-element links-of-blogroll-inline">
+            <div class="links-of-blogroll-title">
+              <i class="fa  fa-fw fa-globe"></i>
+              Links
+            </div>
+            <ul class="links-of-blogroll-list">
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://gank.io/" title="干货集中营" target="_blank">干货集中营</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.jcodecraeer.com/" title="泡在网上的日子" target="_blank">泡在网上的日子</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://trinea.cn/" title="Trinea" target="_blank">Trinea</a>
+                </li>
+              
+            </ul>
+          </div>
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#更新Layer-Buffer"><span class="nav-number">1.</span> <span class="nav-text">更新Layer Buffer</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#handlePageFlip函数"><span class="nav-number">1.1.</span> <span class="nav-text">handlePageFlip函数</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#计算Layer的脏区域"><span class="nav-number">1.2.</span> <span class="nav-text">计算Layer的脏区域</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Part-1-处理SidebandStream"><span class="nav-number">1.2.1.</span> <span class="nav-text">Part.1 处理SidebandStream</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Part-2-定义Reject结构体"><span class="nav-number">1.2.2.</span> <span class="nav-text">Part.2 定义Reject结构体</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Part-3-更新纹理并处理结果"><span class="nav-number">1.2.3.</span> <span class="nav-text">Part.3 更新纹理并处理结果</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#更新纹理"><span class="nav-number">2.</span> <span class="nav-text">更新纹理</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#获取buffer"><span class="nav-number">2.1.</span> <span class="nav-text">获取buffer</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#释放buffer并更新状态"><span class="nav-number">2.2.</span> <span class="nav-text">释放buffer并更新状态</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#小结"><span class="nav-number">3.</span> <span class="nav-text">小结</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy;  2016 - 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">windrunnerlihuan</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+
+        
+<div class="busuanzi-count">
+  <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="site-uv">
+      <i class="fa fa-user"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_uv"></span>
+      
+    </span>
+  
+
+  
+    <span class="site-pv">
+      <i class="fa fa-eye"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_pv"></span>
+      
+    </span>
+  
+</div>
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+  
+  <script type="text/javascript" src="/lib/canvas-nest/canvas-nest.min.js"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.1"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+    
+
+    
+      <!-- UY BEGIN -->
+      <script type="text/javascript" src="http://v2.uyan.cc/code/uyan.js?uid=MTAyMC8zMTQwMC83OTYz"></script>
+      <!-- UY END -->
+    
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (search_path.endsWith("json")) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("bJlEg1N9ed75pssz1m514avl-gzGzoHsz", "Swtq2cOp8A7KYeJ9lpD5nKAy");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
