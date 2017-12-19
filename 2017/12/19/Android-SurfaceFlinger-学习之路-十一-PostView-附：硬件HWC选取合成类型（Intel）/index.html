@@ -1,0 +1,1428 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+  <meta name="google-site-verification" content="3Gndr5oonivG3ajghQU1MgL0IHoMHT4esMsPKjnbeis" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+    
+    
+    <link href="//fonts.lug.ustc.edu.cn/css?family=Monda:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Lobster Two:300,300italic,400,400italic,700,700italic|PT Mono:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="SurfaceFlinger," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="April is your lie" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/images/favicon.ico?v=5.1.1" />
+
+
+
+
+
+
+<meta name="description" content="&amp;#160; &amp;#160; &amp;#160; &amp;#160;这里说点题外话，高通最近势头正猛啊，回拒了博通的恶意收购，又出了骁龙835进军PC市场，拉着AMD一起干英特尔。英特尔在移动设备市场上面还是没有ARM老谋深算，人家简单指令集一路走到底，授权卖指令集或者自己出公版，得到了苹果、三星、高通、MTK等许多大厂的青睐（苹果、高通、三星等厂商都是向ARM买指令集，再自己设计电路，大概是嫌ARM自己的芯片">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android SurfaceFlinger 学习之路(十一)(PostView)--附：硬件HWC选取合成类型（Intel）">
+<meta property="og:url" content="http://windrunnerlihuan.com/2017/12/19/Android-SurfaceFlinger-学习之路-十一-PostView-附：硬件HWC选取合成类型（Intel）/index.html">
+<meta property="og:site_name" content="April is your lie">
+<meta property="og:description" content="&amp;#160; &amp;#160; &amp;#160; &amp;#160;这里说点题外话，高通最近势头正猛啊，回拒了博通的恶意收购，又出了骁龙835进军PC市场，拉着AMD一起干英特尔。英特尔在移动设备市场上面还是没有ARM老谋深算，人家简单指令集一路走到底，授权卖指令集或者自己出公版，得到了苹果、三星、高通、MTK等许多大厂的青睐（苹果、高通、三星等厂商都是向ARM买指令集，再自己设计电路，大概是嫌ARM自己的芯片">
+<meta property="og:image" content="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E5%8D%81%E4%B8%80%29%28PostView%29--%E9%99%84%EF%BC%9A%E7%A1%AC%E4%BB%B6HWC%E9%80%89%E5%8F%96%E5%90%88%E6%88%90%E7%B1%BB%E5%9E%8B%EF%BC%88Intel%EF%BC%89/7c4f157bly1fkqyqfbz8jj20go0p07mv.jpg">
+<meta property="og:updated_time" content="2017-12-19T17:18:46.727Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Android SurfaceFlinger 学习之路(十一)(PostView)--附：硬件HWC选取合成类型（Intel）">
+<meta name="twitter:description" content="&amp;#160; &amp;#160; &amp;#160; &amp;#160;这里说点题外话，高通最近势头正猛啊，回拒了博通的恶意收购，又出了骁龙835进军PC市场，拉着AMD一起干英特尔。英特尔在移动设备市场上面还是没有ARM老谋深算，人家简单指令集一路走到底，授权卖指令集或者自己出公版，得到了苹果、三星、高通、MTK等许多大厂的青睐（苹果、高通、三星等厂商都是向ARM买指令集，再自己设计电路，大概是嫌ARM自己的芯片">
+<meta name="twitter:image" content="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E5%8D%81%E4%B8%80%29%28PostView%29--%E9%99%84%EF%BC%9A%E7%A1%AC%E4%BB%B6HWC%E9%80%89%E5%8F%96%E5%90%88%E6%88%90%E7%B1%BB%E5%9E%8B%EF%BC%88Intel%EF%BC%89/7c4f157bly1fkqyqfbz8jj20go0p07mv.jpg">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    sidebar: {"position":"right","display":"post","offset":12,"offset_float":0,"b2t":false,"scrollpercent":false},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://windrunnerlihuan.com/2017/12/19/Android-SurfaceFlinger-学习之路-十一-PostView-附：硬件HWC选取合成类型（Intel）/"/>
+
+
+
+
+
+  <title>Android SurfaceFlinger 学习之路(十一)(PostView)--附：硬件HWC选取合成类型（Intel） | April is your lie</title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-100464707-1', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?bb4df6db80a16ce54c1fb2c6e1767e18";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+  <script type="text/javascript">
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//tajs.qq.com/stats?sId=62459705";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+<script>
+  	var _mtac = {};
+  	(function() {
+  		var mta = document.createElement("script");
+  		mta.src = "https://pingjs.qq.com/h5/stats.js?v2.0.4";
+  		mta.setAttribute("name", "MTAH5");
+  		mta.setAttribute("sid", "500465801");
+
+  		var s = document.getElementsByTagName("script")[0];
+  		s.parentNode.insertBefore(mta, s);
+  	})();
+</script>
+
+
+
+
+  <div style="display: none;">
+    <script src="//s95.cnzz.com/z_stat.php?id=1262111741&web_id=1262111741" language="JavaScript"></script>
+  </div>
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-right page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">April is your lie</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <h1 class="site-subtitle" itemprop="description">四月是你的谎言</h1>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off"
+             placeholder="搜索..." spellcheck="false"
+             type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://windrunnerlihuan.com/2017/12/19/Android-SurfaceFlinger-学习之路-十一-PostView-附：硬件HWC选取合成类型（Intel）/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="windrunnerlihuan">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="April is your lie">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">Android SurfaceFlinger 学习之路(十一)(PostView)--附：硬件HWC选取合成类型（Intel）</h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-12-19T18:31:11+08:00">
+                2017-12-19
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Android技术点/" itemprop="url" rel="index">
+                    <span itemprop="name">Android技术点</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+             <span id="/2017/12/19/Android-SurfaceFlinger-学习之路-十一-PostView-附：硬件HWC选取合成类型（Intel）/" class="leancloud_visitors" data-flag-title="Android SurfaceFlinger 学习之路(十一)(PostView)--附：硬件HWC选取合成类型（Intel）">
+               <span class="post-meta-divider">|</span>
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               
+                 <span class="post-meta-item-text">阅读次数 </span>
+               
+                 <span class="leancloud-visitors-count"></span>
+             </span>
+          
+
+          
+            <span class="post-meta-divider">|</span>
+            <span class="page-pv"><i class="fa fa-file-o"></i>
+            <span class="busuanzi-value" id="busuanzi_value_page_pv" ></span>
+            </span>
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>&#160; &#160; &#160; &#160;这里说点题外话，高通最近势头正猛啊，回拒了博通的恶意收购，又出了骁龙835进军PC市场，拉着AMD一起干英特尔。英特尔在移动设备市场上面还是没有ARM老谋深算，人家简单指令集一路走到底，授权卖指令集或者自己出公版，得到了苹果、三星、高通、MTK等许多大厂的青睐（苹果、高通、三星等厂商都是向ARM买指令集，再自己设计电路，大概是嫌ARM自己的芯片效能不够；然而联发科和其他几家厂商买的是IP（公版）来兜自己的芯片，不自己从头设计电路），细水长流，进过多年顺风打野，最后打出一身神装出来carry。<br>&#160; &#160; &#160; &#160;反观intel，执着于自己x86架构，也用复杂指令集芯片打入过移动市场，奈何功耗扛不住啊，（充电两小时，装逼5分钟，只是个夸张比喻，勿当真）虽然后来又出了Atom的低功耗处理器，奈何市场已被ARM吞食大半，自己名气也没有打出，最后只能默默凉凉了。<br>&#160; &#160; &#160; &#160;intel在PC市场上霸主这么多年，实力肯定不是盖的，所以我们这次选个intel在hwc模块的实现来看看（其实是因为TI、高通的实现有些复杂，比较晦涩，三星也倒是比较容易看懂，但是也没有intel代码这么人性化=。=）<br><a id="more"></a></p>
+<h1 id="HWC选取合成类型"><a href="#HWC选取合成类型" class="headerlink" title="HWC选取合成类型"></a>HWC选取合成类型</h1><p>&#160; &#160; &#160; &#160;上面讲到mHwc-&gt;prepare(mHwc, mNumDisplays, mLists);对所有显示屏中所有Layer作合成准备（此时也可以开始发送合成的命令码下去，启动硬件合成，但不需要等待完成），hwcomposer需要正确汇报每个Layer的composetype，以告知SurfaceFlinger是否需要额外处理。<br>&#160; &#160; &#160; &#160;<br>&#160; &#160; &#160; &#160;实现位于/hardware/intel/img/hwcomposer/common/base/Hwcomposer.cpp，我们找一个公共模块：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">bool</span> Hwcomposer::prepare(<span class="keyword">size_t</span> numDisplays,</span><br><span class="line">                          <span class="keyword">hwc_display_contents_1_t</span>** displays)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">bool</span> ret = <span class="literal">true</span>;</span><br><span class="line"></span><br><span class="line">    RETURN_FALSE_IF_NOT_INIT();</span><br><span class="line">    ALOGTRACE(<span class="string">"display count = %d"</span>, numDisplays);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (!numDisplays || !displays) &#123;</span><br><span class="line">        ELOGTRACE(<span class="string">"invalid parameters"</span>);</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//检查显示屏相关信息，处理热插拔消息</span></span><br><span class="line">    mDisplayAnalyzer-&gt;analyzeContents(numDisplays, displays);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// disable reclaimed planes</span></span><br><span class="line">    <span class="comment">//disable掉所有回收的显示平面</span></span><br><span class="line">    mPlaneManager-&gt;disableReclaimedPlanes();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// reclaim all allocated planes if possible</span></span><br><span class="line">    <span class="comment">//如果可能，回首所有已经申请过的显示平面</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">size_t</span> i = <span class="number">0</span>; i &lt; numDisplays; i++) &#123;</span><br><span class="line">        <span class="keyword">if</span> (i &gt;= mDisplayDevices.size()) &#123;</span><br><span class="line">            <span class="keyword">continue</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        IDisplayDevice *device = mDisplayDevices.itemAt(i);</span><br><span class="line">        <span class="keyword">if</span> (!device) &#123;</span><br><span class="line">            VLOGTRACE(<span class="string">"device %d doesn't exist"</span>, i);</span><br><span class="line">            <span class="keyword">continue</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">//检查显示屏几何区域是否有变化</span></span><br><span class="line">        device-&gt;prePrepare(displays[i]);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">size_t</span> i = <span class="number">0</span>; i &lt; numDisplays; i++) &#123;</span><br><span class="line">        <span class="keyword">if</span> (i &gt;= mDisplayDevices.size()) &#123;</span><br><span class="line">            <span class="keyword">continue</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        IDisplayDevice *device = mDisplayDevices.itemAt(i);</span><br><span class="line">        <span class="keyword">if</span> (!device) &#123;</span><br><span class="line">            VLOGTRACE(<span class="string">"device %d doesn't exist"</span>, i);</span><br><span class="line">            <span class="keyword">continue</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">//最重要的一行：更新HwcLayer，选择合成类型</span></span><br><span class="line">        ret = device-&gt;prepare(displays[i]);</span><br><span class="line">        <span class="keyword">if</span> (ret == <span class="literal">false</span>) &#123;</span><br><span class="line">            ELOGTRACE(<span class="string">"failed to do prepare for device %d"</span>, i);</span><br><span class="line">            <span class="keyword">continue</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> ret;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;上述就是选取合成类型的步骤：<br>&#160; &#160; &#160; &#160;1）检查显示屏相关信息，处理热插拔消息；<br>&#160; &#160; &#160; &#160;2）disable掉所有回收的显示平面；<br>&#160; &#160; &#160; &#160;3）检查显示屏几何区域是否有变化；<br>&#160; &#160; &#160; &#160;4）最重要的一行：更新HwcLayer，选择合成类型。</p>
+<h2 id="流程细节"><a href="#流程细节" class="headerlink" title="流程细节"></a>流程细节</h2><p>&#160; &#160; &#160; &#160;我们分步查看：<br>&#160; &#160; &#160; &#160;1）检查显示屏相关信息，处理热插拔消息。位于hardware/intel/img/hwcomposer/common/base/DisplayAnalyzer.cpp：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">void</span> DisplayAnalyzer::analyzeContents(</span><br><span class="line">        <span class="keyword">size_t</span> numDisplays, <span class="keyword">hwc_display_contents_1_t</span>** displays)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// cache and use them only in this context during analysis</span></span><br><span class="line">    mCachedNumDisplays = numDisplays;</span><br><span class="line">    mCachedDisplays = displays;</span><br><span class="line">    <span class="comment">//处理pending的事件</span></span><br><span class="line">    handlePendingEvents();</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">void</span> DisplayAnalyzer::handlePendingEvents()</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// handle one event per analysis to avoid blocking surface flinger</span></span><br><span class="line">    <span class="comment">// some event may take lengthy time to process</span></span><br><span class="line">    Event e;</span><br><span class="line">    <span class="keyword">if</span> (!getEvent(e)) &#123;</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">switch</span> (e.type) &#123;</span><br><span class="line">    <span class="keyword">case</span> HOTPLUG_EVENT:</span><br><span class="line">        <span class="comment">//处理热插拔</span></span><br><span class="line">        handleHotplugEvent(e.bValue);</span><br><span class="line">        <span class="keyword">break</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">void</span> DisplayAnalyzer::handleHotplugEvent(<span class="keyword">bool</span> connected)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">if</span> (connected) &#123;</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; mCachedNumDisplays; i++) &#123;</span><br><span class="line">            <span class="comment">//将合成类型设置成HWC_FRAMEBUFFER</span></span><br><span class="line">            setCompositionType(i, HWC_FRAMEBUFFER, <span class="literal">true</span>);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;这就是处理热插拔消息，然后将cache的显示屏合成类型设置成HWC_FRAMEBUFFER，表示用Open GL合成。</p>
+<p>&#160; &#160; &#160; &#160;2）disable掉所有回收的显示平面。位于hardware/intel/img/hwcomposer/common/planes/DisplayPlaneManager.cpp：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">void</span> DisplayPlaneManager::disableReclaimedPlanes()</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">int</span> i, j;</span><br><span class="line">    <span class="keyword">bool</span> ret;</span><br><span class="line"></span><br><span class="line">    RETURN_VOID_IF_NOT_INIT();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; DisplayPlane::PLANE_MAX; i++) &#123;</span><br><span class="line">        <span class="comment">// disable reclaimed planes</span></span><br><span class="line">        <span class="keyword">if</span> (mReclaimedPlanes[i]) &#123;</span><br><span class="line">            <span class="keyword">for</span> (j = <span class="number">0</span>; j &lt; mPlaneCount[i]; j++) &#123;</span><br><span class="line">                <span class="keyword">int</span> bit = (<span class="number">1</span> &lt;&lt; j);</span><br><span class="line">                <span class="keyword">if</span> (mReclaimedPlanes[i] &amp; bit) &#123;</span><br><span class="line">                    DisplayPlane* plane = mPlanes[i].itemAt(j);</span><br><span class="line">                    <span class="comment">// check plane state first</span></span><br><span class="line">                    ret = plane-&gt;isDisabled();</span><br><span class="line">                    <span class="comment">// reset plane</span></span><br><span class="line">                    <span class="keyword">if</span> (ret)</span><br><span class="line">                        ret = plane-&gt;reset();</span><br><span class="line">                    <span class="keyword">if</span> (ret) &#123;</span><br><span class="line">                        <span class="comment">// only merge into free bitmap if it is successfully disabled and reset</span></span><br><span class="line">                        <span class="comment">// otherwise, plane will be disabled and reset again.</span></span><br><span class="line">                        mFreePlanes[i] |=bit;</span><br><span class="line">                        mReclaimedPlanes[i] &amp;= ~bit;</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;disable所有已经回收planes，检查plane是否已经disable，然后将其reset，如果成功了，就合并进入空闲的bitmap，如果没有就要重新disabled and reset。</p>
+<p>&#160; &#160; &#160; &#160;3）检查显示屏几何区域是否有变化，遍历每一个显示屏，调用device-&gt;prePrepare(displays[i]);我们看一下物理屏幕，位于hardware/intel/img/hwcomposer/common/devices/PhysicalDevice.cpp：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">bool</span> PhysicalDevice::prePrepare(<span class="keyword">hwc_display_contents_1_t</span> *display)</span><br><span class="line">&#123;</span><br><span class="line">    RETURN_FALSE_IF_NOT_INIT();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// for a null list, delete hwc list</span></span><br><span class="line">    <span class="keyword">if</span> (!mConnected || !display || mBlank) &#123;</span><br><span class="line">        <span class="keyword">if</span> (mLayerList) &#123;</span><br><span class="line">            DEINIT_AND_DELETE_OBJ(mLayerList);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// check if geometry is changed, if changed delete list</span></span><br><span class="line">    <span class="keyword">if</span> ((display-&gt;flags &amp; HWC_GEOMETRY_CHANGED) &amp;&amp; mLayerList) &#123;</span><br><span class="line">        DEINIT_AND_DELETE_OBJ(mLayerList);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;如果是一个空的hwc list，就将其删除；然后检查几何区域是否变化，如果变了，也要删除hwc list。</p>
+<p>&#160; &#160; &#160; &#160;4）最重要的一行：更新HwcLayer，选择合成类型。依然是遍历每一个显示屏，然后调用prepare函数，依然位于hardware/intel/img/hwcomposer/common/devices/PhysicalDevice.cpp：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">bool</span> PhysicalDevice::prepare(<span class="keyword">hwc_display_contents_1_t</span> *display)</span><br><span class="line">&#123;</span><br><span class="line">    RETURN_FALSE_IF_NOT_INIT();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (!mConnected || !display || mBlank)</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// check if geometry is changed</span></span><br><span class="line">    <span class="keyword">if</span> (display-&gt;flags &amp; HWC_GEOMETRY_CHANGED) &#123;</span><br><span class="line">        <span class="comment">//上一步处理了几何区域变化，上出了hwc list，这一步重新创建</span></span><br><span class="line">        onGeometryChanged(display);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (!mLayerList) &#123;</span><br><span class="line">        WLOGTRACE(<span class="string">"null HWC layer list"</span>);</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// update list with new list</span></span><br><span class="line">    <span class="comment">//更新hwc list使用重新new的，选取合成类型</span></span><br><span class="line">    <span class="keyword">return</span> mLayerList-&gt;update(display);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">void</span> PhysicalDevice::onGeometryChanged(<span class="keyword">hwc_display_contents_1_t</span> *<span class="built_in">list</span>)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">if</span> (!<span class="built_in">list</span>) &#123;</span><br><span class="line">        ELOGTRACE(<span class="string">"list is NULL"</span>);</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    ALOGTRACE(<span class="string">"disp = %d, layer number = %d"</span>, mType, <span class="built_in">list</span>-&gt;numHwLayers);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// <span class="doctag">NOTE:</span> should NOT be here</span></span><br><span class="line">    <span class="keyword">if</span> (mLayerList) &#123;</span><br><span class="line">        WLOGTRACE(<span class="string">"mLayerList exists"</span>);</span><br><span class="line">        DEINIT_AND_DELETE_OBJ(mLayerList);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// create a new layer list</span></span><br><span class="line">    <span class="comment">//上一步处理了几何区域变化，上出了hwc list，这一步重新创建</span></span><br><span class="line">    mLayerList = <span class="keyword">new</span> HwcLayerList(<span class="built_in">list</span>, mType);</span><br><span class="line">    <span class="keyword">if</span> (!mLayerList) &#123;</span><br><span class="line">        WLOGTRACE(<span class="string">"failed to create layer list"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;上一步处理了几何区域变化，上出了hwc list，这一步重新创建，在onGeometryChanged函数中得以体现。</p>
+<h2 id="更新HwcLayerList"><a href="#更新HwcLayerList" class="headerlink" title="更新HwcLayerList"></a>更新HwcLayerList</h2><p>&#160; &#160; &#160; &#160;那么选取合成类型就位于mLayerList-&gt;update(display);，位于hardware/intel/img/hwcomposer/common/base/HwcLayerList.cpp：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">bool</span> HwcLayerList::update(<span class="keyword">hwc_display_contents_1_t</span> *<span class="built_in">list</span>)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">bool</span> ret;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// basic check to make sure the consistance</span></span><br><span class="line">    <span class="keyword">if</span> (!<span class="built_in">list</span>) &#123;</span><br><span class="line">        ELOGTRACE(<span class="string">"null layer list"</span>);</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> ((<span class="keyword">int</span>)<span class="built_in">list</span>-&gt;numHwLayers != mLayerCount) &#123;</span><br><span class="line">        ELOGTRACE(<span class="string">"layer count doesn't match (%d, %d)"</span>, <span class="built_in">list</span>-&gt;numHwLayers, mLayerCount);</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// update list</span></span><br><span class="line">    mList = <span class="built_in">list</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">bool</span> ok = <span class="literal">true</span>;</span><br><span class="line">    <span class="comment">// update all layers, call each layer's update()</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; mLayerCount; i++) &#123;</span><br><span class="line">        HwcLayer *hwcLayer = mLayers.itemAt(i);</span><br><span class="line">        <span class="keyword">if</span> (!hwcLayer) &#123;</span><br><span class="line">            ELOGTRACE(<span class="string">"no HWC layer for layer %d"</span>, i);</span><br><span class="line">            <span class="keyword">continue</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">//更新layer，如果更新返回false，则需要fallback回GLES去合成</span></span><br><span class="line">        <span class="keyword">if</span> (!hwcLayer-&gt;update(&amp;<span class="built_in">list</span>-&gt;hwLayers[i])) &#123;</span><br><span class="line">            ok = <span class="literal">false</span>;</span><br><span class="line">            hwcLayer-&gt;setCompositionType(HWC_FORCE_FRAMEBUFFER);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (!ok) &#123;</span><br><span class="line">        <span class="comment">//如果上一步update有返回false的，就要把它fallback回GLES合成</span></span><br><span class="line">        ILOGTRACE(<span class="string">"overlay fallback to GLES. flags: %#x"</span>, <span class="built_in">list</span>-&gt;flags);</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; mLayerCount - <span class="number">1</span>; i++) &#123;</span><br><span class="line">            HwcLayer *hwcLayer = mLayers.itemAt(i);</span><br><span class="line">            <span class="keyword">if</span> (hwcLayer-&gt;getPlane() &amp;&amp;</span><br><span class="line">                (hwcLayer-&gt;getCompositionType() == HWC_OVERLAY ||</span><br><span class="line">                hwcLayer-&gt;getCompositionType() == HWC_CURSOR_OVERLAY)) &#123;</span><br><span class="line">                hwcLayer-&gt;setCompositionType(HWC_FRAMEBUFFER);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">//最后一个layer是HWC_FRAMEBUFFER_TARGET合成目标，上面讲过</span></span><br><span class="line">        mLayers.itemAt(mLayerCount - <span class="number">1</span>)-&gt;setCompositionType(HWC_FRAMEBUFFER_TARGET);</span><br><span class="line">        <span class="comment">//反初始化</span></span><br><span class="line">        deinitialize();</span><br><span class="line">        mList = <span class="built_in">list</span>;</span><br><span class="line">        <span class="comment">//初始化LayerList每一项</span></span><br><span class="line">        initialize();</span><br><span class="line"></span><br><span class="line">        <span class="comment">// update all layers again after plane re-allocation</span></span><br><span class="line">        <span class="comment">//再次更新所有的layer，在plane重新申请之后</span></span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; mLayerCount; i++) &#123;</span><br><span class="line">            HwcLayer *hwcLayer = mLayers.itemAt(i);</span><br><span class="line">            <span class="keyword">if</span> (!hwcLayer) &#123;</span><br><span class="line">                ELOGTRACE(<span class="string">"no HWC layer for layer %d"</span>, i);</span><br><span class="line">                <span class="keyword">continue</span>;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="keyword">if</span> (!hwcLayer-&gt;update(&amp;<span class="built_in">list</span>-&gt;hwLayers[i])) &#123;</span><br><span class="line">                DLOGTRACE(<span class="string">"fallback to GLES update failed on layer[%d]!\n"</span>, i);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//建立只能合成选项，即选择OverLay还是FB</span></span><br><span class="line">    setupSmartComposition();</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h2 id="更新HwcLayer"><a href="#更新HwcLayer" class="headerlink" title="更新HwcLayer"></a>更新HwcLayer</h2><p>&#160; &#160; &#160; &#160;这里依然要分步查看：<br>&#160; &#160; &#160; &#160;Part.1：我们可以看到，选取合成类型为Overlay还是FB就在hwcLayer-&gt;update函数，如果返回false，就要fallback回GLES，剩余的都是OverLay。我们看看这个实现，位于hardware/intel/img/hwcomposer/common/base/HwcLayer.cpp：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">bool</span> HwcLayer::update(<span class="keyword">hwc_layer_1_t</span> *layer)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// update layer</span></span><br><span class="line">    mLayer = layer;</span><br><span class="line">    <span class="comment">//创建基本属性，从DataBuffer获取，也可是说是GraphicBuffer</span></span><br><span class="line">    setupAttributes();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// if not a FB layer &amp; a plane was attached update plane's data buffer</span></span><br><span class="line">    <span class="comment">//如果不是一个FB layer并且plane已经被连接到更新data buffer</span></span><br><span class="line">    <span class="keyword">if</span> (mPlane) &#123;</span><br><span class="line">        <span class="comment">//设置position位置信息</span></span><br><span class="line">        mPlane-&gt;setPosition(layer-&gt;displayFrame.left,</span><br><span class="line">                            layer-&gt;displayFrame.top,</span><br><span class="line">                            layer-&gt;displayFrame.right - layer-&gt;displayFrame.left,</span><br><span class="line">                            layer-&gt;displayFrame.bottom - layer-&gt;displayFrame.top);</span><br><span class="line">        <span class="comment">//设置sourceCrop区域                    </span></span><br><span class="line">        mPlane-&gt;setSourceCrop(layer-&gt;sourceCropf.left,</span><br><span class="line">                              layer-&gt;sourceCropf.top,</span><br><span class="line">                              layer-&gt;sourceCropf.right - layer-&gt;sourceCropf.left,</span><br><span class="line">                              layer-&gt;sourceCropf.bottom - layer-&gt;sourceCropf.top);</span><br><span class="line">        <span class="comment">//设置矩阵变换                      </span></span><br><span class="line">        mPlane-&gt;setTransform(layer-&gt;transform);</span><br><span class="line">        <span class="comment">//透明度</span></span><br><span class="line">        mPlane-&gt;setPlaneAlpha(layer-&gt;planeAlpha, layer-&gt;blending);</span><br><span class="line">        <span class="comment">//将layer的句柄设置给plane</span></span><br><span class="line">        <span class="keyword">bool</span> ret = mPlane-&gt;setDataBuffer((<span class="keyword">uint32_t</span>)layer-&gt;handle);</span><br><span class="line">        <span class="keyword">if</span> (ret == <span class="literal">true</span>) &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        DLOGTRACE(<span class="string">"failed to set data buffer, reset handle to 0!!"</span>);</span><br><span class="line">        mHandle = <span class="number">0</span>;</span><br><span class="line">        <span class="keyword">if</span> (!mIsProtected) &#123;<span class="comment">//如果不是被保护的buffer</span></span><br><span class="line">            <span class="comment">//典型的例子：旋转的buffer没有准备好或者句柄为null，就不能用OverLay</span></span><br><span class="line">            <span class="comment">// typical case: rotated buffer is not ready or handle is null</span></span><br><span class="line">            <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="comment">//被保护的视频需要使用overlay去渲染，return true</span></span><br><span class="line">            <span class="comment">// protected video has to be rendered using overlay.</span></span><br><span class="line">            <span class="comment">// if buffer is not ready overlay will still be attached to this layer</span></span><br><span class="line">            <span class="comment">// but rendering needs to be skipped.</span></span><br><span class="line">            WLOGTRACE(<span class="string">"ignoring result of data buffer setting for protected video"</span>);</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;先创建基本属性，从DataBuffer获取，也可是说是GraphicBuffer，我们看看setupAttributes函数：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">void</span> HwcLayer::setupAttributes()</span><br><span class="line">&#123;   <span class="comment">//如果如下属性发生改变，将mUpdated 置为true</span></span><br><span class="line">    <span class="keyword">if</span> ((mLayer-&gt;flags &amp; HWC_SKIP_LAYER) ||</span><br><span class="line">        mTransform != mLayer-&gt;transform ||</span><br><span class="line">        mSourceCropf != mLayer-&gt;sourceCropf ||</span><br><span class="line">        mDisplayFrame != mLayer-&gt;displayFrame ||</span><br><span class="line">        mHandle != (<span class="keyword">uint32_t</span>)mLayer-&gt;handle ||</span><br><span class="line">        DisplayQuery::isVideoFormat(mFormat)) &#123;</span><br><span class="line">        <span class="comment">// <span class="doctag">TODO:</span> same handle does not mean there is always no update</span></span><br><span class="line">        mUpdated = <span class="literal">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// update handle always as it can become "NULL"</span></span><br><span class="line">    <span class="comment">// if the given layer is not ready</span></span><br><span class="line">    <span class="comment">//如果指定的layer没有准备好，那么handle句柄就会变成null，所以要更新句柄的值</span></span><br><span class="line">    mTransform = mLayer-&gt;transform;</span><br><span class="line">    mSourceCropf = mLayer-&gt;sourceCropf;</span><br><span class="line">    mDisplayFrame = mLayer-&gt;displayFrame;</span><br><span class="line">    mHandle = (<span class="keyword">uint32_t</span>)mLayer-&gt;handle;</span><br><span class="line">    <span class="comment">//其实属性已经被设置，return</span></span><br><span class="line">    <span class="keyword">if</span> (mFormat != DataBuffer::FORMAT_INVALID) &#123;</span><br><span class="line">        <span class="comment">// other attributes have been set.</span></span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//句柄为null，return</span></span><br><span class="line">    <span class="keyword">if</span> (mLayer-&gt;handle == <span class="literal">NULL</span>) &#123;</span><br><span class="line">        VLOGTRACE(<span class="string">"invalid handle"</span>);</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//获取BufferManager</span></span><br><span class="line">    BufferManager *bm = Hwcomposer::getInstance().getBufferManager();</span><br><span class="line">    <span class="keyword">if</span> (bm == <span class="literal">NULL</span>) &#123;</span><br><span class="line">        <span class="comment">// <span class="doctag">TODO:</span> this check is redundant</span></span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//锁定图形缓冲区</span></span><br><span class="line">    DataBuffer *buffer = bm-&gt;lockDataBuffer((<span class="keyword">uint32_t</span>)mLayer-&gt;handle);</span><br><span class="line">     <span class="keyword">if</span> (!buffer) &#123;</span><br><span class="line">         ELOGTRACE(<span class="string">"failed to get buffer"</span>);</span><br><span class="line">     &#125; <span class="keyword">else</span> &#123;<span class="comment">//获取图形缓冲区属性，并设置给全局变量</span></span><br><span class="line">        mFormat = buffer-&gt;getFormat();</span><br><span class="line">        mWidth = buffer-&gt;getWidth();</span><br><span class="line">        mHeight = buffer-&gt;getHeight();</span><br><span class="line">        mStride = buffer-&gt;getStride();</span><br><span class="line">        mPriority = (mSourceCropf.right - mSourceCropf.left) * (mSourceCropf.bottom - mSourceCropf.top);</span><br><span class="line">        mPriority &lt;&lt;= LAYER_PRIORITY_SIZE_OFFSET;</span><br><span class="line">        mPriority |= mIndex;</span><br><span class="line">        GraphicBuffer *gBuffer = (GraphicBuffer*)buffer;</span><br><span class="line">        mUsage = gBuffer-&gt;getUsage();</span><br><span class="line">        mIsProtected = GraphicBuffer::isProtectedBuffer((GraphicBuffer*)buffer);</span><br><span class="line">        <span class="keyword">if</span> (mIsProtected) &#123;</span><br><span class="line">            mPriority |= LAYER_PRIORITY_PROTECTED;</span><br><span class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span> (PlaneCapabilities::isFormatSupported(DisplayPlane::PLANE_OVERLAY, <span class="keyword">this</span>)) &#123;</span><br><span class="line">            mPriority |= LAYER_PRIORITY_OVERLAY;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">//获取完之后释放</span></span><br><span class="line">        bm-&gt;unlockDataBuffer(buffer);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;这段代码要是参考之前Gralloc模块应该有点印象，就是锁定图形缓冲区，获取图形缓冲区属性，并设置给全局变量，获取完之后释放。<br>&#160; &#160; &#160; &#160;回到HwcLayer::update，之后判断如果不是一个FB layer并且plane已经被连接到更新data buffer，就要设置position位置信息、设置sourceCrop区域、设置矩阵变换 、透明度。</p>
+<h2 id="映射过程"><a href="#映射过程" class="headerlink" title="映射过程"></a>映射过程</h2><p>&#160; &#160; &#160; &#160;然后将layer的句柄设置给plane，我们看看这个实现，位于hardware/intel/img/hwcomposer/common/planes/DisplayPlane.cpp：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">bool</span> DisplayPlane::setDataBuffer(<span class="keyword">uint32_t</span> handle)</span><br><span class="line">&#123;</span><br><span class="line">    DataBuffer *buffer;</span><br><span class="line">    BufferMapper *mapper;</span><br><span class="line">    <span class="keyword">ssize_t</span> index;</span><br><span class="line">    <span class="keyword">bool</span> ret;</span><br><span class="line">    <span class="keyword">bool</span> isCompression;</span><br><span class="line">    <span class="comment">//获取buffermanager</span></span><br><span class="line">    BufferManager *bm = Hwcomposer::getInstance().getBufferManager();</span><br><span class="line"></span><br><span class="line">    RETURN_FALSE_IF_NOT_INIT();</span><br><span class="line">    ALOGTRACE(<span class="string">"handle = %#x"</span>, handle);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (!handle) &#123;</span><br><span class="line">        WLOGTRACE(<span class="string">"invalid buffer handle"</span>);</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// do not need to update the buffer handle</span></span><br><span class="line">    <span class="comment">//如果不是当前保存句柄，加上CHANGE标签</span></span><br><span class="line">    <span class="keyword">if</span> (mCurrentDataBuffer != handle)</span><br><span class="line">        mUpdateMasks |= PLANE_BUFFER_CHANGED;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// if no update then do Not need set data buffer</span></span><br><span class="line">    <span class="keyword">if</span> (!mUpdateMasks)</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">    <span class="comment">//锁定缓冲区</span></span><br><span class="line">    buffer = bm-&gt;lockDataBuffer(handle);</span><br><span class="line">    <span class="keyword">if</span> (!buffer) &#123;</span><br><span class="line">        ELOGTRACE(<span class="string">"failed to get buffer"</span>);</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    mIsProtectedBuffer = GraphicBuffer::isProtectedBuffer((GraphicBuffer*)buffer);</span><br><span class="line">    isCompression = GraphicBuffer::isCompressionBuffer((GraphicBuffer*)buffer);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// map buffer if it's not in cache</span></span><br><span class="line">    <span class="comment">//如果映射区域不在缓存cache中，就要重新映射</span></span><br><span class="line">    index = mDataBuffers.indexOfKey(buffer-&gt;getKey());</span><br><span class="line">    <span class="keyword">if</span> (index &lt; <span class="number">0</span>) &#123;</span><br><span class="line">        VLOGTRACE(<span class="string">"unmapped buffer, mapping..."</span>);</span><br><span class="line">        <span class="comment">//映射buffer，并加入缓存</span></span><br><span class="line">        mapper = mapBuffer(buffer);</span><br><span class="line">        <span class="keyword">if</span> (!mapper) &#123;</span><br><span class="line">            ELOGTRACE(<span class="string">"failed to map buffer %#x"</span>, handle);</span><br><span class="line">            bm-&gt;unlockDataBuffer(buffer);</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        VLOGTRACE(<span class="string">"got mapper in saved data buffers and update source Crop"</span>);</span><br><span class="line">        mapper = mDataBuffers.valueAt(index);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// always update source crop to mapper</span></span><br><span class="line">    <span class="comment">//更新crop区域</span></span><br><span class="line">    mapper-&gt;setCrop(mSrcCrop.x, mSrcCrop.y, mSrcCrop.w, mSrcCrop.h);</span><br><span class="line"></span><br><span class="line">    mapper-&gt;setIsCompression(isCompression);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// unlock buffer after getting mapper</span></span><br><span class="line">    <span class="comment">//映射区域之后释放缓冲区</span></span><br><span class="line">    bm-&gt;unlockDataBuffer(buffer);</span><br><span class="line">    buffer = <span class="literal">NULL</span>;</span><br><span class="line">    <span class="comment">//将映射区域设置给plane</span></span><br><span class="line">    ret = setDataBuffer(*mapper);</span><br><span class="line">    <span class="keyword">if</span> (ret) &#123;<span class="comment">//如果成功了，就将handle赋给mCurrentDataBuffer ，并且更新活跃的buffer</span></span><br><span class="line">        mCurrentDataBuffer = handle;</span><br><span class="line">        <span class="comment">// update active buffers</span></span><br><span class="line">        updateActiveBuffers(mapper);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> ret;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;核心就是获取显示屏的BufferManager，然后锁定图形缓冲区，然后映射buffer，并加入缓存，映射区域之后释放缓冲区，将映射区域设置给plane。<br>&#160; &#160; &#160; &#160;映射实现如下：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line">BufferMapper* DisplayPlane::mapBuffer(DataBuffer *buffer)</span><br><span class="line">&#123;</span><br><span class="line">    BufferManager *bm = Hwcomposer::getInstance().getBufferManager();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// invalidate buffer cache  if cache is full</span></span><br><span class="line">    <span class="comment">//cache满了就要清除</span></span><br><span class="line">    <span class="keyword">if</span> ((<span class="keyword">int</span>)mDataBuffers.size() &gt;= mCacheCapacity) &#123;</span><br><span class="line">        invalidateBufferCache();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//映射plane内存区域</span></span><br><span class="line">    BufferMapper *mapper = bm-&gt;<span class="built_in">map</span>(*buffer);</span><br><span class="line">    <span class="keyword">if</span> (!mapper) &#123;</span><br><span class="line">        ELOGTRACE(<span class="string">"failed to map buffer"</span>);</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// add it to data buffers</span></span><br><span class="line">    <span class="comment">//映射成功后就将这个句柄加入缓存</span></span><br><span class="line">    <span class="keyword">ssize_t</span> index = mDataBuffers.add(buffer-&gt;getKey(), mapper);</span><br><span class="line">    <span class="keyword">if</span> (index &lt; <span class="number">0</span>) &#123;</span><br><span class="line">        ELOGTRACE(<span class="string">"failed to add mapper"</span>);</span><br><span class="line">        bm-&gt;unmap(mapper);</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> mapper;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">void</span> DisplayPlane::invalidateBufferCache()</span><br><span class="line">&#123;</span><br><span class="line">    BufferManager *bm = Hwcomposer::getInstance().getBufferManager();</span><br><span class="line">    BufferMapper* mapper;</span><br><span class="line"></span><br><span class="line">    RETURN_VOID_IF_NOT_INIT();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">size_t</span> i = <span class="number">0</span>; i &lt; mDataBuffers.size(); i++) &#123;</span><br><span class="line">        mapper = mDataBuffers.valueAt(i);</span><br><span class="line">        bm-&gt;unmap(mapper);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    mDataBuffers.clear();</span><br><span class="line">    <span class="comment">// reset current buffer</span></span><br><span class="line">    mCurrentDataBuffer = <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;之后将映射区域设置给plane，如果成功了，就将handle赋给mCurrentDataBuffer ，并且更新活跃的buffer：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">void</span> DisplayPlane::updateActiveBuffers(BufferMapper *mapper)</span><br><span class="line">&#123;</span><br><span class="line">    BufferManager *bm = Hwcomposer::getInstance().getBufferManager();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// unmap the first entry (oldest buffer)</span></span><br><span class="line">    <span class="keyword">if</span> (mActiveBuffers.size() &gt;= MIN_DATA_BUFFER_COUNT) &#123;</span><br><span class="line">        BufferMapper *oldest = mActiveBuffers.itemAt(<span class="number">0</span>);</span><br><span class="line">        bm-&gt;unmap(oldest);</span><br><span class="line">        mActiveBuffers.removeAt(<span class="number">0</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// queue it to active buffers</span></span><br><span class="line">    <span class="keyword">if</span> (!isActiveBuffer(mapper)) &#123;</span><br><span class="line">        mapper-&gt;incRef();</span><br><span class="line">        mActiveBuffers.push_back(mapper);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;也就是移除最老的映射buffer，然后新增加一个最新的。</p>
+<p>&#160; &#160; &#160; &#160;如果设置给plane不成功，即没有可用的内存区域或者不匹配，则不能使用OverLay合成，返回false，就要是OpenGL了。</p>
+<h2 id="初始化和反初始化"><a href="#初始化和反初始化" class="headerlink" title="初始化和反初始化"></a>初始化和反初始化</h2><p>&#160; &#160; &#160; &#160;回到上面HwcLayerList::update，继续往下走。</p>
+<p>&#160; &#160; &#160; &#160;然后就是先反初始化deinitialize：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">void</span> HwcLayerList::deinitialize()</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">if</span> (mLayerCount == <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    DisplayPlaneManager *planeManager = Hwcomposer::getInstance().getPlaneManager();</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; mLayerCount; i++) &#123;</span><br><span class="line">        HwcLayer *hwcLayer = mLayers.itemAt(i);</span><br><span class="line">        <span class="keyword">if</span> (hwcLayer) &#123;</span><br><span class="line">            DisplayPlane *plane = hwcLayer-&gt;detachPlane();</span><br><span class="line">            <span class="keyword">if</span> (plane) &#123;</span><br><span class="line">                planeManager-&gt;reclaimPlane(mDisplayIndex, *plane);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">delete</span> hwcLayer;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    mLayers.clear();</span><br><span class="line">    mFBLayers.clear();</span><br><span class="line">    mOverlayCandidates.clear();</span><br><span class="line">    mSpriteCandidates.clear();</span><br><span class="line">    mCursorCandidates.clear();</span><br><span class="line">    mZOrderConfig.clear();</span><br><span class="line">    mFrameBufferTarget = <span class="literal">NULL</span>;</span><br><span class="line">    mLayerCount = <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;反初始化就是清除一些变量。然后是初始化initialize：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">bool</span> HwcLayerList::initialize()</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">if</span> (!mList || mList-&gt;numHwLayers == <span class="number">0</span>) &#123;</span><br><span class="line">        ELOGTRACE(<span class="string">"invalid hwc list"</span>);</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//设置一些变量</span></span><br><span class="line">    mLayerCount = (<span class="keyword">int</span>)mList-&gt;numHwLayers;</span><br><span class="line">    mLayers.setCapacity(mLayerCount);</span><br><span class="line">    mFBLayers.setCapacity(mLayerCount);</span><br><span class="line">    mSpriteCandidates.setCapacity(mLayerCount);</span><br><span class="line">    mOverlayCandidates.setCapacity(mLayerCount);</span><br><span class="line">    mCursorCandidates.setCapacity(mLayerCount);</span><br><span class="line">    mZOrderConfig.setCapacity(mLayerCount);</span><br><span class="line">    Hwcomposer&amp; hwc = Hwcomposer::getInstance();</span><br><span class="line"></span><br><span class="line">    PriorityVector rgbOverlayLayers;</span><br><span class="line">    rgbOverlayLayers.setCapacity(mLayerCount);</span><br><span class="line">    <span class="comment">//根据不同合成类型设置hwcLayer的type</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; mLayerCount; i++) &#123;</span><br><span class="line">        <span class="keyword">hwc_layer_1_t</span> *layer = &amp;mList-&gt;hwLayers[i];</span><br><span class="line">        <span class="keyword">if</span> (!layer) &#123;</span><br><span class="line">            DEINIT_AND_RETURN_FALSE(<span class="string">"layer %d is null"</span>, i);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        HwcLayer *hwcLayer = <span class="keyword">new</span> HwcLayer(i, layer);</span><br><span class="line">        <span class="keyword">if</span> (!hwcLayer) &#123;</span><br><span class="line">            DEINIT_AND_RETURN_FALSE(<span class="string">"failed to allocate hwc layer %d"</span>, i);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (layer-&gt;compositionType == HWC_FRAMEBUFFER_TARGET) &#123;<span class="comment">//HWC_FRAMEBUFFER_TARGET</span></span><br><span class="line">            hwcLayer-&gt;setType(HwcLayer::LAYER_FRAMEBUFFER_TARGET);</span><br><span class="line">            mFrameBufferTarget = hwcLayer;</span><br><span class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span> (layer-&gt;compositionType == HWC_OVERLAY)&#123;</span><br><span class="line">            <span class="comment">// skipped layer, filtered by Display Analyzer</span></span><br><span class="line">            hwcLayer-&gt;setType(HwcLayer::LAYER_SKIPPED);</span><br><span class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span> (layer-&gt;compositionType == HWC_FORCE_FRAMEBUFFER) &#123;<span class="comment">//HWC_FORCE_FRAMEBUFFER</span></span><br><span class="line">            layer-&gt;compositionType = HWC_FRAMEBUFFER;</span><br><span class="line">            hwcLayer-&gt;setType(HwcLayer::LAYER_FORCE_FB);</span><br><span class="line">            <span class="comment">// add layer to FB layer list for zorder check during plane assignment</span></span><br><span class="line">            mFBLayers.add(hwcLayer);</span><br><span class="line">        &#125; <span class="keyword">else</span>  <span class="keyword">if</span> (layer-&gt;compositionType == HWC_FRAMEBUFFER) &#123;<span class="comment">//HWC_FRAMEBUFFER</span></span><br><span class="line">            <span class="comment">// by default use GPU composition</span></span><br><span class="line">            <span class="comment">//默认由GPU合成</span></span><br><span class="line">            hwcLayer-&gt;setType(HwcLayer::LAYER_FB);</span><br><span class="line">            mFBLayers.add(hwcLayer);</span><br><span class="line">            <span class="comment">//检查是否支持cursor overlay</span></span><br><span class="line">            <span class="keyword">if</span> (checkCursorSupported(hwcLayer)) &#123;</span><br><span class="line">                mCursorCandidates.add(hwcLayer);</span><br><span class="line">            &#125; <span class="keyword">else</span> <span class="keyword">if</span> (checkRgbOverlaySupported(hwcLayer)) &#123;<span class="comment">//检查是否支持rgb overlay</span></span><br><span class="line">                rgbOverlayLayers.add(hwcLayer);</span><br><span class="line">            &#125; <span class="keyword">else</span> <span class="keyword">if</span> (checkSupported(DisplayPlane::PLANE_SPRITE, hwcLayer)) &#123;<span class="comment">//检查是否支持PLANE_SPRITE</span></span><br><span class="line">                mSpriteCandidates.add(hwcLayer);</span><br><span class="line">            &#125; <span class="keyword">else</span> <span class="keyword">if</span> (checkSupported(DisplayPlane::PLANE_OVERLAY, hwcLayer)) &#123;<span class="comment">//是否支持PLANE_OVERLAY</span></span><br><span class="line">                mOverlayCandidates.add(hwcLayer);</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                <span class="comment">// noncandidate layer</span></span><br><span class="line">            &#125;</span><br><span class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span> (layer-&gt;compositionType == HWC_SIDEBAND)&#123;<span class="comment">//HWC_SIDEBAND</span></span><br><span class="line">            hwcLayer-&gt;setType(HwcLayer::LAYER_SIDEBAND);</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            DEINIT_AND_RETURN_FALSE(<span class="string">"invalid composition type %d"</span>, layer-&gt;compositionType);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// add layer to layer list</span></span><br><span class="line">        mLayers.add(hwcLayer);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (mFrameBufferTarget == <span class="literal">NULL</span>) &#123;</span><br><span class="line">        ELOGTRACE(<span class="string">"no frame buffer target?"</span>);</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// If has layer besides of FB_Target, but no FBLayers, skip plane allocation</span></span><br><span class="line">    <span class="comment">// Note: There is case that SF passes down a layerlist with only FB_Target</span></span><br><span class="line">    <span class="comment">// layer; we need to have this FB_Target to be flipped as well, otherwise it</span></span><br><span class="line">    <span class="comment">// will have the buffer queue blocked. (The buffer hold by driver cannot be</span></span><br><span class="line">    <span class="comment">// released if new buffers' flip is skipped).</span></span><br><span class="line">    <span class="keyword">if</span> ((mFBLayers.size() == <span class="number">0</span>) &amp;&amp; (mLayers.size() &gt; <span class="number">1</span>)) &#123;</span><br><span class="line">        VLOGTRACE(<span class="string">"no FB layers, skip plane allocation"</span>);</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">bool</span> hasOverlay = mOverlayCandidates.size() != <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">while</span> (rgbOverlayLayers.size()) &#123;</span><br><span class="line">        HwcLayer *hwcLayer = rgbOverlayLayers.top();</span><br><span class="line">        <span class="keyword">if</span> (hasOverlay) &#123;</span><br><span class="line">            mSpriteCandidates.add(hwcLayer);</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            mOverlayCandidates.add(hwcLayer);</span><br><span class="line">        &#125;</span><br><span class="line">        rgbOverlayLayers.removeItemsAt(<span class="number">0</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (!DisplayQuery::forceFbScaling(mDisplayIndex)) &#123;</span><br><span class="line">        allocatePlanes();</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="comment">// force GLES composition on all layers, then use GPU or hardware</span></span><br><span class="line">        <span class="comment">// overlay to scale buffer to match display resolution</span></span><br><span class="line">        assignPrimaryPlane();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//dump();</span></span><br><span class="line">    <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;这一段核心就是根据不同合成类型设置hwcLayer的type，合成类型有HWC_FRAMEBUFFER_TARGET、HWC_FORCE_FRAMEBUFFER、HWC_FRAMEBUFFER、HWC_SIDEBAND，又在HWC_FRAMEBUFFER检测：检查是否支持cursor overlay、检查是否支持rgb overlay、检查是否支持PLANE_SPRITE、是否支持PLANE_OVERLAY，如果支持就要加入OverLay合成。</p>
+<h2 id="开始智能合成"><a href="#开始智能合成" class="headerlink" title="开始智能合成"></a>开始智能合成</h2><p>&#160; &#160; &#160; &#160;继续回到上面，进行最后一步setupSmartComposition，建立只能合成选项，即选择OverLay还是FB：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">void</span> HwcLayerList::setupSmartComposition()</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">//默认都是HWC_OVERLAY</span></span><br><span class="line">    <span class="keyword">uint32_t</span> compositionType = HWC_OVERLAY;</span><br><span class="line">    HwcLayer *hwcLayer = <span class="literal">NULL</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// setup smart composition only there's no update on all FB layers</span></span><br><span class="line">    <span class="comment">//如果所有的FB layer没有更新了就开始建立智能合成</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">size_t</span> i = <span class="number">0</span>; i &lt; mFBLayers.size(); i++) &#123;</span><br><span class="line">        hwcLayer = mFBLayers.itemAt(i);</span><br><span class="line">        <span class="keyword">if</span> (hwcLayer-&gt;isUpdated()) &#123;</span><br><span class="line">            compositionType = HWC_FRAMEBUFFER;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    VLOGTRACE(<span class="string">"smart composition enabled %s"</span>,</span><br><span class="line">           (compositionType == HWC_OVERLAY) ? <span class="string">"TRUE"</span> : <span class="string">"FALSE"</span>);</span><br><span class="line">    <span class="comment">//开始只能合成，当compositionType == HWC_OVERLAY就是硬件合成，否则其他都是FB模式       </span></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">size_t</span> i = <span class="number">0</span>; i &lt; mFBLayers.size(); i++) &#123;</span><br><span class="line">        hwcLayer = mFBLayers.itemAt(i);</span><br><span class="line">        <span class="keyword">switch</span> (hwcLayer-&gt;getType()) &#123;</span><br><span class="line">        <span class="keyword">case</span> HwcLayer::LAYER_FB:</span><br><span class="line">        <span class="keyword">case</span> HwcLayer::LAYER_FORCE_FB:</span><br><span class="line">            hwcLayer-&gt;setCompositionType(compositionType);</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        <span class="keyword">default</span>:</span><br><span class="line">            ELOGTRACE(<span class="string">"Invalid layer type %d"</span>, hwcLayer-&gt;getType());</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>&#160; &#160; &#160; &#160;上面就是开始智能合成，当compositionType == HWC_OVERLAY就是硬件合成，否则其他都是FB模式。</p>
+<h1 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h1><p>&#160; &#160; &#160; &#160;上述就是hwc硬件选取合成类型的模块，流程分析比较粗略，估计有好多不正确的地方，欢迎大家指正，我好在第一时间修改。</p>
+<p><img src="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E5%8D%81%E4%B8%80%29%28PostView%29--%E9%99%84%EF%BC%9A%E7%A1%AC%E4%BB%B6HWC%E9%80%89%E5%8F%96%E5%90%88%E6%88%90%E7%B1%BB%E5%9E%8B%EF%BC%88Intel%EF%BC%89/7c4f157bly1fkqyqfbz8jj20go0p07mv.jpg" alt="meizi"></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>坚持技术分享，您的支持将鼓励我继续创作！</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="/images/wechat.jpg" alt="windrunnerlihuan WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+        <div id="alipay" style="display: inline-block">
+          <img id="alipay_qr" src="/images/alipay.jpg" alt="windrunnerlihuan Alipay"/>
+          <p>支付宝打赏</p>
+        </div>
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/SurfaceFlinger/" rel="tag"># SurfaceFlinger</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/12/01/Android-SurfaceFlinger-学习之路-十一-合成Layer之准备合成/" rel="next" title="Android SurfaceFlinger 学习之路(十一)----合成Layer之准备合成">
+                <i class="fa fa-chevron-left"></i> Android SurfaceFlinger 学习之路(十一)----合成Layer之准备合成
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+        <!-- JiaThis Button BEGIN -->
+<div class="jiathis_style">
+  <a class="jiathis_button_tsina"></a>
+  <a class="jiathis_button_tqq"></a>
+  <a class="jiathis_button_weixin"></a>
+  <a class="jiathis_button_cqq"></a>
+  <a class="jiathis_button_douban"></a>
+  <a class="jiathis_button_renren"></a>
+  <a class="jiathis_button_qzone"></a>
+  <a class="jiathis_button_kaixin001"></a>
+  <a class="jiathis_button_copy"></a>
+  <a href="http://www.jiathis.com/share" class="jiathis jiathis_txt jiathis_separator jtico jtico_jiathis" target="_blank"></a>
+  <a class="jiathis_counter_style"></a>
+</div>
+<script type="text/javascript" >
+  var jiathis_config={
+    hideMore:false
+  }
+</script>
+<script type="text/javascript" src="http://v3.jiathis.com/code/jia.js" charset="utf-8"></script>
+<!-- JiaThis Button END -->
+
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div id="uyan_frame"></div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.png"
+               alt="windrunnerlihuan" />
+          <p class="site-author-name" itemprop="name">windrunnerlihuan</p>
+           
+              <p class="site-description motion-element" itemprop="description"></p>
+           
+        </div>
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives">
+                <span class="site-state-item-count">36</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-categories">
+              <a href="/categories/index.html">
+                <span class="site-state-item-count">5</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-tags">
+              <a href="/tags/index.html">
+                <span class="site-state-item-count">18</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="mailto:937874128@qq.com" target="_blank" title="Email">
+                  
+                    <i class="fa fa-fw fa-envelope-o"></i>
+                  
+                  Email
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/windrunnerlihuan" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+          <div class="links-of-blogroll motion-element links-of-blogroll-inline">
+            <div class="links-of-blogroll-title">
+              <i class="fa  fa-fw fa-globe"></i>
+              Links
+            </div>
+            <ul class="links-of-blogroll-list">
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://gank.io/" title="干货集中营" target="_blank">干货集中营</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.jcodecraeer.com/" title="泡在网上的日子" target="_blank">泡在网上的日子</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://trinea.cn/" title="Trinea" target="_blank">Trinea</a>
+                </li>
+              
+            </ul>
+          </div>
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#HWC选取合成类型"><span class="nav-number">1.</span> <span class="nav-text">HWC选取合成类型</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#流程细节"><span class="nav-number">1.1.</span> <span class="nav-text">流程细节</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#更新HwcLayerList"><span class="nav-number">1.2.</span> <span class="nav-text">更新HwcLayerList</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#更新HwcLayer"><span class="nav-number">1.3.</span> <span class="nav-text">更新HwcLayer</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#映射过程"><span class="nav-number">1.4.</span> <span class="nav-text">映射过程</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#初始化和反初始化"><span class="nav-number">1.5.</span> <span class="nav-text">初始化和反初始化</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#开始智能合成"><span class="nav-number">1.6.</span> <span class="nav-text">开始智能合成</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#小结"><span class="nav-number">2.</span> <span class="nav-text">小结</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy;  2016 - 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">windrunnerlihuan</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+
+        
+<div class="busuanzi-count">
+  <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="site-uv">
+      <i class="fa fa-user"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_uv"></span>
+      
+    </span>
+  
+
+  
+    <span class="site-pv">
+      <i class="fa fa-eye"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_pv"></span>
+      
+    </span>
+  
+</div>
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+  
+  <script type="text/javascript" src="/lib/canvas-nest/canvas-nest.min.js"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.1"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+    
+
+    
+      <!-- UY BEGIN -->
+      <script type="text/javascript" src="http://v2.uyan.cc/code/uyan.js?uid=MTAyMC8zMTQwMC83OTYz"></script>
+      <!-- UY END -->
+    
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (search_path.endsWith("json")) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("bJlEg1N9ed75pssz1m514avl-gzGzoHsz", "Swtq2cOp8A7KYeJ9lpD5nKAy");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

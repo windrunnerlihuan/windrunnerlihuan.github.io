@@ -380,6 +380,156 @@
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://windrunnerlihuan.com/2016/07/02/DanmakuFlameMaster简单分析/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="windrunnerlihuan">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="April is your lie">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2016/07/02/DanmakuFlameMaster简单分析/" itemprop="url">弹幕框架DanmakuFlameMaster简单分析</a></h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-07-02T20:13:04+08:00">
+                2016-07-02
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Android技术点/" itemprop="url" rel="index">
+                    <span itemprop="name">Android技术点</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+             <span id="/2016/07/02/DanmakuFlameMaster简单分析/" class="leancloud_visitors" data-flag-title="弹幕框架DanmakuFlameMaster简单分析">
+               <span class="post-meta-divider">|</span>
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               
+                 <span class="post-meta-item-text">阅读次数 </span>
+               
+                 <span class="leancloud-visitors-count"></span>
+             </span>
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          <hr>
+<p>&#160; &#160; &#160; &#160;随着B站逐渐崛起，其开源弹幕项目<a href="https://github.com/Bilibili/DanmakuFlameMaster">DanmakuFlameMaster</a>应用场景也越来越多。我也是在一次偶然机会下发现了这个项目，被其惊艳的效果震撼。以前我就对弹幕技术很感兴趣，可能是因为B站动漫看多，几乎每一部番都是漫天的弹幕乱飞，如果哪部剧没有弹幕反而觉得不适应；久而久之就愈发倾向钻研其原理。<br>&#160; &#160; &#160; &#160;看到效果后，我猜想<strong>绘制原理</strong>应该是创建一个定时器作为全部弹幕的时间参考，然后每条弹幕出现的位置都以这个定时器去计算x、y值，然后定时任务定期postInvalidate，弹幕画布重新绘制onDraw；弹幕如此之多，应该有<strong>缓存机制</strong>，也许建立了一个弹幕池让出现过的弹幕缓存起来，新弹幕可以复用旧弹幕item。<br>&#160; &#160; &#160; &#160;先这么假设吧，然后验证我们的猜想，看看有哪些坑。<br>
+          <!--noindex-->
+          <div class="post-button text-center">
+            <a class="btn" href="/2016/07/02/DanmakuFlameMaster简单分析/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
     <link itemprop="mainEntityOfPage" href="http://windrunnerlihuan.com/2016/06/24/Android属性动画原理分析/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1173,7 +1323,7 @@
           
             <div class="site-state-item site-state-posts">
               <a href="/archives">
-                <span class="site-state-item-count">35</span>
+                <span class="site-state-item-count">36</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
