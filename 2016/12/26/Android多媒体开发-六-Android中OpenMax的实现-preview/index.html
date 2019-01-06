@@ -121,14 +121,14 @@
 <meta property="og:url" content="http://windrunnerlihuan.com/2016/12/26/Android多媒体开发-六-Android中OpenMax的实现-preview/index.html">
 <meta property="og:site_name" content="April is your lie">
 <meta property="og:description" content="&amp;#160; &amp;#160; &amp;#160; &amp;#160;上一篇对OpenMax有了简单介绍，本篇就讲讲Android上对OpenMax IL层的实现。（可以忽略，下一篇会分析流程）">
-<meta property="og:image" content="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E5%A4%9A%E5%AA%92%E4%BD%93%E5%BC%80%E5%8F%91%28%E5%85%AD%29----Android%E4%B8%ADOpenMax%E7%9A%84%E5%AE%9E%E7%8E%B0%28preview%29/state.png">
-<meta property="og:image" content="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E5%A4%9A%E5%AA%92%E4%BD%93%E5%BC%80%E5%8F%91%28%E5%85%AD%29----Android%E4%B8%ADOpenMax%E7%9A%84%E5%AE%9E%E7%8E%B0%28preview%29/tiopenmaxil.png">
-<meta property="og:image" content="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E5%A4%9A%E5%AA%92%E4%BD%93%E5%BC%80%E5%8F%91%28%E5%85%AD%29----Android%E4%B8%ADOpenMax%E7%9A%84%E5%AE%9E%E7%8E%B0%28preview%29/meizi.png">
-<meta property="og:updated_time" content="2016-12-27T15:01:59.936Z">
+<meta property="og:image" content="http://images.windrunnerlihuan.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E5%A4%9A%E5%AA%92%E4%BD%93%E5%BC%80%E5%8F%91%28%E5%85%AD%29----Android%E4%B8%ADOpenMax%E7%9A%84%E5%AE%9E%E7%8E%B0%28preview%29/state.png">
+<meta property="og:image" content="http://images.windrunnerlihuan.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E5%A4%9A%E5%AA%92%E4%BD%93%E5%BC%80%E5%8F%91%28%E5%85%AD%29----Android%E4%B8%ADOpenMax%E7%9A%84%E5%AE%9E%E7%8E%B0%28preview%29/tiopenmaxil.png">
+<meta property="og:image" content="http://images.windrunnerlihuan.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E5%A4%9A%E5%AA%92%E4%BD%93%E5%BC%80%E5%8F%91%28%E5%85%AD%29----Android%E4%B8%ADOpenMax%E7%9A%84%E5%AE%9E%E7%8E%B0%28preview%29/meizi.png">
+<meta property="og:updated_time" content="2019-01-06T07:25:42.199Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Android多媒体开发(六)----Android中OpenMax的实现(preview)">
 <meta name="twitter:description" content="&amp;#160; &amp;#160; &amp;#160; &amp;#160;上一篇对OpenMax有了简单介绍，本篇就讲讲Android上对OpenMax IL层的实现。（可以忽略，下一篇会分析流程）">
-<meta name="twitter:image" content="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E5%A4%9A%E5%AA%92%E4%BD%93%E5%BC%80%E5%8F%91%28%E5%85%AD%29----Android%E4%B8%ADOpenMax%E7%9A%84%E5%AE%9E%E7%8E%B0%28preview%29/state.png">
+<meta name="twitter:image" content="http://images.windrunnerlihuan.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E5%A4%9A%E5%AA%92%E4%BD%93%E5%BC%80%E5%8F%91%28%E5%85%AD%29----Android%E4%B8%ADOpenMax%E7%9A%84%E5%AE%9E%E7%8E%B0%28preview%29/state.png">
 
 
 
@@ -511,7 +511,7 @@
 <li>端口格式的数据结构：使用format联合体来表示，具体由四种不同类型来表示，与端口的类型相对应<br>OMX_AUDIO_PORTDEFINITIONTYPE，OMX_VIDEO_PORTDEFINITIONTYPE，OMX_IMAGE_PORTDEFINITIONTYPE和OMX_OTHER_PORTDEFINITIONTYPE等几个具体的格式类型，分别在OMX_Audio.h，OMX_Video.h，OMX_Image.h和OMX_Other.h这四个头文件中定义。</li>
 </ul>
 <p>&#160; &#160; &#160; &#160;OMX_Core.h中定义的枚举类型OMX_STATETYPE命令表示OpenMax的状态机，内容如下所示：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="keyword">enum</span> OMX_STATETYPE   </span><br><span class="line">&#123;   </span><br><span class="line">    OMX_StateInvalid,                   <span class="comment">/* 组件监测到内部的数据结构被破坏 */</span>   </span><br><span class="line">    OMX_StateLoaded,                    <span class="comment">/* 组件被加载但是没有完成初始化 */</span>   </span><br><span class="line">    OMX_StateIdle,                      <span class="comment">/* 组件初始化完成，准备开始 */</span>   </span><br><span class="line">    OMX_StateExecuting,             <span class="comment">/* 组件接受了开始命令，正在树立数据 */</span>   </span><br><span class="line">    OMX_StatePause,                     <span class="comment">/* 组件接受暂停命令*/</span>   </span><br><span class="line">    OMX_StateWaitForResources,      <span class="comment">/* 组件正在等待资源 */</span>   </span><br><span class="line">    OMX_StateKhronosExtensions = <span class="number">0x6F000000</span>, <span class="comment">/* 保留for Khronos */</span>   </span><br><span class="line">    OMX_StateVendorStartUnused = <span class="number">0x7F000000</span>, <span class="comment">/* 保留for厂商 */</span>   </span><br><span class="line">    OMX_StateMax = <span class="number">0X7FFFFFFF</span>  </span><br><span class="line">&#125; OMX_STATETYPE;</span><br></pre></td></tr></table></figure></p>
-<p>&#160; &#160; &#160; &#160;OpenMax组件的状态机可以由外部的命令改变，也可以由内部发生的情况改变。OpenMax IL组件的状态机的迁移关系如图所示：<br><img src="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E5%A4%9A%E5%AA%92%E4%BD%93%E5%BC%80%E5%8F%91%28%E5%85%AD%29----Android%E4%B8%ADOpenMax%E7%9A%84%E5%AE%9E%E7%8E%B0%28preview%29/state.png" alt="状态机"></p>
+<p>&#160; &#160; &#160; &#160;OpenMax组件的状态机可以由外部的命令改变，也可以由内部发生的情况改变。OpenMax IL组件的状态机的迁移关系如图所示：<br><img src="http://images.windrunnerlihuan.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E5%A4%9A%E5%AA%92%E4%BD%93%E5%BC%80%E5%8F%91%28%E5%85%AD%29----Android%E4%B8%ADOpenMax%E7%9A%84%E5%AE%9E%E7%8E%B0%28preview%29/state.png" alt="状态机"></p>
 <p>&#160; &#160; &#160; &#160;OMX_Core.h中定义的枚举类型OMX_COMMANDTYPE表示对组件的命令类型，内容如下所示：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="keyword">enum</span> OMX_COMMANDTYPE   </span><br><span class="line">&#123;   </span><br><span class="line">    OMX_CommandStateSet,                <span class="comment">/* 改变状态机器 */</span>   </span><br><span class="line">    OMX_CommandFlush,                   <span class="comment">/* 刷新数据队列 */</span>   </span><br><span class="line">    OMX_CommandPortDisable,             <span class="comment">/* 禁止端口 */</span>   </span><br><span class="line">    OMX_CommandPortEnable,              <span class="comment">/* 使能端口 */</span>   </span><br><span class="line">    OMX_CommandMarkBuffer,              <span class="comment">/* 标记组件或Buffer用于观察 */</span>   </span><br><span class="line">    OMX_CommandKhronosExtensions = <span class="number">0x6F000000</span>, <span class="comment">/* 保留for Khronos */</span>   </span><br><span class="line">    OMX_CommandVendorStartUnused = <span class="number">0x7F000000</span>, <span class="comment">/* 保留for厂商 */</span>   </span><br><span class="line">    OMX_CommandMax = <span class="number">0X7FFFFFFF</span>  </span><br><span class="line">&#125; OMX_COMMANDTYPE;</span><br></pre></td></tr></table></figure></p>
 <p>&#160; &#160; &#160; &#160;OMX_COMMANDTYPE类型在SendCommand调用中作为参数被使用，其中OMX_CommandStateSet就是改变状态机的命令。</p>
 <h2 id="OpenMax-IL实现的内容"><a href="#OpenMax-IL实现的内容" class="headerlink" title="OpenMax IL实现的内容"></a>OpenMax IL实现的内容</h2><p>&#160; &#160; &#160; &#160;对于OpenMax IL层的实现，一般的方式并不调用OpenMax DL层。具体实现的内容就是各个不同的组件。<br>&#160; &#160; &#160; &#160;OpenMax IL组件的实现包含以下两个步骤：</p>
@@ -529,7 +529,7 @@
 <li>video：视频处理部分OpenMax IL组件</li>
 <li>image：图像处理部分OpenMax IL组件</li>
 </ul>
-<p>&#160; &#160; &#160; &#160;TI OpenMax IL实现的结构如图所示:<br><img src="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E5%A4%9A%E5%AA%92%E4%BD%93%E5%BC%80%E5%8F%91%28%E5%85%AD%29----Android%E4%B8%ADOpenMax%E7%9A%84%E5%AE%9E%E7%8E%B0%28preview%29/tiopenmaxil.png" alt="TI openmax IL实现"></p>
+<p>&#160; &#160; &#160; &#160;TI OpenMax IL实现的结构如图所示:<br><img src="http://images.windrunnerlihuan.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E5%A4%9A%E5%AA%92%E4%BD%93%E5%BC%80%E5%8F%91%28%E5%85%AD%29----Android%E4%B8%ADOpenMax%E7%9A%84%E5%AE%9E%E7%8E%B0%28preview%29/tiopenmaxil.png" alt="TI openmax IL实现"></p>
 <p>&#160; &#160; &#160; &#160;在TI OpenMax IL实现中，最上面的内容是OpenMax的管理者用于管理和初始化，中间层是各个编解码单元的OpenMax IL标准组件，下层是LCML层，供各个OpenMax IL标准组件所调用。<br>&#160; &#160; &#160; &#160;（1）TI OpenMax IL实现的公共部分在system/src/openmax_il/目录中，主要的内容如下所示。</p>
 <ul>
 <li>omx_core/src：OpenMax IL的核心，生成动态库<strong>libOMX_Core.so</strong></li>
@@ -599,7 +599,7 @@
 <li>对视频解码相关基本配置进行设置</li>
 <li>创建一个管道，然后再开一个个工作线程，调用omx开始处理解码，并进行i/o操作</li>
 </ul>
-<h1 id="结语"><a href="#结语" class="headerlink" title="结语"></a>结语</h1><p>&#160; &#160; &#160; &#160;本篇和上一篇都是科普一下OpenMax和它在android上的实现，可以忽略不用看。下一篇我们将承接上上一篇和上一篇结尾的部分，分析android平台Stagefright和codec的交互。<br><img src="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E5%A4%9A%E5%AA%92%E4%BD%93%E5%BC%80%E5%8F%91%28%E5%85%AD%29----Android%E4%B8%ADOpenMax%E7%9A%84%E5%AE%9E%E7%8E%B0%28preview%29/meizi.png" alt="妹子"></p>
+<h1 id="结语"><a href="#结语" class="headerlink" title="结语"></a>结语</h1><p>&#160; &#160; &#160; &#160;本篇和上一篇都是科普一下OpenMax和它在android上的实现，可以忽略不用看。下一篇我们将承接上上一篇和上一篇结尾的部分，分析android平台Stagefright和codec的交互。<br><img src="http://images.windrunnerlihuan.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E5%A4%9A%E5%AA%92%E4%BD%93%E5%BC%80%E5%8F%91%28%E5%85%AD%29----Android%E4%B8%ADOpenMax%E7%9A%84%E5%AE%9E%E7%8E%B0%28preview%29/meizi.png" alt="妹子"></p>
 
       
     </div>
@@ -901,7 +901,7 @@
         <div class="copyright" >
   
   &copy;  2016 - 
-  <span itemprop="copyrightYear">2018</span>
+  <span itemprop="copyrightYear">2019</span>
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>

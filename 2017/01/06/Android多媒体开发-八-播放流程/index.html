@@ -121,12 +121,12 @@
 <meta property="og:url" content="http://windrunnerlihuan.com/2017/01/06/Android多媒体开发-八-播放流程/index.html">
 <meta property="og:site_name" content="April is your lie">
 <meta property="og:description" content="&amp;#160; &amp;#160; &amp;#160; &amp;#160;前面几篇都是视频文件播放前的准备工作，比如设置数据源，初始化解码器等等，本节我们分析MediaPlayer播放器start之后的流程。">
-<meta property="og:image" content="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E5%A4%9A%E5%AA%92%E4%BD%93%E5%BC%80%E5%8F%91%28%E5%85%AB%29----%E6%92%AD%E6%94%BE%E6%B5%81%E7%A8%8B/meizi.jpg">
-<meta property="og:updated_time" content="2017-01-06T18:03:21.516Z">
+<meta property="og:image" content="http://images.windrunnerlihuan.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E5%A4%9A%E5%AA%92%E4%BD%93%E5%BC%80%E5%8F%91%28%E5%85%AB%29----%E6%92%AD%E6%94%BE%E6%B5%81%E7%A8%8B/meizi.jpg">
+<meta property="og:updated_time" content="2019-01-06T07:25:26.059Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Android多媒体开发(八)----播放流程">
 <meta name="twitter:description" content="&amp;#160; &amp;#160; &amp;#160; &amp;#160;前面几篇都是视频文件播放前的准备工作，比如设置数据源，初始化解码器等等，本节我们分析MediaPlayer播放器start之后的流程。">
-<meta name="twitter:image" content="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E5%A4%9A%E5%AA%92%E4%BD%93%E5%BC%80%E5%8F%91%28%E5%85%AB%29----%E6%92%AD%E6%94%BE%E6%B5%81%E7%A8%8B/meizi.jpg">
+<meta name="twitter:image" content="http://images.windrunnerlihuan.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E5%A4%9A%E5%AA%92%E4%BD%93%E5%BC%80%E5%8F%91%28%E5%85%AB%29----%E6%92%AD%E6%94%BE%E6%B5%81%E7%A8%8B/meizi.jpg">
 
 
 
@@ -569,7 +569,7 @@
 <h2 id="mBufferingEvent"><a href="#mBufferingEvent" class="headerlink" title="mBufferingEvent"></a>mBufferingEvent</h2><p>&#160; &#160; &#160; &#160;awesomeplayer中通过调用postBufferingEvent_l来触发此事件，作用是缓冲数据。调用的位置有：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">void</span> AwesomePlayer::onPrepareAsyncEvent() &#123;  </span><br><span class="line">   </span><br><span class="line">    ...... </span><br><span class="line">   </span><br><span class="line">    <span class="keyword">if</span>(isStreamingHTTP()) &#123;  </span><br><span class="line">        postBufferingEvent_l();  </span><br><span class="line">    &#125;<span class="keyword">else</span>&#123;  </span><br><span class="line">        finishAsyncPrepare_l();  </span><br><span class="line">    &#125;  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
 <p>&#160; &#160; &#160; &#160;当时网络流的时候，先缓冲一部分数据，看下具体实现:<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">void</span> AwesomePlayer::postBufferingEvent_l() &#123;  </span><br><span class="line">    <span class="keyword">if</span>(mBufferingEventPending) &#123;  </span><br><span class="line">        <span class="keyword">return</span>;  </span><br><span class="line">    &#125;  </span><br><span class="line">    mBufferingEventPending =<span class="literal">true</span>;  </span><br><span class="line">    mQueue.postEventWithDelay(mBufferingEvent, <span class="number">1000000l</span>l);  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
 <p>&#160; &#160; &#160; &#160;首先修改标志位mBufferingEventPending，之后触发消息。<br>&#160; &#160; &#160; &#160;这里就不贴代码了，说说原理：当需要cache数据的时候，在onPrepareAsyncEvent调用postBufferingEvent_l 后onPrepareAsyncEvent 就结束了。由于此时解码器已经开始解码，即数据链路已经建立。因此会不断的进行 读数据-解码的操作，而在onBufferingUpdate响应函数中，会先pause住输出，等数据缓存足够了之后，调用finishAsyncPrepare_l等完成prepareAsync的操作。</p>
-<h1 id="结语"><a href="#结语" class="headerlink" title="结语"></a>结语</h1><p>&#160; &#160; &#160; &#160;到这里播放流程就分析完了，最复杂的还是递归消息处理那一段。流程中对于Video Buffer传入流程和Audio Playback流程还没分析，这个我们以后再讲。<br><img src="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E5%A4%9A%E5%AA%92%E4%BD%93%E5%BC%80%E5%8F%91%28%E5%85%AB%29----%E6%92%AD%E6%94%BE%E6%B5%81%E7%A8%8B/meizi.jpg" alt="妹子"></p>
+<h1 id="结语"><a href="#结语" class="headerlink" title="结语"></a>结语</h1><p>&#160; &#160; &#160; &#160;到这里播放流程就分析完了，最复杂的还是递归消息处理那一段。流程中对于Video Buffer传入流程和Audio Playback流程还没分析，这个我们以后再讲。<br><img src="http://images.windrunnerlihuan.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E5%A4%9A%E5%AA%92%E4%BD%93%E5%BC%80%E5%8F%91%28%E5%85%AB%29----%E6%92%AD%E6%94%BE%E6%B5%81%E7%A8%8B/meizi.jpg" alt="妹子"></p>
 
       
     </div>
@@ -871,7 +871,7 @@
         <div class="copyright" >
   
   &copy;  2016 - 
-  <span itemprop="copyrightYear">2018</span>
+  <span itemprop="copyrightYear">2019</span>
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>

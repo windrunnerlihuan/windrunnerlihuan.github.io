@@ -121,12 +121,12 @@
 <meta property="og:url" content="http://windrunnerlihuan.com/2016/08/23/智能指针简单分析/index.html">
 <meta property="og:site_name" content="April is your lie">
 <meta property="og:description" content="&amp;#160; &amp;#160; &amp;#160; &amp;#160;前一阵子好忙，忙的根本停不下来。现在还好点，能闲一些。所以抽空把之前没研究完的Android智能指针继续研究。">
-<meta property="og:image" content="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/%E6%99%BA%E8%83%BD%E6%8C%87%E9%92%88%E7%AE%80%E5%8D%95%E5%88%86%E6%9E%90/meizi.jpg">
-<meta property="og:updated_time" content="2016-08-24T00:02:42.885Z">
+<meta property="og:image" content="http://images.windrunnerlihuan.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/%E6%99%BA%E8%83%BD%E6%8C%87%E9%92%88%E7%AE%80%E5%8D%95%E5%88%86%E6%9E%90/meizi.jpg">
+<meta property="og:updated_time" content="2019-01-06T07:22:27.078Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="智能指针简单分析">
 <meta name="twitter:description" content="&amp;#160; &amp;#160; &amp;#160; &amp;#160;前一阵子好忙，忙的根本停不下来。现在还好点，能闲一些。所以抽空把之前没研究完的Android智能指针继续研究。">
-<meta name="twitter:image" content="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/%E6%99%BA%E8%83%BD%E6%8C%87%E9%92%88%E7%AE%80%E5%8D%95%E5%88%86%E6%9E%90/meizi.jpg">
+<meta name="twitter:image" content="http://images.windrunnerlihuan.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/%E6%99%BA%E8%83%BD%E6%8C%87%E9%92%88%E7%AE%80%E5%8D%95%E5%88%86%E6%9E%90/meizi.jpg">
 
 
 
@@ -549,7 +549,7 @@
 <p>&#160; &#160; &#160; &#160;到这里弱指针就分析完了，它和强指针逻辑大同小异。</p>
 <h1 id="使用前提"><a href="#使用前提" class="headerlink" title="使用前提"></a>使用前提</h1><p>&#160; &#160; &#160; &#160;说了这么多原理，下面该看看智能指针该如何使用了。假设现在有一个类MyClass，如果要使用智能指针来引用这个类的对象，那么这个类需满足下列两个前提条件：<br>1：这个类是基类RefBase的子类或间接子类；<br>2：这个类必须定义虚构造函数，即它的构造函数需要这样定义：<br>&#160; &#160; &#160; &#160;virtual ~MyClass();<br>&#160; &#160; &#160; &#160;满足了上述条件的类就可以定义为Android智能指针了，定义方法和普通指针类似。比如&#160; &#160; &#160; &#160;普通指针是这样定义：<br>&#160; &#160; &#160; &#160;MyClass<em> p_obj;<br>&#160; &#160; &#160; &#160;智能指针是这样定义：<br>&#160; &#160; &#160; &#160;sp<myclass> p_obj;<br>&#160; &#160; &#160; &#160;注意不要定义成sp<myclass></myclass></myclass></em> p_obj。这是初学者很容易犯的错误，这样其实相当于定义了一个指针的指针。尽管在语法上没有问题，但是最好不要这样定义。<br>&#160; &#160; &#160; &#160;定义了一个智能指针的变量，就可以象普通指针那样使用它，包括赋值、访问对象成员、作为函数的返回值、作为函数的参数等。比如：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">p_obj = <span class="keyword">new</span> MyClass(); <span class="comment">// 注意不要写成 p_obj = new sp&lt;MyClass&gt; </span></span><br><span class="line">sp&lt;MyClass&gt; p_obj2 = p_obj; </span><br><span class="line">p_obj-&gt;func(); </span><br><span class="line">p_obj = create_obj(); </span><br><span class="line">some_func(p_obj);</span><br></pre></td></tr></table></figure></p>
 <p>&#160; &#160; &#160; &#160;注意不要试图delete一个智能指针，即 delete p_obj。不要担心对象的销毁问题，智能指针的最大作用就是自动销毁不再使用的对象。不需要再使用一个对象后，直接将指针赋值为NULL即可：<br>&#160; &#160; &#160; &#160;p_obj = NULL;<br>&#160; &#160; &#160; &#160;上面说的都是强指针，弱指针的定义方法和强指针类似，但是不能通过弱指针来访问对象的成员。下面是弱指针的示例：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">wp&lt;MyClass&gt; wp_obj = <span class="keyword">new</span> MyClass(); </span><br><span class="line">p_obj = wp_obj.promote(); <span class="comment">// 升级为强指针。不过这里要用.而不是-&gt;，真是有负其指针之名啊 </span></span><br><span class="line">wp_obj = <span class="literal">NULL</span>;</span><br></pre></td></tr></table></figure></p>
-<h1 id="结语"><a href="#结语" class="headerlink" title="结语"></a>结语</h1><p>&#160; &#160; &#160; &#160;至此，智能指针部分就分析完了，我们不得不赞叹Google设计的强大。<br><img src="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/%E6%99%BA%E8%83%BD%E6%8C%87%E9%92%88%E7%AE%80%E5%8D%95%E5%88%86%E6%9E%90/meizi.jpg" alt="结语"></p>
+<h1 id="结语"><a href="#结语" class="headerlink" title="结语"></a>结语</h1><p>&#160; &#160; &#160; &#160;至此，智能指针部分就分析完了，我们不得不赞叹Google设计的强大。<br><img src="http://images.windrunnerlihuan.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/%E6%99%BA%E8%83%BD%E6%8C%87%E9%92%88%E7%AE%80%E5%8D%95%E5%88%86%E6%9E%90/meizi.jpg" alt="结语"></p>
 
       
     </div>
@@ -851,7 +851,7 @@
         <div class="copyright" >
   
   &copy;  2016 - 
-  <span itemprop="copyrightYear">2018</span>
+  <span itemprop="copyrightYear">2019</span>
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>

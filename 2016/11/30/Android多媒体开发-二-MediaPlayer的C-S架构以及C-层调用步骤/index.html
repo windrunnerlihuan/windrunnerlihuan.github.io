@@ -121,13 +121,13 @@
 <meta property="og:url" content="http://windrunnerlihuan.com/2016/11/30/Android多媒体开发-二-MediaPlayer的C-S架构以及C-层调用步骤/index.html">
 <meta property="og:site_name" content="April is your lie">
 <meta property="og:description" content="&amp;#160; &amp;#160; &amp;#160; &amp;#160;上一节主要分析了MediaPlayer从java层到jni层做的一些工作，并且setDataSource和后续流程还没有往下分析。这一节先介绍MediaPlayer的C/S架构，然后顺着架构往下深究，我们的思路会更清晰。">
-<meta property="og:image" content="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E5%A4%9A%E5%AA%92%E4%BD%93%E5%BC%80%E5%8F%91%28%E4%BA%8C%29----MediaPlayer%E7%9A%84C/S%E6%9E%B6%E6%9E%84%E4%BB%A5%E5%8F%8AC++%E5%B1%82%E8%B0%83%E7%94%A8%E6%AD%A5%E9%AA%A4/jiagou.jpg">
-<meta property="og:image" content="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E5%A4%9A%E5%AA%92%E4%BD%93%E5%BC%80%E5%8F%91%28%E4%BA%8C%29----MediaPlayer%E7%9A%84C/S%E6%9E%B6%E6%9E%84%E4%BB%A5%E5%8F%8AC++%E5%B1%82%E8%B0%83%E7%94%A8%E6%AD%A5%E9%AA%A4/meizi.jpg">
-<meta property="og:updated_time" content="2016-11-30T21:42:37.420Z">
+<meta property="og:image" content="http://images.windrunnerlihuan.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E5%A4%9A%E5%AA%92%E4%BD%93%E5%BC%80%E5%8F%91%28%E4%BA%8C%29----MediaPlayer%E7%9A%84C/S%E6%9E%B6%E6%9E%84%E4%BB%A5%E5%8F%8AC++%E5%B1%82%E8%B0%83%E7%94%A8%E6%AD%A5%E9%AA%A4/jiagou.jpg">
+<meta property="og:image" content="http://images.windrunnerlihuan.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E5%A4%9A%E5%AA%92%E4%BD%93%E5%BC%80%E5%8F%91%28%E4%BA%8C%29----MediaPlayer%E7%9A%84C/S%E6%9E%B6%E6%9E%84%E4%BB%A5%E5%8F%8AC++%E5%B1%82%E8%B0%83%E7%94%A8%E6%AD%A5%E9%AA%A4/meizi.jpg">
+<meta property="og:updated_time" content="2019-01-06T07:24:57.919Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Android多媒体开发(二)----MediaPlayer的C/S架构以及C++层调用步骤">
 <meta name="twitter:description" content="&amp;#160; &amp;#160; &amp;#160; &amp;#160;上一节主要分析了MediaPlayer从java层到jni层做的一些工作，并且setDataSource和后续流程还没有往下分析。这一节先介绍MediaPlayer的C/S架构，然后顺着架构往下深究，我们的思路会更清晰。">
-<meta name="twitter:image" content="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E5%A4%9A%E5%AA%92%E4%BD%93%E5%BC%80%E5%8F%91%28%E4%BA%8C%29----MediaPlayer%E7%9A%84C/S%E6%9E%B6%E6%9E%84%E4%BB%A5%E5%8F%8AC++%E5%B1%82%E8%B0%83%E7%94%A8%E6%AD%A5%E9%AA%A4/jiagou.jpg">
+<meta name="twitter:image" content="http://images.windrunnerlihuan.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E5%A4%9A%E5%AA%92%E4%BD%93%E5%BC%80%E5%8F%91%28%E4%BA%8C%29----MediaPlayer%E7%9A%84C/S%E6%9E%B6%E6%9E%84%E4%BB%A5%E5%8F%8AC++%E5%B1%82%E8%B0%83%E7%94%A8%E6%AD%A5%E9%AA%A4/jiagou.jpg">
 
 
 
@@ -486,7 +486,7 @@
       
         <p>&#160; &#160; &#160; &#160;上一节主要分析了MediaPlayer从java层到jni层做的一些工作，并且setDataSource和后续流程还没有往下分析。这一节先介绍MediaPlayer的C/S架构，然后顺着架构往下深究，我们的思路会更清晰。<br><a id="more"></a></p>
 <h1 id="MediaPlayer的C-S架构"><a href="#MediaPlayer的C-S架构" class="headerlink" title="MediaPlayer的C/S架构"></a>MediaPlayer的C/S架构</h1><p>&#160; &#160; &#160; &#160;整个MediaPlayer在运行的时候，可以分成Client和Server两个部分，它们分别在两个进程中运行，它们之间使用Binder机制实现IPC通信。架构图如下，我的viso用的不太好，但是还是能看清。</p>
-<p><img src="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E5%A4%9A%E5%AA%92%E4%BD%93%E5%BC%80%E5%8F%91%28%E4%BA%8C%29----MediaPlayer%E7%9A%84C/S%E6%9E%B6%E6%9E%84%E4%BB%A5%E5%8F%8AC++%E5%B1%82%E8%B0%83%E7%94%A8%E6%AD%A5%E9%AA%A4/jiagou.jpg" alt="架构图"></p>
+<p><img src="http://images.windrunnerlihuan.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E5%A4%9A%E5%AA%92%E4%BD%93%E5%BC%80%E5%8F%91%28%E4%BA%8C%29----MediaPlayer%E7%9A%84C/S%E6%9E%B6%E6%9E%84%E4%BB%A5%E5%8F%8AC++%E5%B1%82%E8%B0%83%E7%94%A8%E6%AD%A5%E9%AA%A4/jiagou.jpg" alt="架构图"></p>
 <p>&#160; &#160; &#160; &#160;1）如果从功能从上往下看，最上层是java层MediaPlayer的API，然后是jni层到C++层之间的IPC通信，最下边就是player的具体实现了（如StageFrightPlayer、MstarPlayer）。<br>&#160; &#160; &#160; &#160;2）C++层是比较重要的环节，这一块也是C/S架构的核心。主要围绕C++层MediaPlayer通过BpMediaPlayerService这个本地proxy对象，经过IPC与远程服务MediaPlayerService(BnMediaPlayerService)通信，完成C/S架构。（其实Android有很多模块设计都是C/S架构，都是通过BpXXX这个代理皮包和拥有干货的BnXXX通信。这里的p指的是proxy，n就是native）<br>&#160; &#160; &#160; &#160;3）当Server端收到Client端的请求，MediaPlayerService会为每一个Client进程创建一个会话，这里就是new一个MediaPlayerService:Client对象和其交互。然后这个对象再根据Client端请求的资源类型去判断创建什么类型的Player，就是最下边那些。（其实这些Player有些是芯片商自己做的，每家做的都不一样）</p>
 <h1 id="C-层MediaPlayer实现"><a href="#C-层MediaPlayer实现" class="headerlink" title="C++层MediaPlayer实现"></a>C++层MediaPlayer实现</h1><p>&#160; &#160; &#160; &#160;上一节我们只是分析了从java层到jni层的一些步骤，应该算是准备工作，正好我们入门。这次我们从jni层入手，应该位于架构图中客户端进程部分，C++层MediaPlayer往上，jni层往下的部分。继续往下，还得从setDataSource入手。</p>
 <h2 id="setDataSource-C-实现"><a href="#setDataSource-C-实现" class="headerlink" title="setDataSource C++实现"></a>setDataSource C++实现</h2><p>&#160; &#160; &#160; &#160;通过JNI方式调用到framework层 android_media_MediaPlayer.cpp(\frameworks\base\media\jni\android_media_MediaPlayer.cpp)，继而调用mediaplayer.cpp(frameworks\av\media\libmedia\MediaPlayer.cpp)。我们找到setDataSource方法，上次我们分析的而是获取文件描述符的重载方法：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">status_t</span> MediaPlayer::setDataSource(<span class="keyword">int</span> fd, <span class="keyword">int64_t</span> offset, <span class="keyword">int64_t</span> length)</span><br><span class="line">&#123;</span><br><span class="line">    ALOGV(<span class="string">"setDataSource(%d, %"</span> PRId64 <span class="string">", %"</span> PRId64 <span class="string">")"</span>, fd, offset, length);</span><br><span class="line">    <span class="keyword">status_t</span> err = UNKNOWN_ERROR;</span><br><span class="line">    <span class="comment">//获取BpMediaPlayerService这个代理MediaPlayerService的proxy对象</span></span><br><span class="line">    <span class="keyword">const</span> sp&lt;IMediaPlayerService&gt;&amp; service(getMediaPlayerService());</span><br><span class="line">    <span class="keyword">if</span> (service != <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="comment">//从service manager中获得MediaPlayerService 服务，然后通过服务来创建player,这个player就是架构图最下层那些拥有真正干活本领的player</span></span><br><span class="line">        sp&lt;IMediaPlayer&gt; player(service-&gt;create(<span class="keyword">this</span>, mAudioSessionId));</span><br><span class="line">        <span class="keyword">if</span> ((NO_ERROR != doSetRetransmitEndpoint(player)) ||</span><br><span class="line">            <span class="comment">//会走到这里，调用那些能够干活的player的setDataSource方法</span></span><br><span class="line">            (NO_ERROR != player-&gt;setDataSource(fd, offset, length))) &#123;</span><br><span class="line">            player.clear();</span><br><span class="line">        &#125;</span><br><span class="line">        err = attachNewPlayer(player);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> err;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
@@ -514,7 +514,7 @@
 <li>服务端setDataSource过程中创建指定类型的播放器；</li>
 <li>播放器设置setDataSource。</li>
 </ul>
-<p>&#160; &#160; &#160; &#160;本届内容就这么多，依然止于setDataSource，不过是StageFright的setDataSource，我们在这里做个标记。<br>&#160; &#160; &#160; &#160;下一节我们将详细分析StageFright框架。<br><img src="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E5%A4%9A%E5%AA%92%E4%BD%93%E5%BC%80%E5%8F%91%28%E4%BA%8C%29----MediaPlayer%E7%9A%84C/S%E6%9E%B6%E6%9E%84%E4%BB%A5%E5%8F%8AC++%E5%B1%82%E8%B0%83%E7%94%A8%E6%AD%A5%E9%AA%A4/meizi.jpg" alt="妹子"></p>
+<p>&#160; &#160; &#160; &#160;本届内容就这么多，依然止于setDataSource，不过是StageFright的setDataSource，我们在这里做个标记。<br>&#160; &#160; &#160; &#160;下一节我们将详细分析StageFright框架。<br><img src="http://images.windrunnerlihuan.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E5%A4%9A%E5%AA%92%E4%BD%93%E5%BC%80%E5%8F%91%28%E4%BA%8C%29----MediaPlayer%E7%9A%84C/S%E6%9E%B6%E6%9E%84%E4%BB%A5%E5%8F%8AC++%E5%B1%82%E8%B0%83%E7%94%A8%E6%AD%A5%E9%AA%A4/meizi.jpg" alt="妹子"></p>
 
       
     </div>
@@ -816,7 +816,7 @@
         <div class="copyright" >
   
   &copy;  2016 - 
-  <span itemprop="copyrightYear">2018</span>
+  <span itemprop="copyrightYear">2019</span>
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>

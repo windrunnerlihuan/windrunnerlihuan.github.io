@@ -121,13 +121,13 @@
 <meta property="og:url" content="http://windrunnerlihuan.com/2017/10/24/Android-SurfaceFlinger-学习之路-九-SurfaceFlinger事务处理/index.html">
 <meta property="og:site_name" content="April is your lie">
 <meta property="og:description" content="&amp;#160; &amp;#160; &amp;#160; &amp;#160;荒废三个月，终于更新了~这期间事情巨多，一言难尽~不过对SurfaceFlinger的研究不能停啊，还是要一点一点钻研。&amp;#160; &amp;#160; &amp;#160; &amp;#160;这次继续顺着上次末尾，分析一下SurfaceFlinger事务处理。">
-<meta property="og:image" content="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E4%B9%9D%29----SurfaceFlinger%E4%BA%8B%E5%8A%A1%E5%A4%84%E7%90%86/Transation.jpg">
-<meta property="og:image" content="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E4%B9%9D%29----SurfaceFlinger%E4%BA%8B%E5%8A%A1%E5%A4%84%E7%90%86/meizi.jpg">
-<meta property="og:updated_time" content="2017-10-24T12:01:23.189Z">
+<meta property="og:image" content="http://images.windrunnerlihuan.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E4%B9%9D%29----SurfaceFlinger%E4%BA%8B%E5%8A%A1%E5%A4%84%E7%90%86/Transation.jpg">
+<meta property="og:image" content="http://images.windrunnerlihuan.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E4%B9%9D%29----SurfaceFlinger%E4%BA%8B%E5%8A%A1%E5%A4%84%E7%90%86/meizi.jpg">
+<meta property="og:updated_time" content="2019-01-06T07:28:33.555Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Android SurfaceFlinger 学习之路(九)----SurfaceFlinger事务处理">
 <meta name="twitter:description" content="&amp;#160; &amp;#160; &amp;#160; &amp;#160;荒废三个月，终于更新了~这期间事情巨多，一言难尽~不过对SurfaceFlinger的研究不能停啊，还是要一点一点钻研。&amp;#160; &amp;#160; &amp;#160; &amp;#160;这次继续顺着上次末尾，分析一下SurfaceFlinger事务处理。">
-<meta name="twitter:image" content="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E4%B9%9D%29----SurfaceFlinger%E4%BA%8B%E5%8A%A1%E5%A4%84%E7%90%86/Transation.jpg">
+<meta name="twitter:image" content="http://images.windrunnerlihuan.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E4%B9%9D%29----SurfaceFlinger%E4%BA%8B%E5%8A%A1%E5%A4%84%E7%90%86/Transation.jpg">
 
 
 
@@ -559,9 +559,9 @@
 <li>提交transaction，主要就是同步2个state。然后currentstate继续跟踪layer变化，如此往复。</li>
 </ul>
 <p>&#160; &#160; &#160; &#160;贴个时序图就是下面的逻辑。</p>
-<p><img src="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E4%B9%9D%29----SurfaceFlinger%E4%BA%8B%E5%8A%A1%E5%A4%84%E7%90%86/Transation.jpg" alt="transation"></p>
+<p><img src="http://images.windrunnerlihuan.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E4%B9%9D%29----SurfaceFlinger%E4%BA%8B%E5%8A%A1%E5%A4%84%E7%90%86/Transation.jpg" alt="transation"></p>
 <h1 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h1><p>&#160; &#160; &#160; &#160;以上就是SurfaceFlinger处理事务的简要流程。回顾开始的内容，我们说过SurfaceControl的openTransation和closeTransaction底层实现也是SurfaceFlinger处理事务的操作，不过这个我们以后在分析。下一篇就应该去讲Layer的合成了，也是个十分复杂的过程。<br>&#160; &#160; &#160; &#160;断更三个月，期间也是尝尽辛酸苦辣，痛苦和悔恨只能自己默默下咽。只希望以后能够少点折腾，多一些安逸。</p>
-<p><img src="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E4%B9%9D%29----SurfaceFlinger%E4%BA%8B%E5%8A%A1%E5%A4%84%E7%90%86/meizi.jpg" alt="meizi"></p>
+<p><img src="http://images.windrunnerlihuan.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%20SurfaceFlinger%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%28%E4%B9%9D%29----SurfaceFlinger%E4%BA%8B%E5%8A%A1%E5%A4%84%E7%90%86/meizi.jpg" alt="meizi"></p>
 
       
     </div>
@@ -863,7 +863,7 @@
         <div class="copyright" >
   
   &copy;  2016 - 
-  <span itemprop="copyrightYear">2018</span>
+  <span itemprop="copyrightYear">2019</span>
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>

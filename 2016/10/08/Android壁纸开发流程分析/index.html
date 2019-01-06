@@ -121,12 +121,12 @@
 <meta property="og:url" content="http://windrunnerlihuan.com/2016/10/08/Android壁纸开发流程分析/index.html">
 <meta property="og:site_name" content="April is your lie">
 <meta property="og:description" content="&amp;#160; &amp;#160; &amp;#160; &amp;#160;起因是产品汪的一个奇葩需求，要求播放视频使用背景播放，前台还可以随意操作其他东西，就像PS4那样的。所以不得不研究一下动态壁纸了，中途也是遇到了无数坑，但终于还是做出来了。这里就简单介绍一下Android对壁纸的管理流程。">
-<meta property="og:image" content="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E5%A3%81%E7%BA%B8%E5%BC%80%E5%8F%91%E6%B5%81%E7%A8%8B%E5%88%86%E6%9E%90/meizi.jpg">
-<meta property="og:updated_time" content="2016-10-08T21:08:32.200Z">
+<meta property="og:image" content="http://images.windrunnerlihuan.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E5%A3%81%E7%BA%B8%E5%BC%80%E5%8F%91%E6%B5%81%E7%A8%8B%E5%88%86%E6%9E%90/meizi.jpg">
+<meta property="og:updated_time" content="2019-01-06T07:23:39.222Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Android壁纸开发流程分析">
 <meta name="twitter:description" content="&amp;#160; &amp;#160; &amp;#160; &amp;#160;起因是产品汪的一个奇葩需求，要求播放视频使用背景播放，前台还可以随意操作其他东西，就像PS4那样的。所以不得不研究一下动态壁纸了，中途也是遇到了无数坑，但终于还是做出来了。这里就简单介绍一下Android对壁纸的管理流程。">
-<meta name="twitter:image" content="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E5%A3%81%E7%BA%B8%E5%BC%80%E5%8F%91%E6%B5%81%E7%A8%8B%E5%88%86%E6%9E%90/meizi.jpg">
+<meta name="twitter:image" content="http://images.windrunnerlihuan.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E5%A3%81%E7%BA%B8%E5%BC%80%E5%8F%91%E6%B5%81%E7%A8%8B%E5%88%86%E6%9E%90/meizi.jpg">
 
 
 
@@ -567,7 +567,7 @@
 <p>&#160; &#160; &#160; &#160;可以发现，最终还是调用了bindWallpaperComponentLocked方法，只不过第一个参数ComponentName 换了。静态壁纸都是ImageWallpaper这个类，动态壁纸都是自己的类。这个方法我们上面已经分析过了，流程就那么些。</p>
 <p>&#160; &#160; &#160; &#160;如果我们想自己绑定自己的壁纸，只要调用mWallpaperManager.getIWallpaperManager().setWallpaperComponent(mWallpaperIntent.getComponent());这句话就行了，只不过需要系统权限，必须在清单文件中配置android:sharedUserId=”android.uid.system”属性，还要打系统签名。</p>
 <h1 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h1><p>&#160; &#160; &#160; &#160;到此Android的壁纸服务就分析完了。<br>&#160; &#160; &#160; &#160;动态壁纸和静态壁纸设置流程本质都是一样的，只不过静态壁纸是ImageWallpaper这个服务，动态壁纸是自己的。<br>&#160; &#160; &#160; &#160;设置静态壁纸可以直接使用WallpaperManager提供的三种方法，setResource(int resId)，setBitmap(Bitmap bm)和setStream(InputStream is)。<br>&#160; &#160; &#160; &#160;设置动态壁纸可以调用：<br>WallpaperManager.getInstance(context).getIWallpaperManager().setWallpaperComponent(componentName)。</p>
-<p><img src="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E5%A3%81%E7%BA%B8%E5%BC%80%E5%8F%91%E6%B5%81%E7%A8%8B%E5%88%86%E6%9E%90/meizi.jpg" alt="妹子"></p>
+<p><img src="http://images.windrunnerlihuan.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E5%A3%81%E7%BA%B8%E5%BC%80%E5%8F%91%E6%B5%81%E7%A8%8B%E5%88%86%E6%9E%90/meizi.jpg" alt="妹子"></p>
 
       
     </div>
@@ -869,7 +869,7 @@
         <div class="copyright" >
   
   &copy;  2016 - 
-  <span itemprop="copyrightYear">2018</span>
+  <span itemprop="copyrightYear">2019</span>
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>

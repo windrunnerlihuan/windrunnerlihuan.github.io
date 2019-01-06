@@ -125,14 +125,14 @@
 <meta property="og:description" content="&amp;#160; &amp;#160; &amp;#160; &amp;#160; 在Android系统中，每个应用都是由四大组件中之几组成，我们经常要去写一些Activity或者Service，这些Activity或者Service有时候会运行在不同的进程中，如果我们要让这些不同的Activity或者Service之间通信，就要用到Android提供的Binder机制了。
 
 &amp;#160;&amp;#160;&amp;#160;&amp;#160">
-<meta property="og:image" content="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E8%B7%A8%E8%BF%9B%E7%A8%8B%E9%80%9A%E4%BF%A1%E6%9C%BA%E5%88%B6Binder%E7%AE%80%E8%A6%81%E5%88%86%E6%9E%90/meizi.jpg">
-<meta property="og:updated_time" content="2016-06-12T00:40:22.181Z">
+<meta property="og:image" content="http://images.windrunnerlihuan.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E8%B7%A8%E8%BF%9B%E7%A8%8B%E9%80%9A%E4%BF%A1%E6%9C%BA%E5%88%B6Binder%E7%AE%80%E8%A6%81%E5%88%86%E6%9E%90/meizi.jpg">
+<meta property="og:updated_time" content="2019-01-06T07:30:37.368Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Android跨进程通信机制Binder简要分析">
 <meta name="twitter:description" content="&amp;#160; &amp;#160; &amp;#160; &amp;#160; 在Android系统中，每个应用都是由四大组件中之几组成，我们经常要去写一些Activity或者Service，这些Activity或者Service有时候会运行在不同的进程中，如果我们要让这些不同的Activity或者Service之间通信，就要用到Android提供的Binder机制了。
 
 &amp;#160;&amp;#160;&amp;#160;&amp;#160">
-<meta name="twitter:image" content="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E8%B7%A8%E8%BF%9B%E7%A8%8B%E9%80%9A%E4%BF%A1%E6%9C%BA%E5%88%B6Binder%E7%AE%80%E8%A6%81%E5%88%86%E6%9E%90/meizi.jpg">
+<meta name="twitter:image" content="http://images.windrunnerlihuan.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E8%B7%A8%E8%BF%9B%E7%A8%8B%E9%80%9A%E4%BF%A1%E6%9C%BA%E5%88%B6Binder%E7%AE%80%E8%A6%81%E5%88%86%E6%9E%90/meizi.jpg">
 
 
 
@@ -513,7 +513,7 @@
 <h3 id="Client-获得实名Binder的引用"><a href="#Client-获得实名Binder的引用" class="headerlink" title="Client 获得实名Binder的引用"></a>Client 获得实名Binder的引用</h3><p>&#160; &#160; &#160; &#160; Server向ServiceManager注册了Binder实体及其名字后，Client就可以通过名字获得该Binder的引用了。Client也利用保留的0号引用向ServiceManager请求访问某个Binder：我申请获得名字叫张三的Binder的引用。ServiceManager收到这个连接请求，从请求数据包里获得Binder的名字，在查找表里找到该名字对应的条目，从条目中取出Binder的引用，将该引用作为回复发送给发起请求的Client。从面向对象的角度，这个Binder对象现在有了两个引用：一个位于ServiceManager中，一个位于发起请求的Client中。如果接下来有更多的Client请求该Binder，系统中就会有更多的引用指向该Binder，就象java里一个对象存在多个引用一样。而且类似的这些指向Binder的引用是强类型，从而确保只要有引用Binder实体就不会被释放掉。通过以上过程可以看出，ServiceManager象个火车票代售点，收集了所有火车的车票，可以通过它购买到乘坐各趟火车的票-得到某个Binder的引用。</p>
 <h3 id="匿名-Binder"><a href="#匿名-Binder" class="headerlink" title="匿名 Binder"></a>匿名 Binder</h3><p>&#160; &#160; &#160; &#160; 并不是所有Binder都需要注册给ServiceManager广而告之的。Server端可以通过已经建立的Binder连接将创建的Binder实体传给Client，当然这条已经建立的Binder连接必须是通过实名Binder实现。如果我们是从事application开发，跨进程的自己手写AIDL文件，或者相同进程的bindService自己添加一个继承Binder的子类，那么这个Binder没有向ServiceManager注册名字，所以是个匿名Binder。Client将会收到这个匿名Binder的引用，通过这个引用向位于Server中的实体发送请求。匿名Binder为通信双方建立一条私密通道，只要Server没有把匿名Binder发给别的进程，别的进程就无法通过穷举或猜测等任何方式获得该Binder的引用，向该Binder发送请求。</p>
 <hr>
-<p>好了，理论性的科普先到这里，再继续下去估计要扑（pu）街（gai）了 =。=，先来美图放松放松。<br><img src="http://o7xxrho8u.bkt.clouddn.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E8%B7%A8%E8%BF%9B%E7%A8%8B%E9%80%9A%E4%BF%A1%E6%9C%BA%E5%88%B6Binder%E7%AE%80%E8%A6%81%E5%88%86%E6%9E%90/meizi.jpg" alt="妹子图"></p>
+<p>好了，理论性的科普先到这里，再继续下去估计要扑（pu）街（gai）了 =。=，先来美图放松放松。<br><img src="http://images.windrunnerlihuan.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Android%E8%B7%A8%E8%BF%9B%E7%A8%8B%E9%80%9A%E4%BF%A1%E6%9C%BA%E5%88%B6Binder%E7%AE%80%E8%A6%81%E5%88%86%E6%9E%90/meizi.jpg" alt="妹子图"></p>
 <h1 id="Binder机制跨进程原理"><a href="#Binder机制跨进程原理" class="headerlink" title="Binder机制跨进程原理"></a>Binder机制跨进程原理</h1><p>&#160; &#160; &#160; &#160; 上文给出了Binder的通信模型，指出了通信过程的四个角色: Client, Server, ServiceManager, driver; 但是我们仍然不清楚<code>Client到底是如何与Server完成通信的</code>,因为实现细节我们还没讲。</p>
 <p>&#160; &#160; &#160; &#160; 虽然Binder用到了面向对象的思想，但并不限制应用程序一定要使用面向对象的语言，无论是C语言还是C++语言都可以很容易的使用Binder来通信。例如尽管Android主要使用java/C++，象ServiceManager这么重要的进程就是用C语言实现的。</p>
 <p>&#160; &#160; &#160; &#160; Binder本质上只是一种底层通信方式，和具体服务没有关系。为了提供具体服务，Server必须提供一套接口函数以便Client通过远程访问使用各种服务。这时通常采用Proxy设计模式：将接口函数定义在一个抽象类中，Server和Client都会以该抽象类为基类实现所有接口函数，所不同的是Server端是真正的功能实现，而Client端是对这些函数远程调用请求的包装。如何将Binder和Proxy设计模式结合起来是应用程序实现面向对象Binder通信的根本问题。</p>
@@ -862,7 +862,7 @@
         <div class="copyright" >
   
   &copy;  2016 - 
-  <span itemprop="copyrightYear">2018</span>
+  <span itemprop="copyrightYear">2019</span>
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>
