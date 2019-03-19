@@ -1,0 +1,2115 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+  <meta name="google-site-verification" content="3Gndr5oonivG3ajghQU1MgL0IHoMHT4esMsPKjnbeis" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+    
+    
+    <link href="//fonts.lug.ustc.edu.cn/css?family=Monda:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Lobster Two:300,300italic,400,400italic,700,700italic|PT Mono:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Chromium,启动," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="April is your lie" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/images/favicon.ico?v=5.1.1" />
+
+
+
+
+
+
+<meta name="description" content="&amp;#160; &amp;#160; &amp;#160; &amp;#160;深思熟虑之后，觉得有必要学一下UI渲染技术和JS引擎技术，为以后的跨平台实现打下坚实的基础。&amp;#160; &amp;#160; &amp;#160; &amp;#160;本篇是一篇科普，将打开苦逼又刺激的Chromium学习之路。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Chromium学习之路-启动篇">
+<meta property="og:url" content="http://windrunnerlihuan.com/2019/03/19/Chromium学习之路-启动篇/index.html">
+<meta property="og:site_name" content="April is your lie">
+<meta property="og:description" content="&amp;#160; &amp;#160; &amp;#160; &amp;#160;深思熟虑之后，觉得有必要学一下UI渲染技术和JS引擎技术，为以后的跨平台实现打下坚实的基础。&amp;#160; &amp;#160; &amp;#160; &amp;#160;本篇是一篇科普，将打开苦逼又刺激的Chromium学习之路。">
+<meta property="og:image" content="http://images.windrunnerlihuan.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Chromium%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF-%E5%90%AF%E5%8A%A8%E7%AF%87/browserapi.jpg">
+<meta property="og:image" content="http://images.windrunnerlihuan.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Chromium%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF-%E5%90%AF%E5%8A%A8%E7%AF%87/handshake.jpg">
+<meta property="og:image" content="http://windrunnerlihuan.com/multiprocess.jpg">
+<meta property="og:image" content="http://images.windrunnerlihuan.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Chromium%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF-%E5%90%AF%E5%8A%A8%E7%AF%87/processcomm.jpg">
+<meta property="og:image" content="http://windrunnerlihuan.com/dns.jpg">
+<meta property="og:image" content="http://windrunnerlihuan.com/Omnibox.png">
+<meta property="og:image" content="http://images.windrunnerlihuan.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Chromium%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF-%E5%90%AF%E5%8A%A8%E7%AF%87/flags.jpg">
+<meta property="og:image" content="http://images.windrunnerlihuan.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Chromium%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF-%E5%90%AF%E5%8A%A8%E7%AF%87/dnsget.jpg">
+<meta property="og:image" content="http://images.windrunnerlihuan.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Chromium%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF-%E5%90%AF%E5%8A%A8%E7%AF%87/dnshost.jpg">
+<meta property="og:image" content="http://windrunnerlihuan.com/socket open.jpg">
+<meta property="og:image" content="http://windrunnerlihuan.com/pretender.jpg">
+<meta property="og:image" content="http://windrunnerlihuan.com/maize.jpg">
+<meta property="og:image" content="http://windrunnerlihuan.com/browerapi.jpg">
+<meta property="og:image" content="http://windrunnerlihuan.com/handshake">
+<meta property="og:image" content="http://images.windrunnerlihuan.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Chromium%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF-%E5%90%AF%E5%8A%A8%E7%AF%87/multiprocess.jpg">
+<meta property="og:image" content="http://windrunnerlihuan.com/processcomm.jpg">
+<meta property="og:image" content="http://images.windrunnerlihuan.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Chromium%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF-%E5%90%AF%E5%8A%A8%E7%AF%87/dns.jpg">
+<meta property="og:image" content="http://images.windrunnerlihuan.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Chromium%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF-%E5%90%AF%E5%8A%A8%E7%AF%87/Omnibox.png">
+<meta property="og:image" content="http://windrunnerlihuan.com/flag.jpg">
+<meta property="og:image" content="http://windrunnerlihuan.com/dnsget.jpg">
+<meta property="og:image" content="http://windrunnerlihuan.com/dnshost.jpg">
+<meta property="og:image" content="http://images.windrunnerlihuan.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Chromium%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF-%E5%90%AF%E5%8A%A8%E7%AF%87/socketopen.jpg">
+<meta property="og:image" content="http://images.windrunnerlihuan.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Chromium%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF-%E5%90%AF%E5%8A%A8%E7%AF%87/prerender.jpg">
+<meta property="og:image" content="http://images.windrunnerlihuan.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Chromium%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF-%E5%90%AF%E5%8A%A8%E7%AF%87/meizi.jpeg">
+<meta property="og:updated_time" content="2019-03-19T19:35:11.716Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Chromium学习之路-启动篇">
+<meta name="twitter:description" content="&amp;#160; &amp;#160; &amp;#160; &amp;#160;深思熟虑之后，觉得有必要学一下UI渲染技术和JS引擎技术，为以后的跨平台实现打下坚实的基础。&amp;#160; &amp;#160; &amp;#160; &amp;#160;本篇是一篇科普，将打开苦逼又刺激的Chromium学习之路。">
+<meta name="twitter:image" content="http://images.windrunnerlihuan.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Chromium%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF-%E5%90%AF%E5%8A%A8%E7%AF%87/browserapi.jpg">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    sidebar: {"position":"right","display":"post","offset":12,"offset_float":0,"b2t":false,"scrollpercent":false},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://windrunnerlihuan.com/2019/03/19/Chromium学习之路-启动篇/"/>
+
+
+
+
+
+  <title>Chromium学习之路-启动篇 | April is your lie</title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-100464707-1', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?bb4df6db80a16ce54c1fb2c6e1767e18";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+  <script type="text/javascript">
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//tajs.qq.com/stats?sId=62459705";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+<script>
+  	var _mtac = {};
+  	(function() {
+  		var mta = document.createElement("script");
+  		mta.src = "https://pingjs.qq.com/h5/stats.js?v2.0.4";
+  		mta.setAttribute("name", "MTAH5");
+  		mta.setAttribute("sid", "500465801");
+
+  		var s = document.getElementsByTagName("script")[0];
+  		s.parentNode.insertBefore(mta, s);
+  	})();
+</script>
+
+
+
+
+  <div style="display: none;">
+    <script src="//s95.cnzz.com/z_stat.php?id=1262111741&web_id=1262111741" language="JavaScript"></script>
+  </div>
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-right page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">April is your lie</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <h1 class="site-subtitle" itemprop="description">四月是你的谎言</h1>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off"
+             placeholder="搜索..." spellcheck="false"
+             type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://windrunnerlihuan.com/2019/03/19/Chromium学习之路-启动篇/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="windrunnerlihuan">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="April is your lie">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">Chromium学习之路-启动篇</h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-03-19T17:58:11+08:00">
+                2019-03-19
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Chromium/" itemprop="url" rel="index">
+                    <span itemprop="name">Chromium</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+             <span id="/2019/03/19/Chromium学习之路-启动篇/" class="leancloud_visitors" data-flag-title="Chromium学习之路-启动篇">
+               <span class="post-meta-divider">|</span>
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               
+                 <span class="post-meta-item-text">阅读次数 </span>
+               
+                 <span class="leancloud-visitors-count"></span>
+             </span>
+          
+
+          
+            <span class="post-meta-divider">|</span>
+            <span class="page-pv"><i class="fa fa-file-o"></i>
+            <span class="busuanzi-value" id="busuanzi_value_page_pv" ></span>
+            </span>
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>&#160; &#160; &#160; &#160;深思熟虑之后，觉得有必要学一下UI渲染技术和JS引擎技术，为以后的跨平台实现打下坚实的基础。<br>&#160; &#160; &#160; &#160;本篇是一篇科普，将打开苦逼又刺激的Chromium学习之路。<br><a id="more"></a></p>
+<h1 id="Google-Chrome的历史和指导性原则"><a href="#Google-Chrome的历史和指导性原则" class="headerlink" title="Google Chrome的历史和指导性原则"></a>Google Chrome的历史和指导性原则</h1><p>&#160; &#160; &#160; &#160;Google Chrome最初是2008年下半年作为Windows平台上的一个beta版本发布的。Google还将自己编写的Chrome在BSD许可下进行了开源——称为Chromium。在很多人看来，这一串事件的发生颇为意外：浏览器战争要再次重启了吗？Google真的能做的更好吗？</p>
+<blockquote>
+<p>&#160; &#160; &#160; &#160;“它非常优秀让我不得不改变主意……”。埃里克•施密特在谈到他一开始反对开发Google Chrome时这样说道。</p>
+</blockquote>
+<p>&#160; &#160; &#160; &#160;答案是，他们能。时至今日，Chrome已经成为使用最广泛的网络浏览器（根据StatCounter的数据，市场份额超过35%），并且兼容Windows、Linux、OS X、Chrome OS多种操作系统，还包括Android和iOS等移动平台。显然，Chrome的特性和功能很对用户的胃口，其很多创新之举还被其他流行的浏览器所吸收和学习。</p>
+<p>&#160; &#160; &#160; &#160;有一本解释Google Chrome的思想和创新的<a href="https://www.google.com/googlebooks/chrome/med_00.html" target="_blank" rel="external">原版38页漫画书</a>，它很好地概括了Chrome受欢迎背后的思路和设计过程。但这只是开始。最初推动着Chrome开发的那些核心原则仍然是它持续优化的指导性原则：</p>
+<ul>
+<li>快速：做出<strong>最快</strong>的浏览器</li>
+<li>安全：为用户提供<strong>最安全</strong>的环境</li>
+<li>稳定：提供<strong>有弹性且稳定</strong>的网络应用平台</li>
+<li>简单：技术精妙蕴含在<strong>简单的用户体验中</strong></li>
+</ul>
+<p>&#160; &#160; &#160; &#160;正如开发团队所看到的那样，我们今天所使用的很多网站都不再仅仅是网页，而是应用程序。这些越来越有野心的应用需要速度、安全和稳定。这些方面，每个都值得单独成文来介绍，不过，因为我们的主题是性能，我们将重点介绍性能。</p>
+<h1 id="性能的多个方面"><a href="#性能的多个方面" class="headerlink" title="性能的多个方面"></a>性能的多个方面</h1><p>&#160; &#160; &#160; &#160;现代浏览器是一个平台，就像你的操作系统一样，Google Chrome也遵循这样的设计理念。在Google Chrome之前，所有主流浏览器都是单进程的应用程序。所有打开的页面共享同一地址空间，争夺同一资源。任何页面或浏览器本身出现bug，整体体验都可能被破坏。</p>
+<p>&#160; &#160; &#160; &#160;与此相反，Chrome运行于多进程模型，这种模型可以保持进程和内存的隔离性，每个标签页都能拥有一个严密的安全沙盒。随着多核架构的流行，隔绝进程并使各个打开的标签页免受其他出错页面的影响，单是这一点就能证明Chrome在浏览器的竞争中具有显著的性能优势。实际上，我们会发现绝大多数其他浏览器都纷纷效仿Chrome，或者开始转向类似的架构。</p>
+<p>&#160; &#160; &#160; &#160;分派进程之后，一个Web程序的执行主要包括三项任务：获取资源，页面布局与呈现，以及执行JavaScript。呈现和脚本执行步骤遵循单线程、交错执行的模型——无法对所得到的DOM（文档对象模型）进行并发式的修改。原因之一是JavaScript本身就是单线程的语言。所以，无论是对于应用程序的开发者还是浏览器的开发者来说，优化呈现和脚本执行运行时的协作方式，是极其重要的。</p>
+<p>&#160; &#160; &#160; &#160;在呈现这一步，Chrome使用的是Blink，这是一种快速、开源、遵守良好标准的布局引擎。在JavaScript这一步，Chrome自带了一个高度优化的V8 JavaScript运行时，它也作为单独开源项目发布，并已经被其他很多流行的项目所吸纳，例如Node.js的运行时。但是如果浏览器的网络连接是阻塞的（等待资源到来），那么优化V8 JavaScript执行或者Blink解析和呈现管道都不会有太大作用。</p>
+<p>&#160; &#160; &#160; &#160;浏览器优化各项网络资源的次序、优先级和延迟的能力对整体用户体验是最关键的影响因素。你可能没有注意到，毫不夸张地说，Chrome的网络栈每天都会变得更加聪明，尝试着隐藏或减少各项资源的延迟开销：它会学习可能出现的DNS查询，会记住网络的拓扑结构，会预连接可能的目标站点，等等。从外部看来，它展示出的是一种简单的资源获取机制，但是从内部看来则是对如何优化网络性能并带给用户最佳体验的一次详细而精彩的案例学习。</p>
+<p>&#160; &#160; &#160; &#160;让我们进入正题吧。</p>
+<h1 id="什么是现代Web应用？"><a href="#什么是现代Web应用？" class="headerlink" title="什么是现代Web应用？"></a>什么是现代Web应用？</h1><p>&#160; &#160; &#160; &#160;在我们接触如何优化网络交互的具体细节之前，先来了解我们所面对的这个问题的发展趋势和背景。换句话说就是，“现代网页或者应用是什么样的？”</p>
+<p>&#160; &#160; &#160; &#160;<a href="https://httparchive.org" target="_blank" rel="external">HTTP Archive</a>目记录了网络的构造过程，可以帮助我们回答这个问题。这个项目并不是为了爬取网页内容，而是周期性地爬取访问量最大的站点，记录和加总各个站点所用资源数量、内容类型、标头和其他元数据的分析数据。2013年1月的数据，可能会令你吃惊。访问量最大前30万个网络站点来看，一个页面平均：</p>
+<ul>
+<li>为1280KB大小</li>
+<li>由88个资源组成</li>
+<li>连接15个以上不同的主机</li>
+</ul>
+<p>&#160; &#160; &#160; &#160;好好琢磨一下。大小平均超过1MB，包含88个如图片、JavaScript、CSS这样的资源，从15个不同的自有和第三方主机传送出来。而且，这些数字在过去几年还在<a href="https://httparchive.org/reports/state-of-the-web" target="_blank" rel="external">持续增长</a>，丝毫没有减缓的迹象。这说明，我们所开发的网络应用正变得越来越大，越来越有野心。</p>
+<p>&#160; &#160; &#160; &#160;根据HTTP Archive的数据，做个简单的算术，我们可知每个资源平均大小为15KB（1280KB/88项资源），这意味着浏览器中大多数的网络传输是短小但突发的。这就造成了一些问题，因为基础传输（TCP）是针对大型、流式下载进行优化的。让我们深入地看一看这些网络请求。</p>
+<h1 id="线上资源请求的生命周期"><a href="#线上资源请求的生命周期" class="headerlink" title="线上资源请求的生命周期"></a>线上资源请求的生命周期</h1><p>&#160; &#160; &#160; &#160;W3C的<a href="https://www.w3.org/TR/navigation-timing/" target="_blank" rel="external">浏览时序规范</a>（Navigation Timing specification）提供了一个浏览器API，让我们可以看到浏览器中每项请求的生命周期背后的时序和性能数据。让我们看看这些组成部分，每一块都是影响最佳用户体验的关键点：</p>
+<p><img src="http://images.windrunnerlihuan.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Chromium%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF-%E5%90%AF%E5%8A%A8%E7%AF%87/browserapi.jpg" alt="浏览时序图"></p>
+<p>&#160; &#160; &#160; &#160;对于一个网络资源的URL，浏览器首先会检查其本地缓存和应用程序缓存。如果你此前获取过该资源，并且提供了适当的<a href="https://developers.google.com/speed/docs/insights/LeverageBrowserCaching" target="_blank" rel="external">缓存标头</a>（<code>Expires, Cache-Control</code>等），则我们可能被允许使用本地副本来响应原请求——最快的请求就是不请求。或者，如果我们需要重新校验该资源（如果资源已过期），或是我们根本从未获取过该资源，那么就必须发起一个高开销的网络请求。</p>
+<p>&#160; &#160; &#160; &#160;有了主机名称和资源路径，Chrome首先检查现有的已开启连接中是否有可以重用的——socket按照{<code>scheme, host, port</code>}的格式储存在池中。或者，如果你已经配置了<a href="https://en.wikipedia.org/wiki/Proxy_auto-config" target="_blank" rel="external">代理</a>，或指定了代理自动配置脚本（PAC），那么Chrome就会通过适当的代理来检查连接。PAC脚本允许基于URL的不同代理或其他指定规则，它们都可以有自己的socket池。最后，如果上述条件都不满足，则请求必须通过将主机名解析为IP地址的方式发起，也称为DNS查询。</p>
+<p>&#160; &#160; &#160; &#160;如果幸运的话，主机名可能已经在缓存当中了，此时通常只需要一次快速的系统调用就得到响应。如若不然，就必须调度一个DNS查询才能继续下去。DNS查询耗费的时间由网络提供商、站点的热门程度、主机名可能存在过渡缓存中的概率以及该域名的权威服务器的响应时间所决定。换句话说，影响变量有很多，但是耗费数百毫秒来进行一次DNS查询也并非罕见。天啊。</p>
+<p><img src="http://images.windrunnerlihuan.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Chromium%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF-%E5%90%AF%E5%8A%A8%E7%AF%87/handshake.jpg" alt="三次握手"></p>
+<p>&#160; &#160; &#160; &#160;得到了解析后的IP地址，Chrome现在可以打开一个新的与目标站点的TCP连接，这意味着我们需要进行“三次握手”：<code>SYN &gt; SYN-ACK &gt; ACK</code>。这一交换过程又为每个新的TCP连接增加了一个往返延迟——此处没有捷径可走。根据客户端与服务器的距离和所选定的路由路径不同，这可能产生几十、几百甚至几千毫秒的延迟。这些工作和延迟是甚至还没有一个字节的应用程序数据开始传输之前就发生的。</p>
+<p>&#160; &#160; &#160; &#160;完成了TCP握手之后，如果我们连接的是安全站点（HTTPS），那么还要进行SSL握手。这又增加了客户端和服务器之间两个往返延迟。如果SSL会话进行了缓存，那么可以“免去”其中一次额外的往返延迟。</p>
+<p>&#160; &#160; &#160; &#160;最后，Chrome要调度HTTP请求（上图中<code>requestStart</code>）。服务器接收到请求之后，会处理该请求，然后通过数据流把响应数据返给客户端。这至少会产生一个往返延迟，还要算上服务器的处理时间。正常情况下这样就结束了，但如果真正的响应是一个HTTP重定向，那么我们可能还需要把整个过程再重走一遍。你的页面上有不必要的重定向吗？那你可能需要重新考虑这个决定了。</p>
+<p>&#160; &#160; &#160; &#160;你算过这所有的延迟时间了吗？为了便于说明问题，我们假设一个典型的宽带连接的最坏情况：没有本地缓存、相对较快的DNS查询速度（50ms）、TCP握手、SSL协商、相对较快的服务器响应时间（100ms）、80ms的往返延迟（这是美国大陆往返延迟的平均时间）：</p>
+<ul>
+<li>DNS需要50ms</li>
+<li>TCP握手需要80ms（一次往返延迟）</li>
+<li>SSL握手需要160ms（两次往返延迟）</li>
+<li>请求传输到服务器需要40ms</li>
+<li>服务器处理需要100ms</li>
+<li>服务器返回响应需要40ms</li>
+</ul>
+<p>&#160; &#160; &#160; &#160;这样算下来，单次请求需要470毫秒，与服务器真正处理请求的时间相比，其中80%都是网络延迟开销。实际上，470毫秒都算是一个乐观的估计了：</p>
+<ul>
+<li>如果服务器响应不匹配初始的TCP拥塞窗口（4-15KB），还会额外产生一个或多个往返延迟。【注1】</li>
+<li>如果我们需要获取缺失证书或者需要执行在线证书状态检查（OCSP），SSL延迟得还会更厉害，因为这两种情况都需要一次全新的TCP连接，这又增加了成百上千毫秒的额外延迟。</li>
+</ul>
+<h1 id="“足够快”有多快？"><a href="#“足够快”有多快？" class="headerlink" title="“足够快”有多快？"></a>“足够快”有多快？</h1><p>&#160; &#160; &#160; &#160;DNS、握手、往返延迟的网络开销是决定前例中总时间的因素——服务器响应时间仅占总延迟的20%。但是，从大局看，这些延迟重要吗？如果你正在阅读本文，你很可能已经知道了答案：不但有影响，而且影响很大。</p>
+<p>&#160; &#160; &#160; &#160;过去一些<a href="https://www.nngroup.com/articles/response-times-3-important-limits/" target="_blank" rel="external">用户体验的研究</a>描述了我们作为用户对应用程序（在线或离线）的响应速度作何预期：</p>
+<table>
+<thead>
+<tr>
+<th>Delay</th>
+<th>User Reaction</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0 - 100 ms</td>
+<td>Instant</td>
+</tr>
+<tr>
+<td>100 - 300 ms</td>
+<td>Small perceptible delay</td>
+</tr>
+<tr>
+<td>100 - 300 ms</td>
+<td>Small perceptible delay</td>
+</tr>
+<tr>
+<td>300 - 1000 ms</td>
+<td>Machine is working</td>
+</tr>
+<tr>
+<td>1 s+</td>
+<td>Mental context switch</td>
+</tr>
+<tr>
+<td>10 s+</td>
+<td>I’ll come back later…</td>
+</tr>
+</tbody>
+</table>
+<p>&#160; &#160; &#160; &#160;上表还能够解释网络性能领域中一条不成文的经验法则：如果不能直接呈现页面，至少也要在250毫秒以内提供视觉上的反馈以保持用户不会失去兴趣。其他因素也会影响速度。对Google、Amazon、Microsoft和数千个其他站点的研究显示，额外的延迟会直接影响站点的获利能力：速度快的网站能生成更多的页面请求，用户参与度也更高，从而转化率也更高。</p>
+<p>&#160; &#160; &#160; &#160;所以，我们知道了，最佳的延迟应该控制在250毫秒，但我们在前例中看到，DNS查询、TCP和SSL握手再加上请求传递的时间总共有370毫秒。我们已经超出50%了，这还是我们没算上服务器处理时间的情况！</p>
+<p>&#160; &#160; &#160; &#160;所以，我们知道了，最佳的延迟应该控制在250毫秒，但我们在前例中看到，DNS查询、TCP和SSL握手再加上请求传递的时间总共有370毫秒。我们已经超出50%了，这还是我们没算上服务器处理时间的情况！</p>
+<p>&#160; &#160; &#160; &#160;对于大多数用户乃至一些网络开发者来说，DNS、TCP和SSL的延迟是完全透明的（无须关心的），它们是在网络层协商的，而我们极少深入到甚至不会去想这个层面的事。但是，这其中的每一步对整体用户体验都是非常关键的，因为每增加额外的网络请求都会增加几十或几百毫秒的延迟。这就是为什么Chrome的网络栈要比一个简单的socket处理器复杂的多得多。</p>
+<p>&#160; &#160; &#160; &#160;找到了症结所在，我们继续来看一些实现细节。</p>
+<h1 id="Chrome的网络栈概览"><a href="#Chrome的网络栈概览" class="headerlink" title="Chrome的网络栈概览"></a>Chrome的网络栈概览</h1><h2 id="多进程架构"><a href="#多进程架构" class="headerlink" title="多进程架构"></a>多进程架构</h2><p>&#160; &#160; &#160; &#160;Chrome的多进程架构对各个网络请求如何在浏览器中进行处理具有重大影响。在底层，Chrome实际上支持<a href="http://www.chromium.org/developers/design-documents/process-models" target="_blank" rel="external">四种不同的执行模型</a>用于确定如何进行进程的分配。</p>
+<p>&#160; &#160; &#160; &#160;默认情况下，桌面上的Chrome浏览器使用“站点对应进程”模型，将不同站点隔离开来，而把同一站点的所有实例分组在同一进程中。不过为了简便起见，我们假设最简单的情况：每个打开的标签页对应一个单独的进程。从网络性能的角度看，这种差别并不重要，但“标签页对应进程”模型要容易理解得多。</p>
+<p><img src="multiprocess.jpg" alt="多进程架构"></p>
+<p>&#160; &#160; &#160; &#160;这个架构为每个标签页配给一个专用的呈现进程。每个呈现进程包含Blink布局引擎和V8 JavaScript引擎，配合上一些胶水代码把这几个部分（再加上其他一些部分）联系起来。【注2】</p>
+<p>&#160; &#160; &#160; &#160;这些呈现进程的每一个都在一个沙盒环境内执行，这个环境对用户计算机——包括网络，只有有限的访问权限。要获得访问这些资源的权限，每个呈现进程要与主浏览器进程（或称为内核进程）进行通信，由内核进程负责管理每个呈现器的安全和权限策略。</p>
+<h2 id="进程间通信和多进程资源加载"><a href="#进程间通信和多进程资源加载" class="headerlink" title="进程间通信和多进程资源加载"></a>进程间通信和多进程资源加载</h2><p>&#160; &#160; &#160; &#160;Chrome中呈现器和内核进程之间的所有通信都是通过进程间通信（IPC）完成的。在Linux和OS X上使用的是<code>socketpair</code>，这个方法提供一个命名的管道传输进行异步通信。来自呈现器的每条消息经过序列化处理再传给专用的I/O线程，再由它将其派发给主浏览器进程。在接收端，内核进程提供一个过滤接口，允许Chrome拦截应该由网络栈处理的资源IPC请求（参见<a href="https://bugs.chromium.org/p/chromium/adminIntro?q=resourcemessagefilter" target="_blank" rel="external">ResourceMessageFilter</a>）。</p>
+<p><img src="http://images.windrunnerlihuan.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Chromium%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF-%E5%90%AF%E5%8A%A8%E7%AF%87/processcomm.jpg" alt="进程间通信"></p>
+<p>&#160; &#160; &#160; &#160;这种架构的一个优点是，所有的资源请求都完全在I/O线程上处理，用户接口产生的活动与网络事件之间互不干扰。资源过滤器运行在浏览器进程中的I/O线程中，截获资源请求消息，并将其转发给浏览器进程中的ResourceDispatcherHost【注3】单例。</p>
+<p>&#160; &#160; &#160; &#160;这个单例接口允许浏览器控制各个呈现器的网络访问权限，它还能实现高效和一致性的资源共享。一些例子包括：</p>
+<ul>
+<li>socket池和连接限制：浏览器能够对每个profile、代理和<code>{scheme, host, port}</code>组所对应的已开启socket数量进行限制（分别为256、32和6个）。注意，按照这个规则，同一<code>{host, port}</code>最多可以进行6个HTTP和6个HTTPS连接。</li>
+<li>socket重用：持久性的TCP连接会在请求处理之后在socket池中保留一段时间，以供连接重用，这样能够避免发起新的连接额外带来的DNS、TCP和SSL（如有需要）的启动开销。</li>
+<li>socket后期绑定：当socket准备好分派应用程序请求时，请求才与基础的TCP连接绑定起来，这样一来可以获得更好的请求次序优化（例如：当socket在连接中时，更高优先级的请求到达），更大的流量（例如：在现有socket可用而新连接正在打开时，重用“刚使用过”的TCP连接）以及TCP预连接的通用机制和其他一些优化。</li>
+<li>一致的会话状态：所有呈现进程的身份鉴证、cookies和缓存数据都是共享的。</li>
+<li>全局性资源和网络优化：浏览器可以从所有呈现进程和未完成请求的全局做出决策。例如，对前景标签页发起的请求赋予网络优先级。</li>
+<li>预测性优化：通过观测所有的网络流量情况，Chrome能够构建和修正预测性模型提升性能。</li>
+</ul>
+<p>&#160; &#160; &#160; &#160;就呈现进程而言，它只是通过IPC发送资源请求消息，这个请求被打上对应浏览器进程的唯一请求ID，剩下的部分都是由浏览器内核进程处理的。</p>
+<h2 id="跨平台资源获取"><a href="#跨平台资源获取" class="headerlink" title="跨平台资源获取"></a>跨平台资源获取</h2><p>&#160; &#160; &#160; &#160;跨Linux、Windows、OS X、Chrome OS、Android和iOS等不同平台的可移植性是Chrome网络栈实现中的一个重要问题。要解决这个挑战性的问题，网络栈被实现为一个几乎单线程（有单独的缓存和代理线程）的跨平台库，使Chrome可以重用相同的基础设施并提供相同的性能优化水平，更有机会进行跨平台的优化。</p>
+<p>&#160; &#160; &#160; &#160;当然，所有的代码都是开源的，可以在<code>src/net</code><a href="https://cs.chromium.org/#chromium/src/net/&amp;ct=rc&amp;cd=1&amp;q=src.net&amp;sq=package:chromium" target="_blank" rel="external">子目录</a>中找到。我们不打算详细剖析每个部分，但是代码格局本身就带有很大的信息量，告诉我们它的功能和结构。下表中是一些例子。</p>
+<table>
+<thead>
+<tr>
+<th>组件</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>net/android</td>
+<td>对Android运行时的绑定。</td>
+</tr>
+<tr>
+<td>net/base</td>
+<td>常用网络工具，如主机解析、cookies、网络变化检测和SSL证书管理。</td>
+</tr>
+<tr>
+<td>net/disk_cache</td>
+<td>实现网络资源的磁盘和内存缓存。</td>
+</tr>
+<tr>
+<td>net/dns</td>
+<td>实现异步DNS解析器。</td>
+</tr>
+<tr>
+<td>net/http</td>
+<td>实现HTTP协议。</td>
+</tr>
+<tr>
+<td>net/proxy</td>
+<td>代理（SOCKS和HTTP）配置、解析和脚本获取等。</td>
+</tr>
+<tr>
+<td>net/socket</td>
+<td>TCP socket、SSL流和socket池的跨平台实现。</td>
+</tr>
+<tr>
+<td>net/spdy</td>
+<td>实现SPDY协议。</td>
+</tr>
+<tr>
+<td>net/url_request</td>
+<td>实现URLRequest、URLRequestContext和URLRequestJob。</td>
+</tr>
+<tr>
+<td>net/websockets</td>
+<td>实现WebSockets协议。</td>
+</tr>
+</tbody>
+</table>
+<p>&#160; &#160; &#160; &#160;这些组件的代码都让人忍不住想好好读一读，它们文档完备，每个组件你都能找到很多的单元测试。</p>
+<h2 id="移动平台的架构和性能"><a href="#移动平台的架构和性能" class="headerlink" title="移动平台的架构和性能"></a>移动平台的架构和性能</h2><p>&#160; &#160; &#160; &#160;移动端浏览器的使用正在以指数级增长，即使按照保守预测，它也会在不远的将来完全取代桌面浏览。所以不言而喻，提供优化的移动端访问体验一直是Chrome团队的首要任务之一。在2012年初，<a href="https://www.google.com/intl/en/chrome/browser/mobile/android.html" target="_blank" rel="external">Chrome for Android</a>发布，数月后<a href="https://www.google.com/intl/en/chrome/browser/mobile/ios.html" target="_blank" rel="external">Chrome for iOS</a>发布。</p>
+<p>&#160; &#160; &#160; &#160;于Chrome的移动端版本，第一件需要注意的事是，它并不是简单地直接在桌面浏览器基础上做一些调整——那样并不能得到最好的用户体验。从本质讲，移动端环境的资源更加局限，而且有很多根本不同的操作参数：</p>
+<ul>
+<li>桌面用户通过鼠标来浏览，可以进行窗口重叠，屏幕更大，几乎没有电量的约束，网络连接通常更稳定，能够访问更大的存储和内存池。</li>
+<li>移动端用户使用触摸和手势浏览，屏幕更小，受制于电池和电量的约束，往往使用流量计量的网络，本地存储和内存也较为有限。</li>
+</ul>
+<p>&#160; &#160; &#160; &#160;此外，并不存在一个“典型移动设备”。不同硬件能力的各种设备五花八门，要提供最佳性能，Chrome必须适应每种设备的操作约束条件。所幸，Chrome有多种执行模型正好可以实现这一点。</p>
+<p>&#160; &#160; &#160; &#160;在Android设备上，Chrome沿用了桌面版本中相同的多进程架构——即一个浏览器进程多个呈现进程。一个区别是，由于移动设备的内存有限，Chrome可能不能为每个开启的标签页运行专用的呈现器。Chrome是根据可用内存和设备的其他约束条件确定一个最优的呈现进程数量，由多个标签页共享呈现进程。</p>
+<p>&#160; &#160; &#160; &#160;当只有最少资源可用时，或者Chrome无法运行多进程时，它也可以切换回使用单进程、多线程处理模型。实际上，在iOS设备上，由于基础平台对沙盒的限制，它就是这样实现的——运行多线程的单一进程。</p>
+<p>&#160; &#160; &#160; &#160;网络性能方面呢？首先，Chrome在Android和iOS上使用和其他版本相同的网络栈。这样保证所有平台都有相同的网络优化，Chrome由此获得显著的性能优势。但是，如推测优化技术、socket超时设定与管理逻辑、缓存大小等这样的变量，是有所不同的并且会根据设备功能和所用网络时时调整。</p>
+<p>&#160; &#160; &#160; &#160;例如，为了节约电池电量，移动端Chrome可能选择使用闲置socket的懒惰关闭方式——即仅当开启新socket时才关闭旧的，这样来尽可能减少使用广播模组。同样地，因为预呈现（见下文）可能需要大量的网络和处理器资源，所以通常仅当用户使用WiFi时才进行。</p>
+<p>&#160; &#160; &#160; &#160;优化移动端浏览体验是Chrome开发团队的首要优先任务之一，我们可以期待在未来几个月或几年内看到新的改进。实际上，这是一个值得单独行文介绍的内容——或许在POSA系列的下一版中就会出现。</p>
+<h2 id="使用Chrome预测器进行推测优化"><a href="#使用Chrome预测器进行推测优化" class="headerlink" title="使用Chrome预测器进行推测优化"></a>使用Chrome预测器进行推测优化</h2><p>&#160; &#160; &#160; &#160;Chrome会随着你的使用变得越来越快。这项本领是借助<code>Predictor</code>单例对象实现的，它在浏览器内核进程中被实例化，其唯一职责是观测网络模式，并学习和预测未来可能出现的用户行为。<code>Predictor</code>处理信号的一些例子有：</p>
+<ul>
+<li>用户鼠标在一个链接上悬停，很好地预示了接下来可能发生的浏览行为，Chrome可以发起一个推测的目标主机DNS查询，还有可能开始TCP握手，以提升速度。待用户实际点击时，这平均还需要约200毫秒的时间，我们很有可能已经完成了DNS和TCP的步骤，这就为这次浏览减少了数百毫秒的额外延迟时间。</li>
+<li>在Omnibox（URL）栏中键入内容将触发高概率建议，也会触发DNS查询、TCP预连接甚至在隐藏的标签页中预呈现该页面。</li>
+<li>我们都有一个每天访问的喜爱站点清单。Chrome可以学习这些站点的子资源并推测性地进行预解析，甚至可能预获取这些资源来加速浏览。</li>
+</ul>
+<p>&#160; &#160; &#160; &#160;Chrome会随着你的使用，逐步学习网络的拓扑结构和你的浏览模式。如果顺利，它可以为每次浏览减少数百毫秒的延迟，让用户更加接近“页面即刻加载”的理想状态。为了实现这一点，Chrome使用了四个核心的优化技术，见下表：</p>
+<table>
+<thead>
+<tr>
+<th>技术</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>DNS预解析</td>
+<td>提前解析主机名，避免DNS延迟</td>
+</tr>
+<tr>
+<td>TCP预连接</td>
+<td>提前连接目标服务器，避免TCP握手的延迟</td>
+</tr>
+<tr>
+<td>资源预获取</td>
+<td>提前获取页面上的关键资源，加速页面的呈现</td>
+</tr>
+<tr>
+<td>页面预呈现</td>
+<td>提前获取整个页面的所有资源，用户触发时立即展示</td>
+</tr>
+</tbody>
+</table>
+<p>&#160; &#160; &#160; &#160;每个触发这些技术的决定都是在大量约束条件下优化判断的。毕竟，每一项优化都是推测性的，这意味着如果运用失当，可能会导致不必要任务和网络流量，更糟的是，还有可能对用户实际浏览行为的加载时间产生负面效果。</p>
+<p>&#160; &#160; &#160; &#160;Chrome是如何解决这个问题的呢？预测器会尽可能多地吸收信号，包括用户产生的行为、历史浏览数据以及来自呈现器和网络栈本身的信号。</p>
+<p>&#160; &#160; &#160; &#160;与<code>ResourceDispatcherHost</code>负责协调Chrome中所有网络活动的情况类似，<code>Predictor</code>对象也在Chrome内部创建了对一些用户和网络产生活动的过滤器：</p>
+<ul>
+<li>IPC频道过滤器，监测来自呈现进程的信号</li>
+<li>为各个请求添加ConnectInterceptor对象，这样它就能观测每个请求的流量模式并记录成功次数。</li>
+</ul>
+<p>&#160; &#160; &#160; &#160;下面是一个实际操作的例子，呈现进程可以发出一条带有以下任何提示的消息给浏览器进程，这些提示定义在ResolutionMotivation（url_info.h）中：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">enum</span> ResolutionMotivation &#123;</span><br><span class="line">  MOUSE_OVER_MOTIVATED,     <span class="comment">// Mouse-over initiated by the user.</span></span><br><span class="line">  OMNIBOX_MOTIVATED,        <span class="comment">// Omnibox suggested resolving this.</span></span><br><span class="line">  STARTUP_LIST_MOTIVATED,   <span class="comment">// This resource is on the top 10 startup list.</span></span><br><span class="line">  EARLY_LOAD_MOTIVATED,     <span class="comment">// In some cases we use the prefetcher to warm up</span></span><br><span class="line">                            <span class="comment">// the connection in advance of issuing the real</span></span><br><span class="line">                            <span class="comment">// request.</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// The following involve predictive prefetching, triggered by a navigation.</span></span><br><span class="line">  <span class="comment">// The referring_url_ is also set when these are used.</span></span><br><span class="line">  STATIC_REFERAL_MOTIVATED,  <span class="comment">// External database suggested this resolution.</span></span><br><span class="line">  LEARNED_REFERAL_MOTIVATED, <span class="comment">// Prior navigation taught us this resolution.</span></span><br><span class="line">  SELF_REFERAL_MOTIVATED,    <span class="comment">// Guess about need for a second connection.</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// &lt;snip&gt; ...</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>&#160; &#160; &#160; &#160;收到这样的信号后，预测器的目标是评价其成功的可能性，然后在资源可用的情况下触发相应行为。每条提示可能都有一个成功概率、一个优先级和一个过期时间戳，这组数据可用于维护一个推测优化的内部优先级队列。最后，对于每条从此队列发出的请求，预测器还能够跟踪记录其成功率，这又被用于未来决策的优化中。</p>
+<h2 id="Chrome网络架构概要"><a href="#Chrome网络架构概要" class="headerlink" title="Chrome网络架构概要"></a>Chrome网络架构概要</h2><ul>
+<li>Chrome使用多进程架构，将呈现进程与浏览器进程隔离开。</li>
+<li>Chrome保持资源调度器的一个单一实例，它被所有呈现进程所共享，运行在浏览器内核进程中。</li>
+<li>网络栈是一个跨平台、几乎单线程的库。</li>
+<li>网络栈使用非阻塞操作来管理所有网络操作。</li>
+<li>共享的网络栈可实现高效的资源次序优先化、重用并使浏览器可以在所有运行的进程之间进行全局性的优化。</li>
+<li>各个呈现进程通过IPC与资源调度器通信。</li>
+<li>资源调度器通过自定义的IPC过滤器截获资源请求。</li>
+<li>预测器截获资源请求和响应通信来学习和优化未来的网络请求。</li>
+<li>预测器根据所学的浏览模式可能推测性地安排DNS、TCP甚至资源请求的计划，当用户实际发生行为时节省数百毫秒的时间。</li>
+</ul>
+<h1 id="浏览器会话的生命周期"><a href="#浏览器会话的生命周期" class="headerlink" title="浏览器会话的生命周期"></a>浏览器会话的生命周期</h1><p>&#160; &#160; &#160; &#160;有了对Chrome网络栈架构的一个概括性认识后，我们接下来仔细研究一下浏览器内部实施的各种面向用户的优化。具体而言，假设我们刚创建了一个新的Chrome profile，准备好开始了。</p>
+<h2 id="优化冷启动体验"><a href="#优化冷启动体验" class="headerlink" title="优化冷启动体验"></a>优化冷启动体验</h2><p>&#160; &#160; &#160; &#160;当你第一次加载浏览器时，它对你的喜爱站点和浏览模式一无所知。但是，我们中的很多人都会在浏览器冷启动后做同样的事：我们会浏览我们的电邮收件箱、喜爱的新闻站点、社交网站、内网入口等等。具体的站点可能因人而异，但是这些会话的相似之处使Chrome的Predictor可以加速你的冷启动过程。</p>
+<p>&#160; &#160; &#160; &#160;Chrome会记住用户在浏览器启动后前10个最有可能访问的主机名——注意这并不是前10个全局目标站点，而特指全新开启浏览器之后的目标站点。浏览器加载时，Chrome可以为这些可能的目标站点触发DNS预获取行为。如果你对此感兴趣，可以打开一个新标签页浏览地址<code>chrome://dns</code>，看一看你自己的启动主机名列表。在页面顶端，你会找到你profile的前10个最可能启动站点。</p>
+<p><img src="dns.jpg" alt="启动DNS"></p>
+<p>截图是我的Chrome profile的例子。我通常是如何开始浏览的呢，如果我在写文章，比如现在这一篇，可能会频繁访问Google Docs。果不其然，我们在列表中看到很多Google的主机名。</p>
+<h2 id="使用Omnibox优化交互过程"><a href="#使用Omnibox优化交互过程" class="headerlink" title="使用Omnibox优化交互过程"></a>使用Omnibox优化交互过程</h2><p>&#160; &#160; &#160; &#160;Chrome的创新之一是引入了Omnibox，它与此前的地址栏不同，可以处理目标站点URL之外的很多东西。除了记住用户曾经访问过的页面的URL之外，它还提供完整的对历史记录的文本检索功能，与你所选择的搜索引擎的集成性也较好。</p>
+<p>&#160; &#160; &#160; &#160;随着用户在其中键入内容，Omnibox会自动提供建议的行为，可能是基于你的浏览历史的URL或者是一次检索查询。在后台，每个建议行为都根据查询结果和历史表现进行评分。实际上，Chrome允许我们通过访问<code>chrome://predictors</code>来查看这些数据。</p>
+<p><img src="Omnibox.png" alt="Omnibox的URL预测"></p>
+<p>&#160; &#160; &#160; &#160;Chrome会维护用户输入前缀、建议行为以及每一记录的命中率的历史记录。在我的profile中，你可以看到当我在Omnibox中输入“g”时，有76%的可能性我是要访问Gmail。而当我加了一个“m”之后（变成“gm”），则置信水平上升到99.8%，实际上，在记录的412次访问中，我只有一次在输入“gm”之后没有访问Gmail。</p>
+<p>&#160; &#160; &#160; &#160;这与网络栈有什么关系呢？可能备选站点中黄色和绿色的记录也是<code>ResourceDispatcher</code>的重要信号。如果我们有一个可能的备选站点（黄色），Chrome可能为该目标主机触发DNS预获取。如果我们有一个高度确信的备选站点（绿色），那么Chrome可能还会在主机名解析之后触发TCP预连接。最后，如果这两步都做完时用户还没做出最终决定，那么Chrome甚至可能在隐藏的标签页中预呈现整个页面。</p>
+<p>&#160; &#160; &#160; &#160;另一方面，如果根据过去的浏览历史没有为所输入的前缀找到较好的匹配，那么Chrome预计可能会发生检索请求，会向你的搜索引擎发起DNS预获取和TCP预连接。</p>
+<p>&#160; &#160; &#160; &#160;一个普通用户需要花费数百毫秒来填写查询内容，评价所给出的自动补全建议。在后台，Chrome能够预获取、预连接，并在某些情况下对页面进行预呈现，这样当用户准备好按下“输入”键时，很多网络延迟已经被消除了。</p>
+<h2 id="优化缓存性能"><a href="#优化缓存性能" class="headerlink" title="优化缓存性能"></a>优化缓存性能</h2><p>&#160; &#160; &#160; &#160;最好最快的请求是不发出请求。当我们说到性能时必然会涉及缓存的问题——你正在为你网页上的所有资源提供<code>Expires、ETag、Last-Modified和Cache-Control</code>这些<a href="https://developers.google.com/speed/docs/insights/LeverageBrowserCaching" target="_blank" rel="external">响应标头</a>，对吧？如果你没有这样做，请立刻去改。我们会等你。</p>
+<p>&#160; &#160; &#160; &#160;Chrome的内部缓存有两种不同的实现方式：一种是由本地磁盘所支持，另一种是把所有内容存储在内存中。内存实现方式用于<a href="http://support.google.com/chrome/bin/answer.py?hl=en&amp;answer=95464" target="_blank" rel="external">匿名浏览模式</a>，当你关闭窗口后会把痕迹清除干净。两种方式都实现相同的内部接口（<code>disk_cache:Backend</code>和<code>disk_cache:Entry</code>），这极大地简化了架构并且——如果你非要坚持的话——允许你很方便地试验你自己的缓存实现。</p>
+<p>&#160; &#160; &#160; &#160;内部来看，磁盘缓存实现了其自己的数据结构，它们都被存储在你的profile的一个单独的缓存文件夹中。这个文件夹中有索引文件，它们在浏览器启动时进行内存映射，还有数据文件，它们存储了实际数据以及HTTP标头和其他簿记信息【注4】。最后，在缓存回收机制上，磁盘缓存会维护一个最近最少使用（LRU）缓存，它会把访问频度和资源新旧度等排序量化指标考虑进去。</p>
+<p>&#160; &#160; &#160; &#160;如果你对Chrome的缓存状态很感兴趣，可以打开新标签页访问<code>chrome://net-internals/#httpCache</code>。或者，如果你想看看真实的HTTP元数据以及缓存的响应，也可以访问<code>chrome://cache</code>，其中列示了缓存中当前可用的所有资源。在该页面中，检索一项资源之后可以点击URL查看缓存的标头和响应的具体字节内容。</p>
+<h2 id="使用预获取优化DNS"><a href="#使用预获取优化DNS" class="headerlink" title="使用预获取优化DNS"></a>使用预获取优化DNS</h2><p>&#160; &#160; &#160; &#160;我们已经在一些地方提到过DNS预解析，所以在我们深入介绍它的实现方式之前，先回忆一下哪些情况下为什么会触发它：</p>
+<ul>
+<li>运行在呈现进程中的Blink文档解析器，可以提供当前页面上所有链接的主机名清单，Chrome可以从中选择提前解析。</li>
+<li>呈现进程会将鼠标悬停和“按下按键”事件作为用户意图进行浏览的前期信号，从而触发预解析。</li>
+<li>Omnibox根据高度可能的建议，可能触发解析请求。</li>
+<li>Predictor基于过去的浏览和资源请求数据，可能请求主机名解析。</li>
+<li>页面所有者可能明确指示Chrome应该预解析哪些主机名。</li>
+</ul>
+<p>&#160; &#160; &#160; &#160;所有情况下，DNS预解析都被作为提示来处理。Chrome并不保证预解析必然进行，而是综合运用各个信号与其自身的预测器来评估这条提示并动态决策。在“最坏情况”下，如果Chrome未能及时完成主机名预解析，用户就要等待显式DNS解析，接着是TCP连接时间，最后是实际资源获取。但是，如果出现了这种情况，预测器会进行记录并相应调整其未来决策——随着你的持续使用，它会变得更快更聪明。</p>
+<p>&#160; &#160; &#160; &#160;我们此前没有提到的一项优化是Chrome能够学习每个站点的拓扑结构，并运用这项信息来加速未来的访问过程。具体而言，回忆一下，一个页面平均由88项资源组成，由15个以上不同的主机发送。每一次你进行浏览，Chrome会记录页面上的热门资源的主机名，在以后的访问中，它可能会对其中一些或全部选择触发DNS预解析甚至TCP预连接。</p>
+<p>&#160; &#160; &#160; &#160;访问<code>chrome://dns</code>并检索你profile对应的热门站点主机名，可以查看Chrome所保存下来的子资源主机名。在上面的例子中，你可以看到Chrome记录了Google+的6个子资源主机名，还统计了DNS预解析触发或TCP预连接执行的次数，还有会由各项处理的请求的估计值。这些内部记录帮助Chrome预测器实现优化。</p>
+<p>&#160; &#160; &#160; &#160;除了这些内部信号之外，站点的所有者也能在页面中嵌入附加的标记请求浏览器预解析一个主机名：</p>
+<figure class="highlight htmlbars"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;link rel="dns-prefetch" href="//host_name_to_prefetch.com"&gt;</span><br></pre></td></tr></table></figure>
+<p>&#160; &#160; &#160; &#160;为何不直接依靠浏览器的自动机制呢？有些时候，你可能希望解析一个页面中任何地方都没有提到过的主机名。重定向就是一个典型的例子：链接可能指向一个主机——就如同一项分析追踪服务一样——这个主机再把用户重定向至真正的目标站点。Chrome依靠自身是无法推断出这种模式的，但你可以手动提供一条提示帮助它，让浏览器提前解析真实目标站点的主机名。</p>
+<p>&#160; &#160; &#160; &#160;这一切在后台是如何实现的呢？和我们讨论过的其他优化手段一样，这个问题的答案也取决于Chrome的版本，因为开发团队一直试验新的、更好的方式来提升性能。但是，不严格地说，Chrome内部的DNS基础设施有两个主要的实现方式。过去，Chrome依靠操作平台无关的系统调用<code>getaddrinfo</code>，并把DNS查询的实际职责交由操作系统完成。但是，这种方式正逐步被Chrome自己实现的异步DNS解析器所替代。</p>
+<p>&#160; &#160; &#160; &#160;依靠操作系统的原有方式具有其优点：代码少而简单，并能够利用操作系统的DNS缓存。但是，<code>getaddrinfo</code>也是一个阻塞型的系统调用，这意味着Chrome必须创建并维护一个专用的worker线程池，才能够实现多条并行查询。这个未连接池最多只能容纳六个线程，这个上限是基于硬件的最小公分母得出的经验数字——这样并行请求的数量超出的话，有些用户的路由器就会过载。</p>
+<p>&#160; &#160; &#160; &#160;对于使用worker池的预解析，Chrome就只是调度<code>getaddrinfo</code>调用，这会一直阻塞worker线程，直至响应就绪后马上丢弃所返回的结果，并开始处理下一条预获取请求。结果由操作系统的DNS缓存来存储，未来实际进行getaddrinfo查询时，它会立即返回响应。这种方式简单有效，实践中的表现也不错。</p>
+<p>&#160; &#160; &#160; &#160;但这还不够好。<code>getaddrinfo</code>调用有很多有用信息不向Chrome公开，比如每条记录的生存时间（TTL）时间戳，以及DNS缓存本身的状态。为了提升性能，Chrome团队决定自己来实现跨平台的异步DNS解析器。</p>
+<p><img src="http://images.windrunnerlihuan.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Chromium%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF-%E5%90%AF%E5%8A%A8%E7%AF%87/flags.jpg" alt="启用异步DNS解析器"></p>
+<p>&#160; &#160; &#160; &#160;通过把DNS解析放到Chrome内部来处理，新的异步解析器可以实现一些新的优化手段：</p>
+<ul>
+<li>更好控制重传计时器，能够并行执行多条查询</li>
+<li>记录生存时间的可见性，使得Chrome能提前刷新热点记录</li>
+<li>更好的双栈实现（IPv4和IPv6）行为</li>
+<li>基于RTT或其他信号的，对不同服务器的故障切换</li>
+</ul>
+<p>&#160; &#160; &#160; &#160;以上所有以及其他很多想法都是在Chrome内持续试验并优化的。这就必然涉及一个问题：我们如何了解并衡量这些想法的效果呢？很简单，Chrome会为每个profile分别记录详细的网络性能统计数据和直方图。要查看所收集到的DNS统计数据，可以打开新标签页，访问<code>chrome://histograms/DNS</code>（见下图）</p>
+<p><img src="http://images.windrunnerlihuan.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Chromium%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF-%E5%90%AF%E5%8A%A8%E7%AF%87/dnsget.jpg" alt="DNS预获取的直方图"></p>
+<p>&#160; &#160; &#160; &#160;上面的直方图显示出了DNS预获取请求延迟的分布情况：大约50%的（最右侧列）预获取查询在20毫秒内完成（最左侧列）。注意，这是基于最近的浏览会话（9869个样本）的统计得到的，并属于用户的隐私数据。如果该用户选择报告Chrome的使用统计数据，则这些数据的摘要会被匿名处理，定期反馈给开发团队，他们就可以看到试验的效果并进行相应的调整。</p>
+<h2 id="使用预连接优化TCP连接管理"><a href="#使用预连接优化TCP连接管理" class="headerlink" title="使用预连接优化TCP连接管理"></a>使用预连接优化TCP连接管理</h2><p>&#160; &#160; &#160; &#160;我们已经预解析了主机名，按照Omnibox或Chrome预测器的估计，我们很有可能即将进行浏览行为。为什么不更进一步，也推测性地预连接到目标主机，在用户发出请求之前完成TCP握手的步骤呢？这样一来，我们又能消除掉一个往返延迟，轻松省去用户数百毫秒的时间。没错，TCP预连接正是这样做的。</p>
+<p>&#160; &#160; &#160; &#160;打开新标签页访问<code>chrome://dns</code>可以查看已经触发TCP预连接的主机。</p>
+<p><img src="http://images.windrunnerlihuan.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Chromium%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF-%E5%90%AF%E5%8A%A8%E7%AF%87/dnshost.jpg" alt="展示已经触发TCP预连接的主机"></p>
+<p>&#160; &#160; &#160; &#160;首先，Chrome会检查socket池，看看是否有该主机名的可用socket可供重用——存活socket会在池中留存一段时间，以避免TCP握手和慢热启动的惩罚时间。如果没有socket可用，则由其发起TCP握手并放入池中。然后，当用户进行浏览时，HTTP请求就可以立刻调度。</p>
+<p>&#160; &#160; &#160; &#160;Chrome在<code>chrome://net-internals#sockets</code>中提供了一个工具可以查看Chrome中所有已开启socket的状态。图1.10是相关的截图。</p>
+<p><img src="socket open.jpg" alt="已开启的socket"></p>
+<p>&#160; &#160; &#160; &#160;你还可以详细查看每个socket，检查时间线：连接和代理时间，每个包的到达时间等等。最后要说的很重要的一点是：你也可以导出这些数据进行后续分析或报告bug。具有良好的信息统计机制对任何优化都是很关键的，<code>chrome://net-internals</code>就是Chrome中所有功能相互作用的集中展示——如果你还没探索过这个功能，你应该试试！</p>
+<h2 id="使用预获取提示优化资源加载"><a href="#使用预获取提示优化资源加载" class="headerlink" title="使用预获取提示优化资源加载"></a>使用预获取提示优化资源加载</h2><p>&#160; &#160; &#160; &#160;有时，页面的作者能够提供基于其站点结构或布局附加的导航或页面上下文，帮助浏览器优化用户体验。Chrome支持两种这样的提示，可以嵌入页面标记中使用：</p>
+<figure class="highlight htmlbars"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&lt;link rel="subresource" href="/javascript/myapp.js"&gt;</span><br><span class="line"> &lt;link rel="prefetch"    href="/images/big.jpeg"&gt;</span><br></pre></td></tr></table></figure>
+<p>&#160; &#160; &#160; &#160;子资源和预获取看起来非常类似，但是语义完全不同。当链接资源指定其关系为“预获取”时，它是告诉浏览器，这项资源在以后的浏览中可能用到。换言之，这实际上是一个跨页面提示。而当资源指定其关系为“子资源”时，它是提前告诉浏览器该资源会在当前页面中被用到，在该文档后面的部分遇到它之前可以先发起请求。</p>
+<p>&#160; &#160; &#160; &#160;可以想见，两者的不同语义会导致资源加载器的行为大相径庭。标记预获取的资源会被看做优先级较低，并在当前页面加载完成后由浏览器进行一次下载。标记为子资源的内容一旦遇到就会作为高优先级资源来获取，并与当前页面上的其余资源相互竞争。</p>
+<p>&#160; &#160; &#160; &#160;这两种提示如果使用得当可以极大地帮助优化你站点的用户体验。最后，还要注意，预获取是<a href="https://whatwg.org/specs/web-apps/current-work/multipage/links.html#link-type-prefetch" target="_blank" rel="external">HTML5规范的一部分</a>，目前Firefox和Chrome都支持，而子资源目前<a href="http://www.chromium.org/spdy/link-headers-and-server-hint/link-rel-subresource" target="_blank" rel="external">只限于Chrome</a>。</p>
+<h2 id="使用浏览器预刷新优化资源加载"><a href="#使用浏览器预刷新优化资源加载" class="headerlink" title="使用浏览器预刷新优化资源加载"></a>使用浏览器预刷新优化资源加载</h2><p>&#160; &#160; &#160; &#160;不巧的是，不是所有站点所有者都能够或愿意在标记中为浏览器提供子资源提示。而且，即使他们这样做，我们还是要等待HTML文档从服务器传送过来之后才能解析这些提示，开始获取这些必要的子资源——根据服务器响应时间和客户端与服务器间的延迟，这可能需要耗费数百乃至数千毫秒。</p>
+<p>&#160; &#160; &#160; &#160;但是，我们前面看到，Chrome已经通过学习常用资源的主机名来执行DNS预获取了。那么，为什么不如法炮制，更进一步：执行DNS查询，使用TCP预连接然后也推测性地预获取资源呢？没错，这就是预刷新的作用：</p>
+<ul>
+<li>用户发起对目标URL的请求</li>
+<li>Chrome询问预测器其所学习到的与目标URL相关的子资源，并发起DNS预获取、TCP预连接和资源预刷新等一连串行为</li>
+<li>如果所学到的子资源在缓存中，则将其从磁盘加载到内存中</li>
+<li>如果所学到的子资源缺失，或者已过期，则进行一次网络请求</li>
+</ul>
+<p>&#160; &#160; &#160; &#160;资源预刷新是展示Chrome中每个试验性优化手段的工作流的绝佳例子——理论上讲，一项优化应该使性能得到提升，但是也涉及很多因素的此消彼长。只有一种方式能够可靠地确定一项优化是不是有效，是不是适合于Chrome：先实现它，并在一些预先发布的渠道（真正的网络、真实浏览模式、真人用户）上进行A/B试验。</p>
+<p>&#160; &#160; &#160; &#160;在2013年初，Chrome团队还处于讨论这种实现的早期阶段。如果根据所收集的结果它能奏效，我们我们可能会在年内晚些时候在Chrome中看到预刷新。Chrome的网络性能优化从未止步——开发团队一直在试验新的方法、创意和技术。</p>
+<h2 id="使用预呈现优化浏览"><a href="#使用预呈现优化浏览" class="headerlink" title="使用预呈现优化浏览"></a>使用预呈现优化浏览</h2><p>&#160; &#160; &#160; &#160;目前为止我们介绍过的每一项优化都是帮助减少用户进行浏览的直接请求和标签页上呈现最终页面之间的延迟的。但是，要真正得到即刻展示页面的体验，需要什么呢？根据我们之前看到的UX数据，这样的交互时间需要低于100毫秒，这样，留给网络延迟的余地可不算多。我们怎么才能在100毫秒内把呈现好的页面展示出来呢？</p>
+<p>&#160; &#160; &#160; &#160;当然，你已经知道答案了，因为这是很多用户所用的共同模式：如果你打开多个标签页，标签页间的切换就是即刻的，比在一个前景标签页中浏览同样资源之间的等待要快得多。那么，如果浏览器提供一个API来实现这一点呢？</p>
+<figure class="highlight htmlbars"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;link rel="prerender" href="http://example.org/index.html"&gt;</span><br></pre></td></tr></table></figure>
+<p>&#160; &#160; &#160; &#160;你可能猜到了，这就是Chrome中的<a href="https://developers.google.com/chrome/whitepapers/prerender" target="_blank" rel="external">预呈现</a>。不是如“预获取”提示实现的那样只下载单项资源，“预呈现”属性命令Chrome在隐藏标签页中预呈现页面以及所有子资源。隐藏标签页本身对用户不可见，但当用户触发浏览行为时，该标签页就会从后台切换出来实现“即刻体验”。</p>
+<p>&#160; &#160; &#160; &#160;想看看这是如何实现的吗？可以访问prerender-test.appspot.com上还在开发中的演示版，要查看你的profile的预呈现页面的历史记录和状态，访问：<code>chrome://net-internals/#prerender</code>。</p>
+<p><img src="pretender.jpg" alt="当前profile的预呈现页面"></p>
+<p>&#160; &#160; &#160; &#160;可以预见的是，在隐藏标签页中呈现完整页面可能会耗费CPU和网络的大量资源，所以仅当我们高度确信应该使用隐藏标签页时才应该使用。例如，当你使用Omnibox时，对高度确信的建议可能会触发预呈现。类似地，Google搜索如果估计认为它的第一条检索结果是高度确信的目标站点，有时会在其标记中添加预呈现提示（也称为Google即开页面）。</p>
+<p>&#160; &#160; &#160; &#160;你还可以为自己的站点添加预呈现提示。在你这样做之前，请先了解并记住预呈现过程具有的以下局限之处：</p>
+<ul>
+<li>所有线程总共至多只能有一个预呈现标签页</li>
+<li>HTTPS和需要HTTP身份鉴证的页面不能使用</li>
+<li>如果所请求资源或其任何子资源需要进行非幂等请求（只允许GET请求），预呈现会被放弃</li>
+<li>所有资源都以最低的网络优先级进行获取</li>
+<li>该页面以最低的CPU优先级进行呈现</li>
+<li>如果内存需求超过100MB则该页面会被放弃</li>
+<li>插件初始化被推迟，如果出现了HTML5的多媒体元素则预呈现被放弃</li>
+</ul>
+<p>&#160; &#160; &#160; &#160;换言之，预呈现不保证一定发生，并只适用于安全的页面。此外，因为JavaScript和其他逻辑可能在隐藏页面中被执行，实践中最好使用页面<a href="https://developers.google.com/chrome/whitepapers/pagevisibility" target="_blank" rel="external">可见性API</a>来检测一下该页面是否可见——<a href="https://www.html5rocks.com/en/tutorials/pagevisibility/intro/" target="_blank" rel="external">这是你本就应该做的</a>。</p>
+<h1 id="Chrome会随着你的使用越来越快"><a href="#Chrome会随着你的使用越来越快" class="headerlink" title="Chrome会随着你的使用越来越快"></a>Chrome会随着你的使用越来越快</h1><p>&#160; &#160; &#160; &#160;无需多言，Chrome的网络栈绝非一个简单的socket管理器。我们这次走马观花的概述介绍了在网站浏览的背后多层次的透明运行的优化手段。Chrome对网站拓扑结构和你的浏览模式了解越是深入，它的效果就越好。就像魔法一样，Chrome会随着你的使用越来越快。可你知道它并不是魔法，你了解这背后的机制。</p>
+<p>&#160; &#160; &#160; &#160;最后，还要注意一点，Chrome团队持续试验着优化性能的新想法——这个过程从未停止。在你阅读本文时，就可能有新的试验项目和优化手段正在开发、测试或部署着。也许只有当我们能够对每个站点每个页面都实现即刻加载（小于100毫秒）时，才会停下脚步吧。在那之前，总有工作等着我们去完成。</p>
+<h1 id="学习浏览器技术可以得到什么？"><a href="#学习浏览器技术可以得到什么？" class="headerlink" title="学习浏览器技术可以得到什么？"></a>学习浏览器技术可以得到什么？</h1><p>&#160; &#160; &#160; &#160;浏览器要处理的两个核心对象是HTML和JavaScript。HTML用来实现网页UI，涉及到的最核心技术是UI渲染技术。JavaScript用来实现网页功能，涉及到的最核心技术JavaScript引擎技术。</p>
+<p>&#160; &#160; &#160; &#160;一切带有屏幕的智能设备，UI都是其所运行系统的一个核心模块，它负责与用户进行交互，以及将交互结果反馈给用户，从而形成一个闭环。用户在使用一个系统的时候，最先接触到的就是它的UI，经常接触的也是它的UI，因此UI的好坏直接就影响到了系统用户体验的好坏。用户体验对一个系统来说是至关重要的，例如，很多人觉得iOS系统比Android系统好用的其中一个原因就是前者的用户体验更好。</p>
+<p>&#160; &#160; &#160; &#160;衡量一个系统的用户体验好与坏的其中一个重要标准就是UI的流畅与否，其中又以动画的流畅与否为核心，因为一个流畅的动画显示需要的UI渲染速度是60fps。为了达到60fps的渲染速度，各个系统在实现UI模块的时候，可谓是费尽心思、尽其所能。通常都会使用诸如纵向分层、横向分块的渲染策略。</p>
+<p>&#160; &#160; &#160; &#160;所谓纵向分层，就是在Z轴方向上按层来划分UI，这样带来的好处在渲染UI的每一帧时，不必每一层都进行重绘。这种分层渲染策略使用到了一种称为“绘制-合成”的UI渲染技术。也就是各层负责绘制好自己的UI，然后再由一个单独的模块对它们进行合成。这样在渲染UI的每一个帧时，只有UI发生了变化的层才需要重新进行绘制，没有发生UI变化的层只需要参与合成这一步即可。这种技术可以大大地减少渲染操作，从而获得更流畅的UI体验。</p>
+<p>&#160; &#160; &#160; &#160;所谓横向分块，就是对于UI的每一个层，按照一定的规则对其进行分块，这样带来的好处就是在渲染UI的每一帧遇到一个需要进行重新绘制的层时，不必对该层的所有内容都进行重新绘制，只需要绘制那些在可视区间的块即可。这样也可以在某种程度上减少渲染操作，从而获得更流畅的UI体验。</p>
+<p>&#160; &#160; &#160; &#160;现在的智能设备配备的CPU都是多核的。为了能够充分地利用CPU多核特性，一帧UI渲染通常分两步进行：第一步是收集UI绘制命令；第二步是执行UI绘制命令。每一步都是在一个独立的线程完成，因此就可以充分地利用CPU的多核特性：在执行第N帧的UI绘制命令的同时，收集第N+1帧的UI绘制命令。此外，对于第一步收集到的UI绘制命令，还可以做一些额外的优化。当我们收集到一帧UI的所有绘制命令的时候，我们就相当于是知悉了这一帧UI的全貌。知悉了一个UI帧的全貌之后，就可以进行一些优化，例如对某些UI绘制命令进行重排和合并，以及丢弃那些被遮挡的UI相关的绘制命令。这些优化同样是可以减少渲染操作，从而获得更流畅的UI体验。</p>
+<p>&#160; &#160; &#160; &#160;现在的智能设备，很多都配备了GPU，这意味着我们可以使用GPU进一步提高UI的渲染速度，这就是所谓的硬件加速渲染技术。例如对于我们前面提到的UI层和块，可以直接以GPU的纹理或者FBO来进行绘制和合成。GPU具有成熟和专业的UI渲染技术，因此通过它来渲染UI，可以获得更流畅的UI体验。</p>
+<p>&#160; &#160; &#160; &#160;以上提及到的所有UI渲染技术，不管是什么系统，我们都可以或多或少地看到它们的影子，因此它们都是通用的、现代化的UI渲染技术。如果掌握了这些UI渲染技术，那么不管以后流行的是什么系统，我们都可以轻松应对。因此，学习浏览器技术可以得到的第一点核心技术就是现代化的先进UI渲染技术。</p>
+<p>&#160; &#160; &#160; &#160;不知道同学们有没有发现，最近几年时不时都看到有新的编程语言发布，特别是伴随着新系统的发布，其中比较有名的就是Google的Go语言和Apple的Swift语言。我们在惊叹这些编程语言方便好用的同时，有没有想过它们背后是如何设计和实现的呢？如果有考虑过这个问题的话，我们就不得不提到JavaScript这个古老而又流行的编程语言。</p>
+<p>&#160; &#160; &#160; &#160;JavaScript被视为一个“玩具语言”，据说它只花了2个星期设计，然后被使用了20年。在20年的时间里，大家一边在用它，然后又一边在骂它。这足见大家是有多么的喜欢它，正所谓”骂是爱，打是亲“嘛。JavaScript虽然天生是为操作网页而设计的，但是它并不仅仅是应用在网页前端应用开发上，它还渗透了移动端和服务端应用开发上。</p>
+<p>&#160; &#160; &#160; &#160;在移动端上，近两三年出现了不少专门针对手机的Web OS，例如Firefox OS、Ubuntu Mobile OS、Tizen OS以及阿里的云OS，都支持运行Web应用，这意味在这些系统上可以使用JavaScript来开发应用。当然，在Android和iOS上也可以开发Web应用，不过它们都是要运行在WebView之上，不是直接在OS层面上得到支持。在服务端上，Node.js就是一个有代表性的框架，它使得我们可以使用JavaScript来开发Web服务器。</p>
+<p>&#160; &#160; &#160; &#160;除了在移动端和服务端上，JavaScript甚至还应用在MCU（Microcontroller Unit）领域上，也就是俗称的单片机领域上。这些MCU提供了一个JavaScript运行环境，从而使得我们可以使用JavaScript操作它们。</p>
+<p>&#160; &#160; &#160; &#160;一个本来只是设计用在网页开发的语言，由于它的简洁和易用性，现在不仅渗透到移动端、服务器端开发上，还渗透到了MCU领域上，这足以看到JavaScript是如此广泛地被开发者接受和使用。当然，JavaScript广泛地被开发者接受和使用，并不意味着它是完美的，例如性能就是一个比较突出的问题。但是会不会在以后的某一天，当JavaScript的性能问题被解决之后，所有能够编程的领域，都会被JavaScript代替呢？</p>
+<p>&#160; &#160; &#160; &#160;不管如何，鉴于现在JavaScript的流行性，作为一个软件开发从业者，我们不仅会使用JavaScript，还需要知道JavaScript在背后是如何运行的，这样才能达到一个更高的境界。JavaScript是一种动态语言，与C/C++、Java这些静态语言一样，在实现上都是涉及到了编译相关的知识，例如语法解析、生成语法树、生成字节码指令、生成本地指令和指令优化等。只不过对于动态语言来说，这些操作发生在应用程序运行时，只对于静态语言来说，这些操作发生应用程序运行前。此外，运行JavaScript的引擎与运行Java字节码的虚拟机一样，在运行时都提供了内存自动管理技术，也就是会执行GC。由此可见，学习JavaScript可以获得很多编译语言相关的知识。这也是学习浏览器技术可以得到的第二点核心技术。</p>
+<p>&#160; &#160; &#160; &#160;当我们学习的是基于Chromium的浏览器技术的时候，我们就不仅仅是可以获得上面提到的两个核心技术，还可以学习到一个复杂系统的架构，例如它的对象管理技术、多进程架构和多线程编程模型等等。一言蔽之，学习浏览器技术可以使我们获得很多现在和甚至未来都流行的计算机技术。</p>
+<h1 id="注释"><a href="#注释" class="headerlink" title="注释"></a>注释</h1><ol>
+<li>第10章：《移动网络性能的秘密》详细解释了这个问题。</li>
+<li>如果你感兴趣，Chromium的百科页面上有详细的介绍。</li>
+<li>Http://code.google.com/searchframe#OAMlx_jo-ck/src/content/public/browser/resource_dispatcher_host.h&amp;exact_package=chromium&amp;q=ResourceDispatcherHost.</li>
+<li>16KB以内的资源保存在共享数据块文件中，更大的文件在磁盘上有自己的专用文件。</li>
+</ol>
+<h1 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h1><p><a href="http://aosabook.org/en/posa/high-performance-networking-in-chrome.html" target="_blank" rel="external">http://aosabook.org/en/posa/high-performance-networking-in-chrome.html</a><br><a href="https://www.cnbeta.com/articles/tech/63690.htm" target="_blank" rel="external">https://www.cnbeta.com/articles/tech/63690.htm</a></p>
+<p><img src="maize.jpg" alt="妹子图"></p>
+<hr>
+<p>title:  Chromium学习之路————————启动篇<br>date:  2019-03-19 17:58:11<br>tags:</p>
+<ul>
+<li>Chromium</li>
+<li>启动<br>categories:  Chromium</li>
+</ul>
+<hr>
+<p>&#160; &#160; &#160; &#160;深思熟虑之后，觉得有必要学一下UI渲染技术和JS引擎技术，为以后的跨平台实现打下坚实的基础。<br>&#160; &#160; &#160; &#160;本篇是一篇科普，将打开苦逼又刺激的Chromium学习之路。<br><!-- more --></p>
+<h1 id="Google-Chrome的历史和指导性原则-1"><a href="#Google-Chrome的历史和指导性原则-1" class="headerlink" title="Google Chrome的历史和指导性原则"></a>Google Chrome的历史和指导性原则</h1><p>&#160; &#160; &#160; &#160;Google Chrome最初是2008年下半年作为Windows平台上的一个beta版本发布的。Google还将自己编写的Chrome在BSD许可下进行了开源——称为Chromium。在很多人看来，这一串事件的发生颇为意外：浏览器战争要再次重启了吗？Google真的能做的更好吗？</p>
+<blockquote>
+<p>&#160; &#160; &#160; &#160;“它非常优秀让我不得不改变主意……”。埃里克•施密特在谈到他一开始反对开发Google Chrome时这样说道。</p>
+</blockquote>
+<p>&#160; &#160; &#160; &#160;答案是，他们能。时至今日，Chrome已经成为使用最广泛的网络浏览器（根据StatCounter的数据，市场份额超过35%），并且兼容Windows、Linux、OS X、Chrome OS多种操作系统，还包括Android和iOS等移动平台。显然，Chrome的特性和功能很对用户的胃口，其很多创新之举还被其他流行的浏览器所吸收和学习。</p>
+<p>&#160; &#160; &#160; &#160;有一本解释Google Chrome的思想和创新的<a href="https://www.google.com/googlebooks/chrome/med_00.html" target="_blank" rel="external">原版38页漫画书</a>，它很好地概括了Chrome受欢迎背后的思路和设计过程。但这只是开始。最初推动着Chrome开发的那些核心原则仍然是它持续优化的指导性原则：</p>
+<ul>
+<li>快速：做出<strong>最快</strong>的浏览器</li>
+<li>安全：为用户提供<strong>最安全</strong>的环境</li>
+<li>稳定：提供<strong>有弹性且稳定</strong>的网络应用平台</li>
+<li>简单：技术精妙蕴含在<strong>简单的用户体验中</strong></li>
+</ul>
+<p>&#160; &#160; &#160; &#160;正如开发团队所看到的那样，我们今天所使用的很多网站都不再仅仅是网页，而是应用程序。这些越来越有野心的应用需要速度、安全和稳定。这些方面，每个都值得单独成文来介绍，不过，因为我们的主题是性能，我们将重点介绍性能。</p>
+<h1 id="性能的多个方面-1"><a href="#性能的多个方面-1" class="headerlink" title="性能的多个方面"></a>性能的多个方面</h1><p>&#160; &#160; &#160; &#160;现代浏览器是一个平台，就像你的操作系统一样，Google Chrome也遵循这样的设计理念。在Google Chrome之前，所有主流浏览器都是单进程的应用程序。所有打开的页面共享同一地址空间，争夺同一资源。任何页面或浏览器本身出现bug，整体体验都可能被破坏。</p>
+<p>&#160; &#160; &#160; &#160;与此相反，Chrome运行于多进程模型，这种模型可以保持进程和内存的隔离性，每个标签页都能拥有一个严密的安全沙盒。随着多核架构的流行，隔绝进程并使各个打开的标签页免受其他出错页面的影响，单是这一点就能证明Chrome在浏览器的竞争中具有显著的性能优势。实际上，我们会发现绝大多数其他浏览器都纷纷效仿Chrome，或者开始转向类似的架构。</p>
+<p>&#160; &#160; &#160; &#160;分派进程之后，一个Web程序的执行主要包括三项任务：获取资源，页面布局与呈现，以及执行JavaScript。呈现和脚本执行步骤遵循单线程、交错执行的模型——无法对所得到的DOM（文档对象模型）进行并发式的修改。原因之一是JavaScript本身就是单线程的语言。所以，无论是对于应用程序的开发者还是浏览器的开发者来说，优化呈现和脚本执行运行时的协作方式，是极其重要的。</p>
+<p>&#160; &#160; &#160; &#160;在呈现这一步，Chrome使用的是Blink，这是一种快速、开源、遵守良好标准的布局引擎。在JavaScript这一步，Chrome自带了一个高度优化的V8 JavaScript运行时，它也作为单独开源项目发布，并已经被其他很多流行的项目所吸纳，例如Node.js的运行时。但是如果浏览器的网络连接是阻塞的（等待资源到来），那么优化V8 JavaScript执行或者Blink解析和呈现管道都不会有太大作用。</p>
+<p>&#160; &#160; &#160; &#160;浏览器优化各项网络资源的次序、优先级和延迟的能力对整体用户体验是最关键的影响因素。你可能没有注意到，毫不夸张地说，Chrome的网络栈每天都会变得更加聪明，尝试着隐藏或减少各项资源的延迟开销：它会学习可能出现的DNS查询，会记住网络的拓扑结构，会预连接可能的目标站点，等等。从外部看来，它展示出的是一种简单的资源获取机制，但是从内部看来则是对如何优化网络性能并带给用户最佳体验的一次详细而精彩的案例学习。</p>
+<p>&#160; &#160; &#160; &#160;让我们进入正题吧。</p>
+<h1 id="什么是现代Web应用？-1"><a href="#什么是现代Web应用？-1" class="headerlink" title="什么是现代Web应用？"></a>什么是现代Web应用？</h1><p>&#160; &#160; &#160; &#160;在我们接触如何优化网络交互的具体细节之前，先来了解我们所面对的这个问题的发展趋势和背景。换句话说就是，“现代网页或者应用是什么样的？”</p>
+<p>&#160; &#160; &#160; &#160;<a href="https://httparchive.org" target="_blank" rel="external">HTTP Archive</a>目记录了网络的构造过程，可以帮助我们回答这个问题。这个项目并不是为了爬取网页内容，而是周期性地爬取访问量最大的站点，记录和加总各个站点所用资源数量、内容类型、标头和其他元数据的分析数据。2013年1月的数据，可能会令你吃惊。访问量最大前30万个网络站点来看，一个页面平均：</p>
+<ul>
+<li>为1280KB大小</li>
+<li>由88个资源组成</li>
+<li>连接15个以上不同的主机</li>
+</ul>
+<p>&#160; &#160; &#160; &#160;好好琢磨一下。大小平均超过1MB，包含88个如图片、JavaScript、CSS这样的资源，从15个不同的自有和第三方主机传送出来。而且，这些数字在过去几年还在<a href="https://httparchive.org/reports/state-of-the-web" target="_blank" rel="external">持续增长</a>，丝毫没有减缓的迹象。这说明，我们所开发的网络应用正变得越来越大，越来越有野心。</p>
+<p>&#160; &#160; &#160; &#160;根据HTTP Archive的数据，做个简单的算术，我们可知每个资源平均大小为15KB（1280KB/88项资源），这意味着浏览器中大多数的网络传输是短小但突发的。这就造成了一些问题，因为基础传输（TCP）是针对大型、流式下载进行优化的。让我们深入地看一看这些网络请求。</p>
+<h1 id="线上资源请求的生命周期-1"><a href="#线上资源请求的生命周期-1" class="headerlink" title="线上资源请求的生命周期"></a>线上资源请求的生命周期</h1><p>&#160; &#160; &#160; &#160;W3C的<a href="https://www.w3.org/TR/navigation-timing/" target="_blank" rel="external">浏览时序规范</a>（Navigation Timing specification）提供了一个浏览器API，让我们可以看到浏览器中每项请求的生命周期背后的时序和性能数据。让我们看看这些组成部分，每一块都是影响最佳用户体验的关键点：</p>
+<p><img src="browerapi.jpg" alt="浏览时序图"></p>
+<p>&#160; &#160; &#160; &#160;对于一个网络资源的URL，浏览器首先会检查其本地缓存和应用程序缓存。如果你此前获取过该资源，并且提供了适当的<a href="https://developers.google.com/speed/docs/insights/LeverageBrowserCaching" target="_blank" rel="external">缓存标头</a>（<code>Expires, Cache-Control</code>等），则我们可能被允许使用本地副本来响应原请求——最快的请求就是不请求。或者，如果我们需要重新校验该资源（如果资源已过期），或是我们根本从未获取过该资源，那么就必须发起一个高开销的网络请求。</p>
+<p>&#160; &#160; &#160; &#160;有了主机名称和资源路径，Chrome首先检查现有的已开启连接中是否有可以重用的——socket按照{<code>scheme, host, port</code>}的格式储存在池中。或者，如果你已经配置了<a href="https://en.wikipedia.org/wiki/Proxy_auto-config" target="_blank" rel="external">代理</a>，或指定了代理自动配置脚本（PAC），那么Chrome就会通过适当的代理来检查连接。PAC脚本允许基于URL的不同代理或其他指定规则，它们都可以有自己的socket池。最后，如果上述条件都不满足，则请求必须通过将主机名解析为IP地址的方式发起，也称为DNS查询。</p>
+<p>&#160; &#160; &#160; &#160;如果幸运的话，主机名可能已经在缓存当中了，此时通常只需要一次快速的系统调用就得到响应。如若不然，就必须调度一个DNS查询才能继续下去。DNS查询耗费的时间由网络提供商、站点的热门程度、主机名可能存在过渡缓存中的概率以及该域名的权威服务器的响应时间所决定。换句话说，影响变量有很多，但是耗费数百毫秒来进行一次DNS查询也并非罕见。天啊。</p>
+<p><img src="handshake" alt="三次握手"></p>
+<p>&#160; &#160; &#160; &#160;得到了解析后的IP地址，Chrome现在可以打开一个新的与目标站点的TCP连接，这意味着我们需要进行“三次握手”：<code>SYN &gt; SYN-ACK &gt; ACK</code>。这一交换过程又为每个新的TCP连接增加了一个往返延迟——此处没有捷径可走。根据客户端与服务器的距离和所选定的路由路径不同，这可能产生几十、几百甚至几千毫秒的延迟。这些工作和延迟是甚至还没有一个字节的应用程序数据开始传输之前就发生的。</p>
+<p>&#160; &#160; &#160; &#160;完成了TCP握手之后，如果我们连接的是安全站点（HTTPS），那么还要进行SSL握手。这又增加了客户端和服务器之间两个往返延迟。如果SSL会话进行了缓存，那么可以“免去”其中一次额外的往返延迟。</p>
+<p>&#160; &#160; &#160; &#160;最后，Chrome要调度HTTP请求（上图中<code>requestStart</code>）。服务器接收到请求之后，会处理该请求，然后通过数据流把响应数据返给客户端。这至少会产生一个往返延迟，还要算上服务器的处理时间。正常情况下这样就结束了，但如果真正的响应是一个HTTP重定向，那么我们可能还需要把整个过程再重走一遍。你的页面上有不必要的重定向吗？那你可能需要重新考虑这个决定了。</p>
+<p>&#160; &#160; &#160; &#160;你算过这所有的延迟时间了吗？为了便于说明问题，我们假设一个典型的宽带连接的最坏情况：没有本地缓存、相对较快的DNS查询速度（50ms）、TCP握手、SSL协商、相对较快的服务器响应时间（100ms）、80ms的往返延迟（这是美国大陆往返延迟的平均时间）：</p>
+<ul>
+<li>DNS需要50ms</li>
+<li>TCP握手需要80ms（一次往返延迟）</li>
+<li>SSL握手需要160ms（两次往返延迟）</li>
+<li>请求传输到服务器需要40ms</li>
+<li>服务器处理需要100ms</li>
+<li>服务器返回响应需要40ms</li>
+</ul>
+<p>&#160; &#160; &#160; &#160;这样算下来，单次请求需要470毫秒，与服务器真正处理请求的时间相比，其中80%都是网络延迟开销。实际上，470毫秒都算是一个乐观的估计了：</p>
+<ul>
+<li>如果服务器响应不匹配初始的TCP拥塞窗口（4-15KB），还会额外产生一个或多个往返延迟。【注1】</li>
+<li>如果我们需要获取缺失证书或者需要执行在线证书状态检查（OCSP），SSL延迟得还会更厉害，因为这两种情况都需要一次全新的TCP连接，这又增加了成百上千毫秒的额外延迟。</li>
+</ul>
+<h1 id="“足够快”有多快？-1"><a href="#“足够快”有多快？-1" class="headerlink" title="“足够快”有多快？"></a>“足够快”有多快？</h1><p>&#160; &#160; &#160; &#160;DNS、握手、往返延迟的网络开销是决定前例中总时间的因素——服务器响应时间仅占总延迟的20%。但是，从大局看，这些延迟重要吗？如果你正在阅读本文，你很可能已经知道了答案：不但有影响，而且影响很大。</p>
+<p>&#160; &#160; &#160; &#160;过去一些<a href="https://www.nngroup.com/articles/response-times-3-important-limits/" target="_blank" rel="external">用户体验的研究</a>描述了我们作为用户对应用程序（在线或离线）的响应速度作何预期：</p>
+<table>
+<thead>
+<tr>
+<th>Delay</th>
+<th>User Reaction</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0 - 100 ms</td>
+<td>Instant</td>
+</tr>
+<tr>
+<td>100 - 300 ms</td>
+<td>Small perceptible delay</td>
+</tr>
+<tr>
+<td>100 - 300 ms</td>
+<td>Small perceptible delay</td>
+</tr>
+<tr>
+<td>300 - 1000 ms</td>
+<td>Machine is working</td>
+</tr>
+<tr>
+<td>1 s+</td>
+<td>Mental context switch</td>
+</tr>
+<tr>
+<td>10 s+</td>
+<td>I’ll come back later…</td>
+</tr>
+</tbody>
+</table>
+<p>&#160; &#160; &#160; &#160;上表还能够解释网络性能领域中一条不成文的经验法则：如果不能直接呈现页面，至少也要在250毫秒以内提供视觉上的反馈以保持用户不会失去兴趣。其他因素也会影响速度。对Google、Amazon、Microsoft和数千个其他站点的研究显示，额外的延迟会直接影响站点的获利能力：速度快的网站能生成更多的页面请求，用户参与度也更高，从而转化率也更高。</p>
+<p>&#160; &#160; &#160; &#160;所以，我们知道了，最佳的延迟应该控制在250毫秒，但我们在前例中看到，DNS查询、TCP和SSL握手再加上请求传递的时间总共有370毫秒。我们已经超出50%了，这还是我们没算上服务器处理时间的情况！</p>
+<p>&#160; &#160; &#160; &#160;所以，我们知道了，最佳的延迟应该控制在250毫秒，但我们在前例中看到，DNS查询、TCP和SSL握手再加上请求传递的时间总共有370毫秒。我们已经超出50%了，这还是我们没算上服务器处理时间的情况！</p>
+<p>&#160; &#160; &#160; &#160;对于大多数用户乃至一些网络开发者来说，DNS、TCP和SSL的延迟是完全透明的（无须关心的），它们是在网络层协商的，而我们极少深入到甚至不会去想这个层面的事。但是，这其中的每一步对整体用户体验都是非常关键的，因为每增加额外的网络请求都会增加几十或几百毫秒的延迟。这就是为什么Chrome的网络栈要比一个简单的socket处理器复杂的多得多。</p>
+<p>&#160; &#160; &#160; &#160;找到了症结所在，我们继续来看一些实现细节。</p>
+<h1 id="Chrome的网络栈概览-1"><a href="#Chrome的网络栈概览-1" class="headerlink" title="Chrome的网络栈概览"></a>Chrome的网络栈概览</h1><h2 id="多进程架构-1"><a href="#多进程架构-1" class="headerlink" title="多进程架构"></a>多进程架构</h2><p>&#160; &#160; &#160; &#160;Chrome的多进程架构对各个网络请求如何在浏览器中进行处理具有重大影响。在底层，Chrome实际上支持<a href="http://www.chromium.org/developers/design-documents/process-models" target="_blank" rel="external">四种不同的执行模型</a>用于确定如何进行进程的分配。</p>
+<p>&#160; &#160; &#160; &#160;默认情况下，桌面上的Chrome浏览器使用“站点对应进程”模型，将不同站点隔离开来，而把同一站点的所有实例分组在同一进程中。不过为了简便起见，我们假设最简单的情况：每个打开的标签页对应一个单独的进程。从网络性能的角度看，这种差别并不重要，但“标签页对应进程”模型要容易理解得多。</p>
+<p><img src="http://images.windrunnerlihuan.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Chromium%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF-%E5%90%AF%E5%8A%A8%E7%AF%87/multiprocess.jpg" alt="多进程架构"></p>
+<p>&#160; &#160; &#160; &#160;这个架构为每个标签页配给一个专用的呈现进程。每个呈现进程包含Blink布局引擎和V8 JavaScript引擎，配合上一些胶水代码把这几个部分（再加上其他一些部分）联系起来。【注2】</p>
+<p>&#160; &#160; &#160; &#160;这些呈现进程的每一个都在一个沙盒环境内执行，这个环境对用户计算机——包括网络，只有有限的访问权限。要获得访问这些资源的权限，每个呈现进程要与主浏览器进程（或称为内核进程）进行通信，由内核进程负责管理每个呈现器的安全和权限策略。</p>
+<h2 id="进程间通信和多进程资源加载-1"><a href="#进程间通信和多进程资源加载-1" class="headerlink" title="进程间通信和多进程资源加载"></a>进程间通信和多进程资源加载</h2><p>&#160; &#160; &#160; &#160;Chrome中呈现器和内核进程之间的所有通信都是通过进程间通信（IPC）完成的。在Linux和OS X上使用的是<code>socketpair</code>，这个方法提供一个命名的管道传输进行异步通信。来自呈现器的每条消息经过序列化处理再传给专用的I/O线程，再由它将其派发给主浏览器进程。在接收端，内核进程提供一个过滤接口，允许Chrome拦截应该由网络栈处理的资源IPC请求（参见<a href="https://bugs.chromium.org/p/chromium/adminIntro?q=resourcemessagefilter" target="_blank" rel="external">ResourceMessageFilter</a>）。</p>
+<p><img src="processcomm.jpg" alt="进程间通信"></p>
+<p>&#160; &#160; &#160; &#160;这种架构的一个优点是，所有的资源请求都完全在I/O线程上处理，用户接口产生的活动与网络事件之间互不干扰。资源过滤器运行在浏览器进程中的I/O线程中，截获资源请求消息，并将其转发给浏览器进程中的ResourceDispatcherHost【注3】单例。</p>
+<p>&#160; &#160; &#160; &#160;这个单例接口允许浏览器控制各个呈现器的网络访问权限，它还能实现高效和一致性的资源共享。一些例子包括：</p>
+<ul>
+<li>socket池和连接限制：浏览器能够对每个profile、代理和<code>{scheme, host, port}</code>组所对应的已开启socket数量进行限制（分别为256、32和6个）。注意，按照这个规则，同一<code>{host, port}</code>最多可以进行6个HTTP和6个HTTPS连接。</li>
+<li>socket重用：持久性的TCP连接会在请求处理之后在socket池中保留一段时间，以供连接重用，这样能够避免发起新的连接额外带来的DNS、TCP和SSL（如有需要）的启动开销。</li>
+<li>socket后期绑定：当socket准备好分派应用程序请求时，请求才与基础的TCP连接绑定起来，这样一来可以获得更好的请求次序优化（例如：当socket在连接中时，更高优先级的请求到达），更大的流量（例如：在现有socket可用而新连接正在打开时，重用“刚使用过”的TCP连接）以及TCP预连接的通用机制和其他一些优化。</li>
+<li>一致的会话状态：所有呈现进程的身份鉴证、cookies和缓存数据都是共享的。</li>
+<li>全局性资源和网络优化：浏览器可以从所有呈现进程和未完成请求的全局做出决策。例如，对前景标签页发起的请求赋予网络优先级。</li>
+<li>预测性优化：通过观测所有的网络流量情况，Chrome能够构建和修正预测性模型提升性能。</li>
+</ul>
+<p>&#160; &#160; &#160; &#160;就呈现进程而言，它只是通过IPC发送资源请求消息，这个请求被打上对应浏览器进程的唯一请求ID，剩下的部分都是由浏览器内核进程处理的。</p>
+<h2 id="跨平台资源获取-1"><a href="#跨平台资源获取-1" class="headerlink" title="跨平台资源获取"></a>跨平台资源获取</h2><p>&#160; &#160; &#160; &#160;跨Linux、Windows、OS X、Chrome OS、Android和iOS等不同平台的可移植性是Chrome网络栈实现中的一个重要问题。要解决这个挑战性的问题，网络栈被实现为一个几乎单线程（有单独的缓存和代理线程）的跨平台库，使Chrome可以重用相同的基础设施并提供相同的性能优化水平，更有机会进行跨平台的优化。</p>
+<p>&#160; &#160; &#160; &#160;当然，所有的代码都是开源的，可以在<code>src/net</code><a href="https://cs.chromium.org/#chromium/src/net/&amp;ct=rc&amp;cd=1&amp;q=src.net&amp;sq=package:chromium" target="_blank" rel="external">子目录</a>中找到。我们不打算详细剖析每个部分，但是代码格局本身就带有很大的信息量，告诉我们它的功能和结构。下表中是一些例子。</p>
+<table>
+<thead>
+<tr>
+<th>组件</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>net/android</td>
+<td>对Android运行时的绑定。</td>
+</tr>
+<tr>
+<td>net/base</td>
+<td>常用网络工具，如主机解析、cookies、网络变化检测和SSL证书管理。</td>
+</tr>
+<tr>
+<td>net/disk_cache</td>
+<td>实现网络资源的磁盘和内存缓存。</td>
+</tr>
+<tr>
+<td>net/dns</td>
+<td>实现异步DNS解析器。</td>
+</tr>
+<tr>
+<td>net/http</td>
+<td>实现HTTP协议。</td>
+</tr>
+<tr>
+<td>net/proxy</td>
+<td>代理（SOCKS和HTTP）配置、解析和脚本获取等。</td>
+</tr>
+<tr>
+<td>net/socket</td>
+<td>TCP socket、SSL流和socket池的跨平台实现。</td>
+</tr>
+<tr>
+<td>net/spdy</td>
+<td>实现SPDY协议。</td>
+</tr>
+<tr>
+<td>net/url_request</td>
+<td>实现URLRequest、URLRequestContext和URLRequestJob。</td>
+</tr>
+<tr>
+<td>net/websockets</td>
+<td>实现WebSockets协议。</td>
+</tr>
+</tbody>
+</table>
+<p>&#160; &#160; &#160; &#160;这些组件的代码都让人忍不住想好好读一读，它们文档完备，每个组件你都能找到很多的单元测试。</p>
+<h2 id="移动平台的架构和性能-1"><a href="#移动平台的架构和性能-1" class="headerlink" title="移动平台的架构和性能"></a>移动平台的架构和性能</h2><p>&#160; &#160; &#160; &#160;移动端浏览器的使用正在以指数级增长，即使按照保守预测，它也会在不远的将来完全取代桌面浏览。所以不言而喻，提供优化的移动端访问体验一直是Chrome团队的首要任务之一。在2012年初，<a href="https://www.google.com/intl/en/chrome/browser/mobile/android.html" target="_blank" rel="external">Chrome for Android</a>发布，数月后<a href="https://www.google.com/intl/en/chrome/browser/mobile/ios.html" target="_blank" rel="external">Chrome for iOS</a>发布。</p>
+<p>&#160; &#160; &#160; &#160;于Chrome的移动端版本，第一件需要注意的事是，它并不是简单地直接在桌面浏览器基础上做一些调整——那样并不能得到最好的用户体验。从本质讲，移动端环境的资源更加局限，而且有很多根本不同的操作参数：</p>
+<ul>
+<li>桌面用户通过鼠标来浏览，可以进行窗口重叠，屏幕更大，几乎没有电量的约束，网络连接通常更稳定，能够访问更大的存储和内存池。</li>
+<li>移动端用户使用触摸和手势浏览，屏幕更小，受制于电池和电量的约束，往往使用流量计量的网络，本地存储和内存也较为有限。</li>
+</ul>
+<p>&#160; &#160; &#160; &#160;此外，并不存在一个“典型移动设备”。不同硬件能力的各种设备五花八门，要提供最佳性能，Chrome必须适应每种设备的操作约束条件。所幸，Chrome有多种执行模型正好可以实现这一点。</p>
+<p>&#160; &#160; &#160; &#160;在Android设备上，Chrome沿用了桌面版本中相同的多进程架构——即一个浏览器进程多个呈现进程。一个区别是，由于移动设备的内存有限，Chrome可能不能为每个开启的标签页运行专用的呈现器。Chrome是根据可用内存和设备的其他约束条件确定一个最优的呈现进程数量，由多个标签页共享呈现进程。</p>
+<p>&#160; &#160; &#160; &#160;当只有最少资源可用时，或者Chrome无法运行多进程时，它也可以切换回使用单进程、多线程处理模型。实际上，在iOS设备上，由于基础平台对沙盒的限制，它就是这样实现的——运行多线程的单一进程。</p>
+<p>&#160; &#160; &#160; &#160;网络性能方面呢？首先，Chrome在Android和iOS上使用和其他版本相同的网络栈。这样保证所有平台都有相同的网络优化，Chrome由此获得显著的性能优势。但是，如推测优化技术、socket超时设定与管理逻辑、缓存大小等这样的变量，是有所不同的并且会根据设备功能和所用网络时时调整。</p>
+<p>&#160; &#160; &#160; &#160;例如，为了节约电池电量，移动端Chrome可能选择使用闲置socket的懒惰关闭方式——即仅当开启新socket时才关闭旧的，这样来尽可能减少使用广播模组。同样地，因为预呈现（见下文）可能需要大量的网络和处理器资源，所以通常仅当用户使用WiFi时才进行。</p>
+<p>&#160; &#160; &#160; &#160;优化移动端浏览体验是Chrome开发团队的首要优先任务之一，我们可以期待在未来几个月或几年内看到新的改进。实际上，这是一个值得单独行文介绍的内容——或许在POSA系列的下一版中就会出现。</p>
+<h2 id="使用Chrome预测器进行推测优化-1"><a href="#使用Chrome预测器进行推测优化-1" class="headerlink" title="使用Chrome预测器进行推测优化"></a>使用Chrome预测器进行推测优化</h2><p>&#160; &#160; &#160; &#160;Chrome会随着你的使用变得越来越快。这项本领是借助<code>Predictor</code>单例对象实现的，它在浏览器内核进程中被实例化，其唯一职责是观测网络模式，并学习和预测未来可能出现的用户行为。<code>Predictor</code>处理信号的一些例子有：</p>
+<ul>
+<li>用户鼠标在一个链接上悬停，很好地预示了接下来可能发生的浏览行为，Chrome可以发起一个推测的目标主机DNS查询，还有可能开始TCP握手，以提升速度。待用户实际点击时，这平均还需要约200毫秒的时间，我们很有可能已经完成了DNS和TCP的步骤，这就为这次浏览减少了数百毫秒的额外延迟时间。</li>
+<li>在Omnibox（URL）栏中键入内容将触发高概率建议，也会触发DNS查询、TCP预连接甚至在隐藏的标签页中预呈现该页面。</li>
+<li>我们都有一个每天访问的喜爱站点清单。Chrome可以学习这些站点的子资源并推测性地进行预解析，甚至可能预获取这些资源来加速浏览。</li>
+</ul>
+<p>&#160; &#160; &#160; &#160;Chrome会随着你的使用，逐步学习网络的拓扑结构和你的浏览模式。如果顺利，它可以为每次浏览减少数百毫秒的延迟，让用户更加接近“页面即刻加载”的理想状态。为了实现这一点，Chrome使用了四个核心的优化技术，见下表：</p>
+<table>
+<thead>
+<tr>
+<th>技术</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>DNS预解析</td>
+<td>提前解析主机名，避免DNS延迟</td>
+</tr>
+<tr>
+<td>TCP预连接</td>
+<td>提前连接目标服务器，避免TCP握手的延迟</td>
+</tr>
+<tr>
+<td>资源预获取</td>
+<td>提前获取页面上的关键资源，加速页面的呈现</td>
+</tr>
+<tr>
+<td>页面预呈现</td>
+<td>提前获取整个页面的所有资源，用户触发时立即展示</td>
+</tr>
+</tbody>
+</table>
+<p>&#160; &#160; &#160; &#160;每个触发这些技术的决定都是在大量约束条件下优化判断的。毕竟，每一项优化都是推测性的，这意味着如果运用失当，可能会导致不必要任务和网络流量，更糟的是，还有可能对用户实际浏览行为的加载时间产生负面效果。</p>
+<p>&#160; &#160; &#160; &#160;Chrome是如何解决这个问题的呢？预测器会尽可能多地吸收信号，包括用户产生的行为、历史浏览数据以及来自呈现器和网络栈本身的信号。</p>
+<p>&#160; &#160; &#160; &#160;与<code>ResourceDispatcherHost</code>负责协调Chrome中所有网络活动的情况类似，<code>Predictor</code>对象也在Chrome内部创建了对一些用户和网络产生活动的过滤器：</p>
+<ul>
+<li>IPC频道过滤器，监测来自呈现进程的信号</li>
+<li>为各个请求添加ConnectInterceptor对象，这样它就能观测每个请求的流量模式并记录成功次数。</li>
+</ul>
+<p>&#160; &#160; &#160; &#160;下面是一个实际操作的例子，呈现进程可以发出一条带有以下任何提示的消息给浏览器进程，这些提示定义在ResolutionMotivation（url_info.h）中：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">enum</span> ResolutionMotivation &#123;</span><br><span class="line">  MOUSE_OVER_MOTIVATED,     <span class="comment">// Mouse-over initiated by the user.</span></span><br><span class="line">  OMNIBOX_MOTIVATED,        <span class="comment">// Omnibox suggested resolving this.</span></span><br><span class="line">  STARTUP_LIST_MOTIVATED,   <span class="comment">// This resource is on the top 10 startup list.</span></span><br><span class="line">  EARLY_LOAD_MOTIVATED,     <span class="comment">// In some cases we use the prefetcher to warm up</span></span><br><span class="line">                            <span class="comment">// the connection in advance of issuing the real</span></span><br><span class="line">                            <span class="comment">// request.</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// The following involve predictive prefetching, triggered by a navigation.</span></span><br><span class="line">  <span class="comment">// The referring_url_ is also set when these are used.</span></span><br><span class="line">  STATIC_REFERAL_MOTIVATED,  <span class="comment">// External database suggested this resolution.</span></span><br><span class="line">  LEARNED_REFERAL_MOTIVATED, <span class="comment">// Prior navigation taught us this resolution.</span></span><br><span class="line">  SELF_REFERAL_MOTIVATED,    <span class="comment">// Guess about need for a second connection.</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// &lt;snip&gt; ...</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>&#160; &#160; &#160; &#160;收到这样的信号后，预测器的目标是评价其成功的可能性，然后在资源可用的情况下触发相应行为。每条提示可能都有一个成功概率、一个优先级和一个过期时间戳，这组数据可用于维护一个推测优化的内部优先级队列。最后，对于每条从此队列发出的请求，预测器还能够跟踪记录其成功率，这又被用于未来决策的优化中。</p>
+<h2 id="Chrome网络架构概要-1"><a href="#Chrome网络架构概要-1" class="headerlink" title="Chrome网络架构概要"></a>Chrome网络架构概要</h2><ul>
+<li>Chrome使用多进程架构，将呈现进程与浏览器进程隔离开。</li>
+<li>Chrome保持资源调度器的一个单一实例，它被所有呈现进程所共享，运行在浏览器内核进程中。</li>
+<li>网络栈是一个跨平台、几乎单线程的库。</li>
+<li>网络栈使用非阻塞操作来管理所有网络操作。</li>
+<li>共享的网络栈可实现高效的资源次序优先化、重用并使浏览器可以在所有运行的进程之间进行全局性的优化。</li>
+<li>各个呈现进程通过IPC与资源调度器通信。</li>
+<li>资源调度器通过自定义的IPC过滤器截获资源请求。</li>
+<li>预测器截获资源请求和响应通信来学习和优化未来的网络请求。</li>
+<li>预测器根据所学的浏览模式可能推测性地安排DNS、TCP甚至资源请求的计划，当用户实际发生行为时节省数百毫秒的时间。</li>
+</ul>
+<h1 id="浏览器会话的生命周期-1"><a href="#浏览器会话的生命周期-1" class="headerlink" title="浏览器会话的生命周期"></a>浏览器会话的生命周期</h1><p>&#160; &#160; &#160; &#160;有了对Chrome网络栈架构的一个概括性认识后，我们接下来仔细研究一下浏览器内部实施的各种面向用户的优化。具体而言，假设我们刚创建了一个新的Chrome profile，准备好开始了。</p>
+<h2 id="优化冷启动体验-1"><a href="#优化冷启动体验-1" class="headerlink" title="优化冷启动体验"></a>优化冷启动体验</h2><p>&#160; &#160; &#160; &#160;当你第一次加载浏览器时，它对你的喜爱站点和浏览模式一无所知。但是，我们中的很多人都会在浏览器冷启动后做同样的事：我们会浏览我们的电邮收件箱、喜爱的新闻站点、社交网站、内网入口等等。具体的站点可能因人而异，但是这些会话的相似之处使Chrome的Predictor可以加速你的冷启动过程。</p>
+<p>&#160; &#160; &#160; &#160;Chrome会记住用户在浏览器启动后前10个最有可能访问的主机名——注意这并不是前10个全局目标站点，而特指全新开启浏览器之后的目标站点。浏览器加载时，Chrome可以为这些可能的目标站点触发DNS预获取行为。如果你对此感兴趣，可以打开一个新标签页浏览地址<code>chrome://dns</code>，看一看你自己的启动主机名列表。在页面顶端，你会找到你profile的前10个最可能启动站点。</p>
+<p><img src="http://images.windrunnerlihuan.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Chromium%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF-%E5%90%AF%E5%8A%A8%E7%AF%87/dns.jpg" alt="启动DNS"></p>
+<p>截图是我的Chrome profile的例子。我通常是如何开始浏览的呢，如果我在写文章，比如现在这一篇，可能会频繁访问Google Docs。果不其然，我们在列表中看到很多Google的主机名。</p>
+<h2 id="使用Omnibox优化交互过程-1"><a href="#使用Omnibox优化交互过程-1" class="headerlink" title="使用Omnibox优化交互过程"></a>使用Omnibox优化交互过程</h2><p>&#160; &#160; &#160; &#160;Chrome的创新之一是引入了Omnibox，它与此前的地址栏不同，可以处理目标站点URL之外的很多东西。除了记住用户曾经访问过的页面的URL之外，它还提供完整的对历史记录的文本检索功能，与你所选择的搜索引擎的集成性也较好。</p>
+<p>&#160; &#160; &#160; &#160;随着用户在其中键入内容，Omnibox会自动提供建议的行为，可能是基于你的浏览历史的URL或者是一次检索查询。在后台，每个建议行为都根据查询结果和历史表现进行评分。实际上，Chrome允许我们通过访问<code>chrome://predictors</code>来查看这些数据。</p>
+<p><img src="http://images.windrunnerlihuan.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Chromium%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF-%E5%90%AF%E5%8A%A8%E7%AF%87/Omnibox.png" alt="Omnibox的URL预测"></p>
+<p>&#160; &#160; &#160; &#160;Chrome会维护用户输入前缀、建议行为以及每一记录的命中率的历史记录。在我的profile中，你可以看到当我在Omnibox中输入“g”时，有76%的可能性我是要访问Gmail。而当我加了一个“m”之后（变成“gm”），则置信水平上升到99.8%，实际上，在记录的412次访问中，我只有一次在输入“gm”之后没有访问Gmail。</p>
+<p>&#160; &#160; &#160; &#160;这与网络栈有什么关系呢？可能备选站点中黄色和绿色的记录也是<code>ResourceDispatcher</code>的重要信号。如果我们有一个可能的备选站点（黄色），Chrome可能为该目标主机触发DNS预获取。如果我们有一个高度确信的备选站点（绿色），那么Chrome可能还会在主机名解析之后触发TCP预连接。最后，如果这两步都做完时用户还没做出最终决定，那么Chrome甚至可能在隐藏的标签页中预呈现整个页面。</p>
+<p>&#160; &#160; &#160; &#160;另一方面，如果根据过去的浏览历史没有为所输入的前缀找到较好的匹配，那么Chrome预计可能会发生检索请求，会向你的搜索引擎发起DNS预获取和TCP预连接。</p>
+<p>&#160; &#160; &#160; &#160;一个普通用户需要花费数百毫秒来填写查询内容，评价所给出的自动补全建议。在后台，Chrome能够预获取、预连接，并在某些情况下对页面进行预呈现，这样当用户准备好按下“输入”键时，很多网络延迟已经被消除了。</p>
+<h2 id="优化缓存性能-1"><a href="#优化缓存性能-1" class="headerlink" title="优化缓存性能"></a>优化缓存性能</h2><p>&#160; &#160; &#160; &#160;最好最快的请求是不发出请求。当我们说到性能时必然会涉及缓存的问题——你正在为你网页上的所有资源提供<code>Expires、ETag、Last-Modified和Cache-Control</code>这些<a href="https://developers.google.com/speed/docs/insights/LeverageBrowserCaching" target="_blank" rel="external">响应标头</a>，对吧？如果你没有这样做，请立刻去改。我们会等你。</p>
+<p>&#160; &#160; &#160; &#160;Chrome的内部缓存有两种不同的实现方式：一种是由本地磁盘所支持，另一种是把所有内容存储在内存中。内存实现方式用于<a href="http://support.google.com/chrome/bin/answer.py?hl=en&amp;answer=95464" target="_blank" rel="external">匿名浏览模式</a>，当你关闭窗口后会把痕迹清除干净。两种方式都实现相同的内部接口（<code>disk_cache:Backend</code>和<code>disk_cache:Entry</code>），这极大地简化了架构并且——如果你非要坚持的话——允许你很方便地试验你自己的缓存实现。</p>
+<p>&#160; &#160; &#160; &#160;内部来看，磁盘缓存实现了其自己的数据结构，它们都被存储在你的profile的一个单独的缓存文件夹中。这个文件夹中有索引文件，它们在浏览器启动时进行内存映射，还有数据文件，它们存储了实际数据以及HTTP标头和其他簿记信息【注4】。最后，在缓存回收机制上，磁盘缓存会维护一个最近最少使用（LRU）缓存，它会把访问频度和资源新旧度等排序量化指标考虑进去。</p>
+<p>&#160; &#160; &#160; &#160;如果你对Chrome的缓存状态很感兴趣，可以打开新标签页访问<code>chrome://net-internals/#httpCache</code>。或者，如果你想看看真实的HTTP元数据以及缓存的响应，也可以访问<code>chrome://cache</code>，其中列示了缓存中当前可用的所有资源。在该页面中，检索一项资源之后可以点击URL查看缓存的标头和响应的具体字节内容。</p>
+<h2 id="使用预获取优化DNS-1"><a href="#使用预获取优化DNS-1" class="headerlink" title="使用预获取优化DNS"></a>使用预获取优化DNS</h2><p>&#160; &#160; &#160; &#160;我们已经在一些地方提到过DNS预解析，所以在我们深入介绍它的实现方式之前，先回忆一下哪些情况下为什么会触发它：</p>
+<ul>
+<li>运行在呈现进程中的Blink文档解析器，可以提供当前页面上所有链接的主机名清单，Chrome可以从中选择提前解析。</li>
+<li>呈现进程会将鼠标悬停和“按下按键”事件作为用户意图进行浏览的前期信号，从而触发预解析。</li>
+<li>Omnibox根据高度可能的建议，可能触发解析请求。</li>
+<li>Predictor基于过去的浏览和资源请求数据，可能请求主机名解析。</li>
+<li>页面所有者可能明确指示Chrome应该预解析哪些主机名。</li>
+</ul>
+<p>&#160; &#160; &#160; &#160;所有情况下，DNS预解析都被作为提示来处理。Chrome并不保证预解析必然进行，而是综合运用各个信号与其自身的预测器来评估这条提示并动态决策。在“最坏情况”下，如果Chrome未能及时完成主机名预解析，用户就要等待显式DNS解析，接着是TCP连接时间，最后是实际资源获取。但是，如果出现了这种情况，预测器会进行记录并相应调整其未来决策——随着你的持续使用，它会变得更快更聪明。</p>
+<p>&#160; &#160; &#160; &#160;我们此前没有提到的一项优化是Chrome能够学习每个站点的拓扑结构，并运用这项信息来加速未来的访问过程。具体而言，回忆一下，一个页面平均由88项资源组成，由15个以上不同的主机发送。每一次你进行浏览，Chrome会记录页面上的热门资源的主机名，在以后的访问中，它可能会对其中一些或全部选择触发DNS预解析甚至TCP预连接。</p>
+<p>&#160; &#160; &#160; &#160;访问<code>chrome://dns</code>并检索你profile对应的热门站点主机名，可以查看Chrome所保存下来的子资源主机名。在上面的例子中，你可以看到Chrome记录了Google+的6个子资源主机名，还统计了DNS预解析触发或TCP预连接执行的次数，还有会由各项处理的请求的估计值。这些内部记录帮助Chrome预测器实现优化。</p>
+<p>&#160; &#160; &#160; &#160;除了这些内部信号之外，站点的所有者也能在页面中嵌入附加的标记请求浏览器预解析一个主机名：</p>
+<figure class="highlight htmlbars"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;link rel="dns-prefetch" href="//host_name_to_prefetch.com"&gt;</span><br></pre></td></tr></table></figure>
+<p>&#160; &#160; &#160; &#160;为何不直接依靠浏览器的自动机制呢？有些时候，你可能希望解析一个页面中任何地方都没有提到过的主机名。重定向就是一个典型的例子：链接可能指向一个主机——就如同一项分析追踪服务一样——这个主机再把用户重定向至真正的目标站点。Chrome依靠自身是无法推断出这种模式的，但你可以手动提供一条提示帮助它，让浏览器提前解析真实目标站点的主机名。</p>
+<p>&#160; &#160; &#160; &#160;这一切在后台是如何实现的呢？和我们讨论过的其他优化手段一样，这个问题的答案也取决于Chrome的版本，因为开发团队一直试验新的、更好的方式来提升性能。但是，不严格地说，Chrome内部的DNS基础设施有两个主要的实现方式。过去，Chrome依靠操作平台无关的系统调用<code>getaddrinfo</code>，并把DNS查询的实际职责交由操作系统完成。但是，这种方式正逐步被Chrome自己实现的异步DNS解析器所替代。</p>
+<p>&#160; &#160; &#160; &#160;依靠操作系统的原有方式具有其优点：代码少而简单，并能够利用操作系统的DNS缓存。但是，<code>getaddrinfo</code>也是一个阻塞型的系统调用，这意味着Chrome必须创建并维护一个专用的worker线程池，才能够实现多条并行查询。这个未连接池最多只能容纳六个线程，这个上限是基于硬件的最小公分母得出的经验数字——这样并行请求的数量超出的话，有些用户的路由器就会过载。</p>
+<p>&#160; &#160; &#160; &#160;对于使用worker池的预解析，Chrome就只是调度<code>getaddrinfo</code>调用，这会一直阻塞worker线程，直至响应就绪后马上丢弃所返回的结果，并开始处理下一条预获取请求。结果由操作系统的DNS缓存来存储，未来实际进行getaddrinfo查询时，它会立即返回响应。这种方式简单有效，实践中的表现也不错。</p>
+<p>&#160; &#160; &#160; &#160;但这还不够好。<code>getaddrinfo</code>调用有很多有用信息不向Chrome公开，比如每条记录的生存时间（TTL）时间戳，以及DNS缓存本身的状态。为了提升性能，Chrome团队决定自己来实现跨平台的异步DNS解析器。</p>
+<p><img src="flag.jpg" alt="启用异步DNS解析器"></p>
+<p>&#160; &#160; &#160; &#160;通过把DNS解析放到Chrome内部来处理，新的异步解析器可以实现一些新的优化手段：</p>
+<ul>
+<li>更好控制重传计时器，能够并行执行多条查询</li>
+<li>记录生存时间的可见性，使得Chrome能提前刷新热点记录</li>
+<li>更好的双栈实现（IPv4和IPv6）行为</li>
+<li>基于RTT或其他信号的，对不同服务器的故障切换</li>
+</ul>
+<p>&#160; &#160; &#160; &#160;以上所有以及其他很多想法都是在Chrome内持续试验并优化的。这就必然涉及一个问题：我们如何了解并衡量这些想法的效果呢？很简单，Chrome会为每个profile分别记录详细的网络性能统计数据和直方图。要查看所收集到的DNS统计数据，可以打开新标签页，访问<code>chrome://histograms/DNS</code>（见下图）</p>
+<p><img src="dnsget.jpg" alt="DNS预获取的直方图"></p>
+<p>&#160; &#160; &#160; &#160;上面的直方图显示出了DNS预获取请求延迟的分布情况：大约50%的（最右侧列）预获取查询在20毫秒内完成（最左侧列）。注意，这是基于最近的浏览会话（9869个样本）的统计得到的，并属于用户的隐私数据。如果该用户选择报告Chrome的使用统计数据，则这些数据的摘要会被匿名处理，定期反馈给开发团队，他们就可以看到试验的效果并进行相应的调整。</p>
+<h2 id="使用预连接优化TCP连接管理-1"><a href="#使用预连接优化TCP连接管理-1" class="headerlink" title="使用预连接优化TCP连接管理"></a>使用预连接优化TCP连接管理</h2><p>&#160; &#160; &#160; &#160;我们已经预解析了主机名，按照Omnibox或Chrome预测器的估计，我们很有可能即将进行浏览行为。为什么不更进一步，也推测性地预连接到目标主机，在用户发出请求之前完成TCP握手的步骤呢？这样一来，我们又能消除掉一个往返延迟，轻松省去用户数百毫秒的时间。没错，TCP预连接正是这样做的。</p>
+<p>&#160; &#160; &#160; &#160;打开新标签页访问<code>chrome://dns</code>可以查看已经触发TCP预连接的主机。</p>
+<p><img src="dnshost.jpg" alt="展示已经触发TCP预连接的主机"></p>
+<p>&#160; &#160; &#160; &#160;首先，Chrome会检查socket池，看看是否有该主机名的可用socket可供重用——存活socket会在池中留存一段时间，以避免TCP握手和慢热启动的惩罚时间。如果没有socket可用，则由其发起TCP握手并放入池中。然后，当用户进行浏览时，HTTP请求就可以立刻调度。</p>
+<p>&#160; &#160; &#160; &#160;Chrome在<code>chrome://net-internals#sockets</code>中提供了一个工具可以查看Chrome中所有已开启socket的状态。图1.10是相关的截图。</p>
+<p><img src="http://images.windrunnerlihuan.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Chromium%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF-%E5%90%AF%E5%8A%A8%E7%AF%87/socketopen.jpg" alt="已开启的socket"></p>
+<p>&#160; &#160; &#160; &#160;你还可以详细查看每个socket，检查时间线：连接和代理时间，每个包的到达时间等等。最后要说的很重要的一点是：你也可以导出这些数据进行后续分析或报告bug。具有良好的信息统计机制对任何优化都是很关键的，<code>chrome://net-internals</code>就是Chrome中所有功能相互作用的集中展示——如果你还没探索过这个功能，你应该试试！</p>
+<h2 id="使用预获取提示优化资源加载-1"><a href="#使用预获取提示优化资源加载-1" class="headerlink" title="使用预获取提示优化资源加载"></a>使用预获取提示优化资源加载</h2><p>&#160; &#160; &#160; &#160;有时，页面的作者能够提供基于其站点结构或布局附加的导航或页面上下文，帮助浏览器优化用户体验。Chrome支持两种这样的提示，可以嵌入页面标记中使用：</p>
+<figure class="highlight htmlbars"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&lt;link rel="subresource" href="/javascript/myapp.js"&gt;</span><br><span class="line"> &lt;link rel="prefetch"    href="/images/big.jpeg"&gt;</span><br></pre></td></tr></table></figure>
+<p>&#160; &#160; &#160; &#160;子资源和预获取看起来非常类似，但是语义完全不同。当链接资源指定其关系为“预获取”时，它是告诉浏览器，这项资源在以后的浏览中可能用到。换言之，这实际上是一个跨页面提示。而当资源指定其关系为“子资源”时，它是提前告诉浏览器该资源会在当前页面中被用到，在该文档后面的部分遇到它之前可以先发起请求。</p>
+<p>&#160; &#160; &#160; &#160;可以想见，两者的不同语义会导致资源加载器的行为大相径庭。标记预获取的资源会被看做优先级较低，并在当前页面加载完成后由浏览器进行一次下载。标记为子资源的内容一旦遇到就会作为高优先级资源来获取，并与当前页面上的其余资源相互竞争。</p>
+<p>&#160; &#160; &#160; &#160;这两种提示如果使用得当可以极大地帮助优化你站点的用户体验。最后，还要注意，预获取是<a href="https://whatwg.org/specs/web-apps/current-work/multipage/links.html#link-type-prefetch" target="_blank" rel="external">HTML5规范的一部分</a>，目前Firefox和Chrome都支持，而子资源目前<a href="http://www.chromium.org/spdy/link-headers-and-server-hint/link-rel-subresource" target="_blank" rel="external">只限于Chrome</a>。</p>
+<h2 id="使用浏览器预刷新优化资源加载-1"><a href="#使用浏览器预刷新优化资源加载-1" class="headerlink" title="使用浏览器预刷新优化资源加载"></a>使用浏览器预刷新优化资源加载</h2><p>&#160; &#160; &#160; &#160;不巧的是，不是所有站点所有者都能够或愿意在标记中为浏览器提供子资源提示。而且，即使他们这样做，我们还是要等待HTML文档从服务器传送过来之后才能解析这些提示，开始获取这些必要的子资源——根据服务器响应时间和客户端与服务器间的延迟，这可能需要耗费数百乃至数千毫秒。</p>
+<p>&#160; &#160; &#160; &#160;但是，我们前面看到，Chrome已经通过学习常用资源的主机名来执行DNS预获取了。那么，为什么不如法炮制，更进一步：执行DNS查询，使用TCP预连接然后也推测性地预获取资源呢？没错，这就是预刷新的作用：</p>
+<ul>
+<li>用户发起对目标URL的请求</li>
+<li>Chrome询问预测器其所学习到的与目标URL相关的子资源，并发起DNS预获取、TCP预连接和资源预刷新等一连串行为</li>
+<li>如果所学到的子资源在缓存中，则将其从磁盘加载到内存中</li>
+<li>如果所学到的子资源缺失，或者已过期，则进行一次网络请求</li>
+</ul>
+<p>&#160; &#160; &#160; &#160;资源预刷新是展示Chrome中每个试验性优化手段的工作流的绝佳例子——理论上讲，一项优化应该使性能得到提升，但是也涉及很多因素的此消彼长。只有一种方式能够可靠地确定一项优化是不是有效，是不是适合于Chrome：先实现它，并在一些预先发布的渠道（真正的网络、真实浏览模式、真人用户）上进行A/B试验。</p>
+<p>&#160; &#160; &#160; &#160;在2013年初，Chrome团队还处于讨论这种实现的早期阶段。如果根据所收集的结果它能奏效，我们我们可能会在年内晚些时候在Chrome中看到预刷新。Chrome的网络性能优化从未止步——开发团队一直在试验新的方法、创意和技术。</p>
+<h2 id="使用预呈现优化浏览-1"><a href="#使用预呈现优化浏览-1" class="headerlink" title="使用预呈现优化浏览"></a>使用预呈现优化浏览</h2><p>&#160; &#160; &#160; &#160;目前为止我们介绍过的每一项优化都是帮助减少用户进行浏览的直接请求和标签页上呈现最终页面之间的延迟的。但是，要真正得到即刻展示页面的体验，需要什么呢？根据我们之前看到的UX数据，这样的交互时间需要低于100毫秒，这样，留给网络延迟的余地可不算多。我们怎么才能在100毫秒内把呈现好的页面展示出来呢？</p>
+<p>&#160; &#160; &#160; &#160;当然，你已经知道答案了，因为这是很多用户所用的共同模式：如果你打开多个标签页，标签页间的切换就是即刻的，比在一个前景标签页中浏览同样资源之间的等待要快得多。那么，如果浏览器提供一个API来实现这一点呢？</p>
+<figure class="highlight htmlbars"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;link rel="prerender" href="http://example.org/index.html"&gt;</span><br></pre></td></tr></table></figure>
+<p>&#160; &#160; &#160; &#160;你可能猜到了，这就是Chrome中的<a href="https://developers.google.com/chrome/whitepapers/prerender" target="_blank" rel="external">预呈现</a>。不是如“预获取”提示实现的那样只下载单项资源，“预呈现”属性命令Chrome在隐藏标签页中预呈现页面以及所有子资源。隐藏标签页本身对用户不可见，但当用户触发浏览行为时，该标签页就会从后台切换出来实现“即刻体验”。</p>
+<p>&#160; &#160; &#160; &#160;想看看这是如何实现的吗？可以访问prerender-test.appspot.com上还在开发中的演示版，要查看你的profile的预呈现页面的历史记录和状态，访问：<code>chrome://net-internals/#prerender</code>。</p>
+<p><img src="http://images.windrunnerlihuan.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Chromium%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF-%E5%90%AF%E5%8A%A8%E7%AF%87/prerender.jpg" alt="当前profile的预呈现页面"></p>
+<p>&#160; &#160; &#160; &#160;可以预见的是，在隐藏标签页中呈现完整页面可能会耗费CPU和网络的大量资源，所以仅当我们高度确信应该使用隐藏标签页时才应该使用。例如，当你使用Omnibox时，对高度确信的建议可能会触发预呈现。类似地，Google搜索如果估计认为它的第一条检索结果是高度确信的目标站点，有时会在其标记中添加预呈现提示（也称为Google即开页面）。</p>
+<p>&#160; &#160; &#160; &#160;你还可以为自己的站点添加预呈现提示。在你这样做之前，请先了解并记住预呈现过程具有的以下局限之处：</p>
+<ul>
+<li>所有线程总共至多只能有一个预呈现标签页</li>
+<li>HTTPS和需要HTTP身份鉴证的页面不能使用</li>
+<li>如果所请求资源或其任何子资源需要进行非幂等请求（只允许GET请求），预呈现会被放弃</li>
+<li>所有资源都以最低的网络优先级进行获取</li>
+<li>该页面以最低的CPU优先级进行呈现</li>
+<li>如果内存需求超过100MB则该页面会被放弃</li>
+<li>插件初始化被推迟，如果出现了HTML5的多媒体元素则预呈现被放弃</li>
+</ul>
+<p>&#160; &#160; &#160; &#160;换言之，预呈现不保证一定发生，并只适用于安全的页面。此外，因为JavaScript和其他逻辑可能在隐藏页面中被执行，实践中最好使用页面<a href="https://developers.google.com/chrome/whitepapers/pagevisibility" target="_blank" rel="external">可见性API</a>来检测一下该页面是否可见——<a href="https://www.html5rocks.com/en/tutorials/pagevisibility/intro/" target="_blank" rel="external">这是你本就应该做的</a>。</p>
+<h1 id="Chrome会随着你的使用越来越快-1"><a href="#Chrome会随着你的使用越来越快-1" class="headerlink" title="Chrome会随着你的使用越来越快"></a>Chrome会随着你的使用越来越快</h1><p>&#160; &#160; &#160; &#160;无需多言，Chrome的网络栈绝非一个简单的socket管理器。我们这次走马观花的概述介绍了在网站浏览的背后多层次的透明运行的优化手段。Chrome对网站拓扑结构和你的浏览模式了解越是深入，它的效果就越好。就像魔法一样，Chrome会随着你的使用越来越快。可你知道它并不是魔法，你了解这背后的机制。</p>
+<p>&#160; &#160; &#160; &#160;最后，还要注意一点，Chrome团队持续试验着优化性能的新想法——这个过程从未停止。在你阅读本文时，就可能有新的试验项目和优化手段正在开发、测试或部署着。也许只有当我们能够对每个站点每个页面都实现即刻加载（小于100毫秒）时，才会停下脚步吧。在那之前，总有工作等着我们去完成。</p>
+<h1 id="学习浏览器技术可以得到什么？-1"><a href="#学习浏览器技术可以得到什么？-1" class="headerlink" title="学习浏览器技术可以得到什么？"></a>学习浏览器技术可以得到什么？</h1><p>&#160; &#160; &#160; &#160;浏览器要处理的两个核心对象是HTML和JavaScript。HTML用来实现网页UI，涉及到的最核心技术是UI渲染技术。JavaScript用来实现网页功能，涉及到的最核心技术JavaScript引擎技术。</p>
+<p>&#160; &#160; &#160; &#160;一切带有屏幕的智能设备，UI都是其所运行系统的一个核心模块，它负责与用户进行交互，以及将交互结果反馈给用户，从而形成一个闭环。用户在使用一个系统的时候，最先接触到的就是它的UI，经常接触的也是它的UI，因此UI的好坏直接就影响到了系统用户体验的好坏。用户体验对一个系统来说是至关重要的，例如，很多人觉得iOS系统比Android系统好用的其中一个原因就是前者的用户体验更好。</p>
+<p>&#160; &#160; &#160; &#160;衡量一个系统的用户体验好与坏的其中一个重要标准就是UI的流畅与否，其中又以动画的流畅与否为核心，因为一个流畅的动画显示需要的UI渲染速度是60fps。为了达到60fps的渲染速度，各个系统在实现UI模块的时候，可谓是费尽心思、尽其所能。通常都会使用诸如纵向分层、横向分块的渲染策略。</p>
+<p>&#160; &#160; &#160; &#160;所谓纵向分层，就是在Z轴方向上按层来划分UI，这样带来的好处在渲染UI的每一帧时，不必每一层都进行重绘。这种分层渲染策略使用到了一种称为“绘制-合成”的UI渲染技术。也就是各层负责绘制好自己的UI，然后再由一个单独的模块对它们进行合成。这样在渲染UI的每一个帧时，只有UI发生了变化的层才需要重新进行绘制，没有发生UI变化的层只需要参与合成这一步即可。这种技术可以大大地减少渲染操作，从而获得更流畅的UI体验。</p>
+<p>&#160; &#160; &#160; &#160;所谓横向分块，就是对于UI的每一个层，按照一定的规则对其进行分块，这样带来的好处就是在渲染UI的每一帧遇到一个需要进行重新绘制的层时，不必对该层的所有内容都进行重新绘制，只需要绘制那些在可视区间的块即可。这样也可以在某种程度上减少渲染操作，从而获得更流畅的UI体验。</p>
+<p>&#160; &#160; &#160; &#160;现在的智能设备配备的CPU都是多核的。为了能够充分地利用CPU多核特性，一帧UI渲染通常分两步进行：第一步是收集UI绘制命令；第二步是执行UI绘制命令。每一步都是在一个独立的线程完成，因此就可以充分地利用CPU的多核特性：在执行第N帧的UI绘制命令的同时，收集第N+1帧的UI绘制命令。此外，对于第一步收集到的UI绘制命令，还可以做一些额外的优化。当我们收集到一帧UI的所有绘制命令的时候，我们就相当于是知悉了这一帧UI的全貌。知悉了一个UI帧的全貌之后，就可以进行一些优化，例如对某些UI绘制命令进行重排和合并，以及丢弃那些被遮挡的UI相关的绘制命令。这些优化同样是可以减少渲染操作，从而获得更流畅的UI体验。</p>
+<p>&#160; &#160; &#160; &#160;现在的智能设备，很多都配备了GPU，这意味着我们可以使用GPU进一步提高UI的渲染速度，这就是所谓的硬件加速渲染技术。例如对于我们前面提到的UI层和块，可以直接以GPU的纹理或者FBO来进行绘制和合成。GPU具有成熟和专业的UI渲染技术，因此通过它来渲染UI，可以获得更流畅的UI体验。</p>
+<p>&#160; &#160; &#160; &#160;以上提及到的所有UI渲染技术，不管是什么系统，我们都可以或多或少地看到它们的影子，因此它们都是通用的、现代化的UI渲染技术。如果掌握了这些UI渲染技术，那么不管以后流行的是什么系统，我们都可以轻松应对。因此，学习浏览器技术可以得到的第一点核心技术就是现代化的先进UI渲染技术。</p>
+<p>&#160; &#160; &#160; &#160;不知道同学们有没有发现，最近几年时不时都看到有新的编程语言发布，特别是伴随着新系统的发布，其中比较有名的就是Google的Go语言和Apple的Swift语言。我们在惊叹这些编程语言方便好用的同时，有没有想过它们背后是如何设计和实现的呢？如果有考虑过这个问题的话，我们就不得不提到JavaScript这个古老而又流行的编程语言。</p>
+<p>&#160; &#160; &#160; &#160;JavaScript被视为一个“玩具语言”，据说它只花了2个星期设计，然后被使用了20年。在20年的时间里，大家一边在用它，然后又一边在骂它。这足见大家是有多么的喜欢它，正所谓”骂是爱，打是亲“嘛。JavaScript虽然天生是为操作网页而设计的，但是它并不仅仅是应用在网页前端应用开发上，它还渗透了移动端和服务端应用开发上。</p>
+<p>&#160; &#160; &#160; &#160;在移动端上，近两三年出现了不少专门针对手机的Web OS，例如Firefox OS、Ubuntu Mobile OS、Tizen OS以及阿里的云OS，都支持运行Web应用，这意味在这些系统上可以使用JavaScript来开发应用。当然，在Android和iOS上也可以开发Web应用，不过它们都是要运行在WebView之上，不是直接在OS层面上得到支持。在服务端上，Node.js就是一个有代表性的框架，它使得我们可以使用JavaScript来开发Web服务器。</p>
+<p>&#160; &#160; &#160; &#160;除了在移动端和服务端上，JavaScript甚至还应用在MCU（Microcontroller Unit）领域上，也就是俗称的单片机领域上。这些MCU提供了一个JavaScript运行环境，从而使得我们可以使用JavaScript操作它们。</p>
+<p>&#160; &#160; &#160; &#160;一个本来只是设计用在网页开发的语言，由于它的简洁和易用性，现在不仅渗透到移动端、服务器端开发上，还渗透到了MCU领域上，这足以看到JavaScript是如此广泛地被开发者接受和使用。当然，JavaScript广泛地被开发者接受和使用，并不意味着它是完美的，例如性能就是一个比较突出的问题。但是会不会在以后的某一天，当JavaScript的性能问题被解决之后，所有能够编程的领域，都会被JavaScript代替呢？</p>
+<p>&#160; &#160; &#160; &#160;不管如何，鉴于现在JavaScript的流行性，作为一个软件开发从业者，我们不仅会使用JavaScript，还需要知道JavaScript在背后是如何运行的，这样才能达到一个更高的境界。JavaScript是一种动态语言，与C/C++、Java这些静态语言一样，在实现上都是涉及到了编译相关的知识，例如语法解析、生成语法树、生成字节码指令、生成本地指令和指令优化等。只不过对于动态语言来说，这些操作发生在应用程序运行时，只对于静态语言来说，这些操作发生应用程序运行前。此外，运行JavaScript的引擎与运行Java字节码的虚拟机一样，在运行时都提供了内存自动管理技术，也就是会执行GC。由此可见，学习JavaScript可以获得很多编译语言相关的知识。这也是学习浏览器技术可以得到的第二点核心技术。</p>
+<p>&#160; &#160; &#160; &#160;当我们学习的是基于Chromium的浏览器技术的时候，我们就不仅仅是可以获得上面提到的两个核心技术，还可以学习到一个复杂系统的架构，例如它的对象管理技术、多进程架构和多线程编程模型等等。一言蔽之，学习浏览器技术可以使我们获得很多现在和甚至未来都流行的计算机技术。</p>
+<h1 id="注释-1"><a href="#注释-1" class="headerlink" title="注释"></a>注释</h1><ol>
+<li>第10章：《移动网络性能的秘密》详细解释了这个问题。</li>
+<li>如果你感兴趣，Chromium的百科页面上有详细的介绍。</li>
+<li>Http://code.google.com/searchframe#OAMlx_jo-ck/src/content/public/browser/resource_dispatcher_host.h&amp;exact_package=chromium&amp;q=ResourceDispatcherHost.</li>
+<li>16KB以内的资源保存在共享数据块文件中，更大的文件在磁盘上有自己的专用文件。</li>
+</ol>
+<h1 id="参考-1"><a href="#参考-1" class="headerlink" title="参考"></a>参考</h1><p><a href="http://aosabook.org/en/posa/high-performance-networking-in-chrome.html" target="_blank" rel="external">http://aosabook.org/en/posa/high-performance-networking-in-chrome.html</a><br><a href="https://www.cnbeta.com/articles/tech/63690.htm" target="_blank" rel="external">https://www.cnbeta.com/articles/tech/63690.htm</a></p>
+<p><img src="http://images.windrunnerlihuan.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Chromium%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF-%E5%90%AF%E5%8A%A8%E7%AF%87/meizi.jpeg" alt="妹子图"></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>坚持技术分享，您的支持将鼓励我继续创作！</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="/images/wechat.jpg" alt="windrunnerlihuan WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+        <div id="alipay" style="display: inline-block">
+          <img id="alipay_qr" src="/images/alipay.jpg" alt="windrunnerlihuan Alipay"/>
+          <p>支付宝打赏</p>
+        </div>
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Chromium/" rel="tag"># Chromium</a>
+          
+            <a href="/tags/启动/" rel="tag"># 启动</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/09/12/无题/" rel="next" title="无题">
+                <i class="fa fa-chevron-left"></i> 无题
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+        <!-- JiaThis Button BEGIN -->
+<div class="jiathis_style">
+  <a class="jiathis_button_tsina"></a>
+  <a class="jiathis_button_tqq"></a>
+  <a class="jiathis_button_weixin"></a>
+  <a class="jiathis_button_cqq"></a>
+  <a class="jiathis_button_douban"></a>
+  <a class="jiathis_button_renren"></a>
+  <a class="jiathis_button_qzone"></a>
+  <a class="jiathis_button_kaixin001"></a>
+  <a class="jiathis_button_copy"></a>
+  <a href="http://www.jiathis.com/share" class="jiathis jiathis_txt jiathis_separator jtico jtico_jiathis" target="_blank"></a>
+  <a class="jiathis_counter_style"></a>
+</div>
+<script type="text/javascript" >
+  var jiathis_config={
+    hideMore:false
+  }
+</script>
+<script type="text/javascript" src="http://v3.jiathis.com/code/jia.js" charset="utf-8"></script>
+<!-- JiaThis Button END -->
+
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div id="lv-container" data-id="city" data-uid="MTAyMC8zMTQwMC83OTYz"></div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.png"
+               alt="windrunnerlihuan" />
+          <p class="site-author-name" itemprop="name">windrunnerlihuan</p>
+           
+              <p class="site-description motion-element" itemprop="description"></p>
+           
+        </div>
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives">
+                <span class="site-state-item-count">40</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-categories">
+              <a href="/categories/index.html">
+                <span class="site-state-item-count">6</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-tags">
+              <a href="/tags/index.html">
+                <span class="site-state-item-count">22</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="mailto:937874128@qq.com" target="_blank" title="Email">
+                  
+                    <i class="fa fa-fw fa-envelope-o"></i>
+                  
+                  Email
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/windrunnerlihuan" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+          <div class="links-of-blogroll motion-element links-of-blogroll-inline">
+            <div class="links-of-blogroll-title">
+              <i class="fa  fa-fw fa-globe"></i>
+              Links
+            </div>
+            <ul class="links-of-blogroll-list">
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://gank.io/" title="干货集中营" target="_blank">干货集中营</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.jcodecraeer.com/" title="泡在网上的日子" target="_blank">泡在网上的日子</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://trinea.cn/" title="Trinea" target="_blank">Trinea</a>
+                </li>
+              
+            </ul>
+          </div>
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Google-Chrome的历史和指导性原则"><span class="nav-number">1.</span> <span class="nav-text">Google Chrome的历史和指导性原则</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#性能的多个方面"><span class="nav-number">2.</span> <span class="nav-text">性能的多个方面</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#什么是现代Web应用？"><span class="nav-number">3.</span> <span class="nav-text">什么是现代Web应用？</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#线上资源请求的生命周期"><span class="nav-number">4.</span> <span class="nav-text">线上资源请求的生命周期</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#“足够快”有多快？"><span class="nav-number">5.</span> <span class="nav-text">“足够快”有多快？</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Chrome的网络栈概览"><span class="nav-number">6.</span> <span class="nav-text">Chrome的网络栈概览</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#多进程架构"><span class="nav-number">6.1.</span> <span class="nav-text">多进程架构</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#进程间通信和多进程资源加载"><span class="nav-number">6.2.</span> <span class="nav-text">进程间通信和多进程资源加载</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#跨平台资源获取"><span class="nav-number">6.3.</span> <span class="nav-text">跨平台资源获取</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#移动平台的架构和性能"><span class="nav-number">6.4.</span> <span class="nav-text">移动平台的架构和性能</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#使用Chrome预测器进行推测优化"><span class="nav-number">6.5.</span> <span class="nav-text">使用Chrome预测器进行推测优化</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Chrome网络架构概要"><span class="nav-number">6.6.</span> <span class="nav-text">Chrome网络架构概要</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#浏览器会话的生命周期"><span class="nav-number">7.</span> <span class="nav-text">浏览器会话的生命周期</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#优化冷启动体验"><span class="nav-number">7.1.</span> <span class="nav-text">优化冷启动体验</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#使用Omnibox优化交互过程"><span class="nav-number">7.2.</span> <span class="nav-text">使用Omnibox优化交互过程</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#优化缓存性能"><span class="nav-number">7.3.</span> <span class="nav-text">优化缓存性能</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#使用预获取优化DNS"><span class="nav-number">7.4.</span> <span class="nav-text">使用预获取优化DNS</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#使用预连接优化TCP连接管理"><span class="nav-number">7.5.</span> <span class="nav-text">使用预连接优化TCP连接管理</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#使用预获取提示优化资源加载"><span class="nav-number">7.6.</span> <span class="nav-text">使用预获取提示优化资源加载</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#使用浏览器预刷新优化资源加载"><span class="nav-number">7.7.</span> <span class="nav-text">使用浏览器预刷新优化资源加载</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#使用预呈现优化浏览"><span class="nav-number">7.8.</span> <span class="nav-text">使用预呈现优化浏览</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Chrome会随着你的使用越来越快"><span class="nav-number">8.</span> <span class="nav-text">Chrome会随着你的使用越来越快</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#学习浏览器技术可以得到什么？"><span class="nav-number">9.</span> <span class="nav-text">学习浏览器技术可以得到什么？</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#注释"><span class="nav-number">10.</span> <span class="nav-text">注释</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#参考"><span class="nav-number">11.</span> <span class="nav-text">参考</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Google-Chrome的历史和指导性原则-1"><span class="nav-number">12.</span> <span class="nav-text">Google Chrome的历史和指导性原则</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#性能的多个方面-1"><span class="nav-number">13.</span> <span class="nav-text">性能的多个方面</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#什么是现代Web应用？-1"><span class="nav-number">14.</span> <span class="nav-text">什么是现代Web应用？</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#线上资源请求的生命周期-1"><span class="nav-number">15.</span> <span class="nav-text">线上资源请求的生命周期</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#“足够快”有多快？-1"><span class="nav-number">16.</span> <span class="nav-text">“足够快”有多快？</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Chrome的网络栈概览-1"><span class="nav-number">17.</span> <span class="nav-text">Chrome的网络栈概览</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#多进程架构-1"><span class="nav-number">17.1.</span> <span class="nav-text">多进程架构</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#进程间通信和多进程资源加载-1"><span class="nav-number">17.2.</span> <span class="nav-text">进程间通信和多进程资源加载</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#跨平台资源获取-1"><span class="nav-number">17.3.</span> <span class="nav-text">跨平台资源获取</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#移动平台的架构和性能-1"><span class="nav-number">17.4.</span> <span class="nav-text">移动平台的架构和性能</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#使用Chrome预测器进行推测优化-1"><span class="nav-number">17.5.</span> <span class="nav-text">使用Chrome预测器进行推测优化</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Chrome网络架构概要-1"><span class="nav-number">17.6.</span> <span class="nav-text">Chrome网络架构概要</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#浏览器会话的生命周期-1"><span class="nav-number">18.</span> <span class="nav-text">浏览器会话的生命周期</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#优化冷启动体验-1"><span class="nav-number">18.1.</span> <span class="nav-text">优化冷启动体验</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#使用Omnibox优化交互过程-1"><span class="nav-number">18.2.</span> <span class="nav-text">使用Omnibox优化交互过程</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#优化缓存性能-1"><span class="nav-number">18.3.</span> <span class="nav-text">优化缓存性能</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#使用预获取优化DNS-1"><span class="nav-number">18.4.</span> <span class="nav-text">使用预获取优化DNS</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#使用预连接优化TCP连接管理-1"><span class="nav-number">18.5.</span> <span class="nav-text">使用预连接优化TCP连接管理</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#使用预获取提示优化资源加载-1"><span class="nav-number">18.6.</span> <span class="nav-text">使用预获取提示优化资源加载</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#使用浏览器预刷新优化资源加载-1"><span class="nav-number">18.7.</span> <span class="nav-text">使用浏览器预刷新优化资源加载</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#使用预呈现优化浏览-1"><span class="nav-number">18.8.</span> <span class="nav-text">使用预呈现优化浏览</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Chrome会随着你的使用越来越快-1"><span class="nav-number">19.</span> <span class="nav-text">Chrome会随着你的使用越来越快</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#学习浏览器技术可以得到什么？-1"><span class="nav-number">20.</span> <span class="nav-text">学习浏览器技术可以得到什么？</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#注释-1"><span class="nav-number">21.</span> <span class="nav-text">注释</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#参考-1"><span class="nav-number">22.</span> <span class="nav-text">参考</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy;  2016 - 
+  <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">windrunnerlihuan</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+
+        
+<div class="busuanzi-count">
+  <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="site-uv">
+      <i class="fa fa-user"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_uv"></span>
+      
+    </span>
+  
+
+  
+    <span class="site-pv">
+      <i class="fa fa-eye"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_pv"></span>
+      
+    </span>
+  
+</div>
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+  
+  <script type="text/javascript" src="/lib/canvas-nest/canvas-nest.min.js"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.1"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+  
+    <script type="text/javascript">
+      (function(d, s) {
+        var j, e = d.getElementsByTagName(s)[0];
+        if (typeof LivereTower === 'function') { return; }
+        j = d.createElement(s);
+        j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+        j.async = true;
+        e.parentNode.insertBefore(j, e);
+      })(document, 'script');
+    </script>
+  
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (search_path.endsWith("json")) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("bJlEg1N9ed75pssz1m514avl-gzGzoHsz", "Swtq2cOp8A7KYeJ9lpD5nKAy");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
