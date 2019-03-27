@@ -752,7 +752,7 @@
 <p>&#160; &#160; &#160; &#160;我们此前没有提到的一项优化是Chrome能够学习每个站点的拓扑结构，并运用这项信息来加速未来的访问过程。具体而言，回忆一下，一个页面平均由88项资源组成，由15个以上不同的主机发送。每一次你进行浏览，Chrome会记录页面上的热门资源的主机名，在以后的访问中，它可能会对其中一些或全部选择触发DNS预解析甚至TCP预连接。</p>
 <p>&#160; &#160; &#160; &#160;访问<code>chrome://dns</code>并检索你profile对应的热门站点主机名，可以查看Chrome所保存下来的子资源主机名。在上面的例子中，你可以看到Chrome记录了Google+的6个子资源主机名，还统计了DNS预解析触发或TCP预连接执行的次数，还有会由各项处理的请求的估计值。这些内部记录帮助Chrome预测器实现优化。</p>
 <p>&#160; &#160; &#160; &#160;除了这些内部信号之外，站点的所有者也能在页面中嵌入附加的标记请求浏览器预解析一个主机名：</p>
-<figure class="highlight htmlbars"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;link rel="dns-prefetch" href="//host_name_to_prefetch.com"&gt;</span><br></pre></td></tr></table></figure>
+<figure class="highlight htmlbars"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="xml"><span class="tag">&lt;<span class="name">link</span> <span class="attr">rel</span>=<span class="string">"dns-prefetch"</span> <span class="attr">href</span>=<span class="string">"//host_name_to_prefetch.com"</span>&gt;</span></span></span><br></pre></td></tr></table></figure>
 <p>&#160; &#160; &#160; &#160;为何不直接依靠浏览器的自动机制呢？有些时候，你可能希望解析一个页面中任何地方都没有提到过的主机名。重定向就是一个典型的例子：链接可能指向一个主机——就如同一项分析追踪服务一样——这个主机再把用户重定向至真正的目标站点。Chrome依靠自身是无法推断出这种模式的，但你可以手动提供一条提示帮助它，让浏览器提前解析真实目标站点的主机名。</p>
 <p>&#160; &#160; &#160; &#160;这一切在后台是如何实现的呢？和我们讨论过的其他优化手段一样，这个问题的答案也取决于Chrome的版本，因为开发团队一直试验新的、更好的方式来提升性能。但是，不严格地说，Chrome内部的DNS基础设施有两个主要的实现方式。过去，Chrome依靠操作平台无关的系统调用<code>getaddrinfo</code>，并把DNS查询的实际职责交由操作系统完成。但是，这种方式正逐步被Chrome自己实现的异步DNS解析器所替代。</p>
 <p>&#160; &#160; &#160; &#160;依靠操作系统的原有方式具有其优点：代码少而简单，并能够利用操作系统的DNS缓存。但是，<code>getaddrinfo</code>也是一个阻塞型的系统调用，这意味着Chrome必须创建并维护一个专用的worker线程池，才能够实现多条并行查询。这个未连接池最多只能容纳六个线程，这个上限是基于硬件的最小公分母得出的经验数字——这样并行请求的数量超出的话，有些用户的路由器就会过载。</p>
@@ -777,7 +777,7 @@
 <p><img src="http://images.windrunnerlihuan.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Chromium%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF-%E5%90%AF%E5%8A%A8%E7%AF%87/socketopen.jpeg" alt="已开启的socket"></p>
 <p>&#160; &#160; &#160; &#160;你还可以详细查看每个socket，检查时间线：连接和代理时间，每个包的到达时间等等。最后要说的很重要的一点是：你也可以导出这些数据进行后续分析或报告bug。具有良好的信息统计机制对任何优化都是很关键的，<code>chrome://net-internals</code>就是Chrome中所有功能相互作用的集中展示——如果你还没探索过这个功能，你应该试试！</p>
 <h2 id="使用预获取提示优化资源加载"><a href="#使用预获取提示优化资源加载" class="headerlink" title="使用预获取提示优化资源加载"></a>使用预获取提示优化资源加载</h2><p>&#160; &#160; &#160; &#160;有时，页面的作者能够提供基于其站点结构或布局附加的导航或页面上下文，帮助浏览器优化用户体验。Chrome支持两种这样的提示，可以嵌入页面标记中使用：</p>
-<figure class="highlight htmlbars"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&lt;link rel="subresource" href="/javascript/myapp.js"&gt;</span><br><span class="line"> &lt;link rel="prefetch"    href="/images/big.jpeg"&gt;</span><br></pre></td></tr></table></figure>
+<figure class="highlight htmlbars"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="xml"><span class="tag">&lt;<span class="name">link</span> <span class="attr">rel</span>=<span class="string">"subresource"</span> <span class="attr">href</span>=<span class="string">"/javascript/myapp.js"</span>&gt;</span></span><br><span class="line"> <span class="tag">&lt;<span class="name">link</span> <span class="attr">rel</span>=<span class="string">"prefetch"</span>    <span class="attr">href</span>=<span class="string">"/images/big.jpeg"</span>&gt;</span></span></span><br></pre></td></tr></table></figure>
 <p>&#160; &#160; &#160; &#160;子资源和预获取看起来非常类似，但是语义完全不同。当链接资源指定其关系为“预获取”时，它是告诉浏览器，这项资源在以后的浏览中可能用到。换言之，这实际上是一个跨页面提示。而当资源指定其关系为“子资源”时，它是提前告诉浏览器该资源会在当前页面中被用到，在该文档后面的部分遇到它之前可以先发起请求。</p>
 <p>&#160; &#160; &#160; &#160;可以想见，两者的不同语义会导致资源加载器的行为大相径庭。标记预获取的资源会被看做优先级较低，并在当前页面加载完成后由浏览器进行一次下载。标记为子资源的内容一旦遇到就会作为高优先级资源来获取，并与当前页面上的其余资源相互竞争。</p>
 <p>&#160; &#160; &#160; &#160;这两种提示如果使用得当可以极大地帮助优化你站点的用户体验。最后，还要注意，预获取是<a href="https://whatwg.org/specs/web-apps/current-work/multipage/links.html#link-type-prefetch" target="_blank" rel="external">HTML5规范的一部分</a>，目前Firefox和Chrome都支持，而子资源目前<a href="http://www.chromium.org/spdy/link-headers-and-server-hint/link-rel-subresource" target="_blank" rel="external">只限于Chrome</a>。</p>
@@ -793,7 +793,7 @@
 <p>&#160; &#160; &#160; &#160;在2013年初，Chrome团队还处于讨论这种实现的早期阶段。如果根据所收集的结果它能奏效，我们我们可能会在年内晚些时候在Chrome中看到预刷新。Chrome的网络性能优化从未止步——开发团队一直在试验新的方法、创意和技术。</p>
 <h2 id="使用预呈现优化浏览"><a href="#使用预呈现优化浏览" class="headerlink" title="使用预呈现优化浏览"></a>使用预呈现优化浏览</h2><p>&#160; &#160; &#160; &#160;目前为止我们介绍过的每一项优化都是帮助减少用户进行浏览的直接请求和标签页上呈现最终页面之间的延迟的。但是，要真正得到即刻展示页面的体验，需要什么呢？根据我们之前看到的UX数据，这样的交互时间需要低于100毫秒，这样，留给网络延迟的余地可不算多。我们怎么才能在100毫秒内把呈现好的页面展示出来呢？</p>
 <p>&#160; &#160; &#160; &#160;当然，你已经知道答案了，因为这是很多用户所用的共同模式：如果你打开多个标签页，标签页间的切换就是即刻的，比在一个前景标签页中浏览同样资源之间的等待要快得多。那么，如果浏览器提供一个API来实现这一点呢？</p>
-<figure class="highlight htmlbars"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;link rel="prerender" href="http://example.org/index.html"&gt;</span><br></pre></td></tr></table></figure>
+<figure class="highlight htmlbars"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="xml"><span class="tag">&lt;<span class="name">link</span> <span class="attr">rel</span>=<span class="string">"prerender"</span> <span class="attr">href</span>=<span class="string">"http://example.org/index.html"</span>&gt;</span></span></span><br></pre></td></tr></table></figure>
 <p>&#160; &#160; &#160; &#160;你可能猜到了，这就是Chrome中的<a href="https://developers.google.com/chrome/whitepapers/prerender" target="_blank" rel="external">预呈现</a>。不是如“预获取”提示实现的那样只下载单项资源，“预呈现”属性命令Chrome在隐藏标签页中预呈现页面以及所有子资源。隐藏标签页本身对用户不可见，但当用户触发浏览行为时，该标签页就会从后台切换出来实现“即刻体验”。</p>
 <p>&#160; &#160; &#160; &#160;想看看这是如何实现的吗？可以访问prerender-test.appspot.com上还在开发中的演示版，要查看你的profile的预呈现页面的历史记录和状态，访问：<code>chrome://net-internals/#prerender</code>。</p>
 <p><img src="http://images.windrunnerlihuan.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Chromium%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF-%E5%90%AF%E5%8A%A8%E7%AF%87/prerender.jpg" alt="当前profile的预呈现页面"></p>
@@ -909,6 +909,10 @@
 
           <div class="post-nav-prev post-nav-item">
             
+              <a href="/2019/03/25/Chromium学习之路（一）——智能指针实现原理分析/" rel="prev" title="Chromium学习之路（一）——智能指针实现原理分析">
+                Chromium学习之路（一）——智能指针实现原理分析 <i class="fa fa-chevron-right"></i>
+              </a>
+            
           </div>
         </div>
       
@@ -1004,7 +1008,7 @@
           
             <div class="site-state-item site-state-posts">
               <a href="/archives">
-                <span class="site-state-item-count">40</span>
+                <span class="site-state-item-count">41</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
