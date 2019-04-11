@@ -1,0 +1,1662 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+  <meta name="google-site-verification" content="3Gndr5oonivG3ajghQU1MgL0IHoMHT4esMsPKjnbeis" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+    
+    
+    <link href="//fonts.lug.ustc.edu.cn/css?family=Monda:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Lobster Two:300,300italic,400,400italic,700,700italic|PT Mono:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Chromium,Closure," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="April is your lie" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/images/favicon.ico?v=5.1.1" />
+
+
+
+
+
+
+<meta name="description" content="&amp;#160; &amp;#160; &amp;#160; &amp;#160;开发Android的同学都知道线程之间通信都需要用到回调接口，比如在子线程用handler往主线程发消息，然后主线程统一从looper 的消息队列中取出来然后在handmessage中统一处理。类似的，Chromium为每一个线程都创建了一个消息队列。当一个线程需要另一个线程执行某一操作时，就向该线程的消息队列发送一个Closure。这个Clo">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Chromium学习之路(二)----多线程通信callback回调机制">
+<meta property="og:url" content="http://windrunnerlihuan.com/2019/04/12/Chromium学习之路-二-多线程通信callback回调机制/index.html">
+<meta property="og:site_name" content="April is your lie">
+<meta property="og:description" content="&amp;#160; &amp;#160; &amp;#160; &amp;#160;开发Android的同学都知道线程之间通信都需要用到回调接口，比如在子线程用handler往主线程发消息，然后主线程统一从looper 的消息队列中取出来然后在handmessage中统一处理。类似的，Chromium为每一个线程都创建了一个消息队列。当一个线程需要另一个线程执行某一操作时，就向该线程的消息队列发送一个Closure。这个Clo">
+<meta property="og:image" content="http://images.windrunnerlihuan.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Chromium%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%EF%BC%88%E4%BA%8C%EF%BC%89%E2%80%94%E2%80%94%E5%A4%9A%E7%BA%BF%E7%A8%8B%E9%80%9A%E4%BF%A1Callback%E5%9B%9E%E8%B0%83%E6%9C%BA%E5%88%B6/Callback.jpg">
+<meta property="og:image" content="http://images.windrunnerlihuan.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Chromium%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%EF%BC%88%E4%BA%8C%EF%BC%89%E2%80%94%E2%80%94%E5%A4%9A%E7%BA%BF%E7%A8%8B%E9%80%9A%E4%BF%A1Callback%E5%9B%9E%E8%B0%83%E6%9C%BA%E5%88%B6/meizi.jpeg">
+<meta property="og:updated_time" content="2019-04-11T19:02:52.723Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Chromium学习之路(二)----多线程通信callback回调机制">
+<meta name="twitter:description" content="&amp;#160; &amp;#160; &amp;#160; &amp;#160;开发Android的同学都知道线程之间通信都需要用到回调接口，比如在子线程用handler往主线程发消息，然后主线程统一从looper 的消息队列中取出来然后在handmessage中统一处理。类似的，Chromium为每一个线程都创建了一个消息队列。当一个线程需要另一个线程执行某一操作时，就向该线程的消息队列发送一个Closure。这个Clo">
+<meta name="twitter:image" content="http://images.windrunnerlihuan.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Chromium%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%EF%BC%88%E4%BA%8C%EF%BC%89%E2%80%94%E2%80%94%E5%A4%9A%E7%BA%BF%E7%A8%8B%E9%80%9A%E4%BF%A1Callback%E5%9B%9E%E8%B0%83%E6%9C%BA%E5%88%B6/Callback.jpg">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    sidebar: {"position":"right","display":"post","offset":12,"offset_float":0,"b2t":false,"scrollpercent":false},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://windrunnerlihuan.com/2019/04/12/Chromium学习之路-二-多线程通信callback回调机制/"/>
+
+
+
+
+
+  <title>Chromium学习之路(二)----多线程通信callback回调机制 | April is your lie</title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-100464707-1', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?bb4df6db80a16ce54c1fb2c6e1767e18";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+  <script type="text/javascript">
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//tajs.qq.com/stats?sId=62459705";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+<script>
+  	var _mtac = {};
+  	(function() {
+  		var mta = document.createElement("script");
+  		mta.src = "https://pingjs.qq.com/h5/stats.js?v2.0.4";
+  		mta.setAttribute("name", "MTAH5");
+  		mta.setAttribute("sid", "500465801");
+
+  		var s = document.getElementsByTagName("script")[0];
+  		s.parentNode.insertBefore(mta, s);
+  	})();
+</script>
+
+
+
+
+  <div style="display: none;">
+    <script src="//s95.cnzz.com/z_stat.php?id=1262111741&web_id=1262111741" language="JavaScript"></script>
+  </div>
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-right page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">April is your lie</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <h1 class="site-subtitle" itemprop="description">四月是你的谎言</h1>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off"
+             placeholder="搜索..." spellcheck="false"
+             type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://windrunnerlihuan.com/2019/04/12/Chromium学习之路-二-多线程通信callback回调机制/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="windrunnerlihuan">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="April is your lie">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">Chromium学习之路(二)----多线程通信callback回调机制</h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-04-12T03:02:11+08:00">
+                2019-04-12
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Chromium/" itemprop="url" rel="index">
+                    <span itemprop="name">Chromium</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+             <span id="/2019/04/12/Chromium学习之路-二-多线程通信callback回调机制/" class="leancloud_visitors" data-flag-title="Chromium学习之路(二)----多线程通信callback回调机制">
+               <span class="post-meta-divider">|</span>
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               
+                 <span class="post-meta-item-text">阅读次数 </span>
+               
+                 <span class="leancloud-visitors-count"></span>
+             </span>
+          
+
+          
+            <span class="post-meta-divider">|</span>
+            <span class="page-pv"><i class="fa fa-file-o"></i>
+            <span class="busuanzi-value" id="busuanzi_value_page_pv" ></span>
+            </span>
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>&#160; &#160; &#160; &#160;开发Android的同学都知道线程之间通信都需要用到回调接口，比如在子线程用handler往主线程发消息，然后主线程统一从looper 的消息队列中取出来然后在handmessage中统一处理。类似的，Chromium为每一个线程都创建了一个消息队列。当一个线程需要另一个线程执行某一操作时，就向该线程的消息队列发送一个Closure。这个Closure最终在目标线程中得到执行。<br><a id="more"></a></p>
+<h1 id="回调机制"><a href="#回调机制" class="headerlink" title="回调机制"></a>回调机制</h1><p>&#160; &#160; &#160; &#160;Chromium Callback机制适合用作线程间异步通信。假设有两个线程A和B，其中线程A希望在线程B中执行一个任务。这时候线程A就可以将该任务封装成一个Callback对象，并且将该Callback对象发送到线程B的任务队列去。于是线程B调度该Callback对象时，不需要知道它描述的是一个什么样的任务，只需要统一地调用它的成员函数Run，就可以让它执行一个具体的任务。</p>
+<p>&#160; &#160; &#160; &#160;开发Android的同学都知道线程之间通信都需要用到回调接口，比如在子线程用handler往主线程发消息，然后主线程统一从looper 的消息队列中取出来然后在handmessage中统一处理。类似的，Chromium为每一个线程都创建了一个消息队列。当一个线程需要另一个线程执行某一操作时，就向该线程的消息队列发送一个Closure。这个Closure最终在目标线程中得到执行。</p>
+<p>&#160; &#160; &#160; &#160;为了充分利用CPU多核特性，Chromium在启动时会创建很多线程，来负责执行不同的操作。这样就涉及到了多线程通信问题。Chromium为每一个线程都创建了一个消息队列。当一个线程需要另一个线程执行某一操作时，就向该线程的消息队列发送一个Closure。这个Closure最终在目标线程中得到执行。这种基于Closure的多线程通信方式在Chromium中使用得很普通，因此本文就对它的实现进行分析。</p>
+<p> &#160; &#160; &#160; &#160;Chromium将这种用于线程间异步通信的Callback对象称为Closure对象，如下所示：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"> <span class="comment">// Syntactic sugar to make Callbacks&lt;void(void)&gt; easier to declare since it</span></span><br><span class="line"><span class="comment">// will be used in a lot of APIs with delayed execution.</span></span><br><span class="line"><span class="keyword">typedef</span> Callback&lt;<span class="keyword">void</span>(<span class="keyword">void</span>)&gt; Closure;</span><br></pre></td></tr></table></figure>
+<p>&#160; &#160; &#160; &#160;位于external/chromium_org/base/callback.h中。</p>
+<p>&#160; &#160; &#160; &#160;Closure从字面翻译就是闭包的意思，但是它与JavaScript或者 C++ 11里面的闭包是不一样的，因为前者不像后者一样，会对作用域中的变量进行引用。Chromium多线程通信用到的Closure实际上是一个特殊的Callback。因此，本文实际要讲的是Chromium的Callback机制。当我们理解了Chromium的Callback机制之后，就自然而然地理解Chromium多线程通信用到的Closure机制。</p>
+<h1 id="使用用例"><a href="#使用用例" class="headerlink" title="使用用例"></a>使用用例</h1><p> &#160; &#160; &#160; &#160;1）一个Callback从创建到调用的代码示例如下所示：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">MyFunc</span><span class="params">(<span class="keyword">int</span> i, <span class="keyword">const</span> <span class="built_in">std</span>::<span class="built_in">string</span>&amp; str)</span> </span>&#123;&#125;</span><br><span class="line">base::Callback&lt;<span class="keyword">void</span>(<span class="keyword">const</span> <span class="built_in">std</span>::<span class="built_in">string</span>&amp;)&gt; cb = base::Bind(&amp;MyFunc, <span class="number">23</span>);</span><br><span class="line">cb.Run(<span class="string">"hello world"</span>);</span><br></pre></td></tr></table></figure>
+<p>&#160; &#160; &#160; &#160;我们首先是调用函数base::Bind创建了一个Callback对象。这个Callback对象与函数MyFunc进行绑定，同时被绑定的还有函数MyFunc被调用时传递进去的第一个整型参数23。我们接着调用了上述Callback对象的成员函数Run，并且给它传递了一个字符串参数“hello world”。这时候实际被调用的是函数MyFunc，并且传递给它的两个参数分别就为整数23和字符串“hello world”。</p>
+<p>&#160; &#160; &#160; &#160;如果我们把上面创建的Callback对象看作是一个Closure，那么它首先会被发送到目标线程的消息队列中，然后再在目标线程中调用它的成员函数Run，最后就会导致函数MyFunc在目标线程中被调用。</p>
+<p>&#160; &#160; &#160; &#160;从上面的代码片段我们可以看到一个有趣的东西，那就是函数MyFunc被调用时传递进去的两个参数是分开指定的。其中第一个参数在调用前指定的，而另一个参数是在调用时指定的。实际上我们可以做到所有的参数均在调用前指定，以及所有的参数均在调用时指定。当不是所有的参数均在调用时指定时，我们就可以简化一个函数的调用过程，即对一个函数实现了不同形式的调用，或者说可以使用不同的方式来调用一个函数。</p>
+<p>&#160; &#160; &#160; &#160;2）此外，上面的代码片段创建的Callback对象是与一个全局函数绑定的。实际上，一个Callback对象还可以与一个类的成员函数绑定，不过这时候在调用函数base::Bind创建该Callback对象时，需要绑定一个对应的类对象，如下所示：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> MyClass &#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">MyFunc</span><span class="params">(<span class="keyword">int</span> i, <span class="keyword">const</span> <span class="built_in">std</span>::<span class="built_in">string</span>&amp; str)</span> </span>&#123;&#125;</span><br><span class="line">&#125;;</span><br><span class="line"> </span><br><span class="line">MyClass* myclass = <span class="keyword">new</span> MyClass;</span><br><span class="line">base::Callback&lt;<span class="keyword">void</span>(<span class="keyword">void</span>)&gt; cb = base::Bind(&amp;MyClass::MyFunc, myclass, <span class="number">23</span>, <span class="string">"hello world"</span>);</span><br></pre></td></tr></table></figure>
+<p>&#160; &#160; &#160; &#160;这里绑定的类对象就为myclass，并且是以裸指针的形式指定的。这时候我们就需要保证Callback对象cb的成员函数Run被调用时，对象myclass还没有被销毁。</p>
+<p>&#160; &#160; &#160; &#160;3）为了更方便地管理被绑定对象的生命周期，函数base::Bind允许通过我们在前面Chromium和WebKit的智能指针实现原理解析一文分析的scoped_refptr智能指针来绑定类对象，如下所示：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">scoped_refptr&lt;MyClass&gt; myclass(<span class="keyword">new</span> MyClass);</span><br><span class="line">base::Callback&lt;<span class="keyword">void</span>(<span class="keyword">void</span>)&gt; cb = base::Bind(&amp;MyClass::MyFunc, myclass, <span class="number">23</span>, <span class="string">"hello world"</span>);</span><br></pre></td></tr></table></figure>
+<p>&#160; &#160; &#160; &#160;Callback对象cb使用完成之后，对象myclass会自动释放，这样就可以保证Callback对象cb的成员函数Run被调用时，对象myclass是存在的。</p>
+<p>&#160; &#160; &#160; &#160;4）我们甚至还可以通过我们在前面Chromium和WebKit的智能指针实现原理解析一文分析的WeakPtr弱智能指针来绑定类对象，如下所示：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">scoped_refptr&lt;MyClass&gt; myclass(<span class="keyword">new</span> MyClass);</span><br><span class="line">base::Callback&lt;<span class="keyword">void</span>(<span class="keyword">void</span>)&gt; cb = base::Bind(&amp;MyClass::MyFunc, GetWeakPtr(myclass), <span class="number">23</span>, <span class="string">"hello world"</span>);</span><br></pre></td></tr></table></figure>
+<p>&#160; &#160; &#160; &#160;我们假设可以通过函数GetWeakPtr获得对象myclass的一个WeakPtr弱智能指针，这样当Callback对象cb的成员函数Run被调用时，如果对象myclass已经被销毁，那么就不会调用它的成员函数MyFunc。</p>
+<p>&#160; &#160; &#160; &#160;5）最后，传递给最终被调用的函数的参数不仅可以是整型和字符串等基本类型，还可以是对象，如下所示：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">TakesOneRef</span><span class="params">(scoped_refptr&lt;MyClass&gt; arg)</span> </span>&#123;&#125;</span><br><span class="line">scoped_refptr&lt;MyClass&gt; f(<span class="keyword">new</span> MyClass)</span><br><span class="line">base::Closure cb = base::Bind(&amp;TakesOneRef, f);</span><br></pre></td></tr></table></figure>
+<p>&#160; &#160; &#160; &#160;传递给被调用函数的对象可以通过裸指针传递，也可以通过在前面Chromium和WebKit的智能指针实现原理解析一文分析的scoped_ptr和scoped_refptr智能指针指定，这样就可以方便地管理被传递对象的生命周期。</p>
+<h1 id="Callback机制实现"><a href="#Callback机制实现" class="headerlink" title="Callback机制实现"></a>Callback机制实现</h1><p>&#160; &#160; &#160; &#160;接下来，我们就通过源代码来分析Chromium的Callback机制的实现，也就是Callback对象的创建和调用过程。</p>
+<h2 id="实现概述"><a href="#实现概述" class="headerlink" title="实现概述"></a>实现概述</h2><p>&#160; &#160; &#160; &#160;在分析Callback对象的创建和调用过程之前，我们首先看它的类关系图，如图所示：</p>
+<p><img src="http://images.windrunnerlihuan.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Chromium%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%EF%BC%88%E4%BA%8C%EF%BC%89%E2%80%94%E2%80%94%E5%A4%9A%E7%BA%BF%E7%A8%8B%E9%80%9A%E4%BF%A1Callback%E5%9B%9E%E8%B0%83%E6%9C%BA%E5%88%B6/Callback.jpg" alt="callback.jpg"></p>
+<p>&#160; &#160; &#160; &#160;从上图可以看到，Callback类是从CallbackBase类继承下来的。CallbackBase类有两个成员变量bind<em>state</em>和polymorphic<em>invoke</em>。其中，成员变量bind<em>state</em>指向的是一个BindState对象，该BindState对象是保存了其宿主Callback对象创建时绑定的函数以及参数。另外一个成员变量polymorphic<em>invoke</em>指向的是一个InvokeFuncStorage对象，该InvokeFuncStorage对象描述的是Invoker类的静态成员函数Run。</p>
+<p>&#160; &#160; &#160; &#160;BindState类是从BindStateBase类继承下来的，BindStateBase类又是从RefCountedThreadSafe类继承下来的。从前面Chromium和WebKit的智能指针实现原理分析一文可以知道，从RefCountedThreadSafe继承下来的类可以配合智能指针来使用，因此我们就可以看到CallbackBase类的成员变量bind<em>state</em>是一个引用了BindStateBase对象的scoped_refptr智能指针。</p>
+<p>&#160; &#160; &#160; &#160;BindState类将宿主Callback对象创建时绑定的参数保存在成员变量p1<em>、p2</em>等中，绑定的函数则保存在成员变量runnable<em>指向的一个RunnableAdapter对象的成员变量function</em>中。</p>
+<p>&#160; &#160; &#160; &#160;当CallbackBase类的成员函数Run被调用时，它们通过成员变量polymorphic<em>invoke</em>调用Invoker类的静态成员函数Run。传递给Invoker类的静态成员函数Run的参数包括：</p>
+<ol>
+<li>从父类BindStateBase继承下来的成员变量bind<em>state</em>指向的一个BindState对象；</li>
+<li>传递给CallbackBase类的成员函数Run的参数。</li>
+</ol>
+<p>&#160; &#160; &#160; &#160;Invoker类的静态成员函数Run从上述的BindState对象分别取出与它绑定的参数p1<em>、p2</em>等，以及RunnableAdapter对象，连同传递给CallbackBase类的成员函数Run的参数，一起再传递给InvokeHelper类的静态成员函数MakeItSo。</p>
+<p>&#160; &#160; &#160; &#160;InvokeHelper类的静态成员函数MakeItSo接下来又会调用传递给它的RunnableAdapter对象的成员函数Run，后者又会调用保存在其成员变量function_的函数，这时候调用的实际上就是其关联的Callback对象绑定的函数。</p>
+<h2 id="具体实现"><a href="#具体实现" class="headerlink" title="具体实现"></a>具体实现</h2><p>&#160; &#160; &#160; &#160;大概理解了图1所示的Callback类关系图之后，接下来我们将以下面两个代码片段来分析Callback对象的创建和调用过程。</p>
+<p>&#160; &#160; &#160; &#160;第一个代码片段如下所示:</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">MyFunc</span><span class="params">(<span class="keyword">int</span> i, <span class="keyword">const</span> <span class="built_in">std</span>::<span class="built_in">string</span>&amp; str)</span> </span>&#123;&#125;</span><br><span class="line">base::Callback&lt;<span class="keyword">void</span>(<span class="keyword">const</span> <span class="built_in">std</span>::<span class="built_in">string</span>&amp;)&gt; cb = base::Bind(&amp;MyFunc, <span class="number">23</span>);</span><br><span class="line">cb.Run(<span class="string">"hello world"</span>);</span><br></pre></td></tr></table></figure>
+<p>&#160; &#160; &#160; &#160;它调用的模板函数Bind的定义如下所示：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> Functor, <span class="keyword">typename</span> P1&gt;</span><br><span class="line">base::Callback&lt;</span><br><span class="line">    <span class="keyword">typename</span> internal::BindState&lt;</span><br><span class="line">        <span class="keyword">typename</span> internal::FunctorTraits&lt;Functor&gt;::RunnableType,</span><br><span class="line">        <span class="keyword">typename</span> internal::FunctorTraits&lt;Functor&gt;::RunType,</span><br><span class="line">        <span class="keyword">void</span>(<span class="keyword">typename</span> internal::CallbackParamTraits&lt;P1&gt;::StorageType)&gt;</span><br><span class="line">            ::UnboundRunType&gt;</span><br><span class="line">Bind(Functor functor, <span class="keyword">const</span> P1&amp; p1) &#123;</span><br><span class="line">  <span class="comment">// Typedefs for how to store and run the functor.</span></span><br><span class="line">  <span class="keyword">typedef</span> <span class="keyword">typename</span> internal::FunctorTraits&lt;Functor&gt;::RunnableType RunnableType;</span><br><span class="line">  <span class="keyword">typedef</span> <span class="keyword">typename</span> internal::FunctorTraits&lt;Functor&gt;::RunType RunType;</span><br><span class="line"> </span><br><span class="line">  ......</span><br><span class="line"> </span><br><span class="line">  <span class="keyword">typedef</span> internal::BindState&lt;RunnableType, RunType,</span><br><span class="line">      <span class="keyword">void</span>(<span class="keyword">typename</span> internal::CallbackParamTraits&lt;P1&gt;::StorageType)&gt; BindState;</span><br><span class="line"> </span><br><span class="line">  <span class="keyword">return</span> Callback&lt;<span class="keyword">typename</span> BindState::UnboundRunType&gt;(</span><br><span class="line">      <span class="keyword">new</span> BindState(internal::MakeRunnable(functor), p1));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>&#160; &#160; &#160; &#160;这个函数定义在文件chromium_org/base/bind.h中。</p>
+<p>&#160; &#160; &#160; &#160;第二个代码片段如下所示：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> MyClass &#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">MyFunc</span><span class="params">(<span class="keyword">int</span> i, <span class="keyword">const</span> <span class="built_in">std</span>::<span class="built_in">string</span>&amp; str)</span> </span>&#123;&#125;</span><br><span class="line">&#125;;</span><br><span class="line"> </span><br><span class="line">MyClass* myclass = <span class="keyword">new</span> MyClass;</span><br><span class="line">base::Callback&lt;<span class="keyword">void</span>(<span class="keyword">const</span> <span class="built_in">std</span>::<span class="built_in">string</span>&amp;)&gt; cb = base::Bind(&amp;MyClass::MyFunc, myclass, <span class="number">23</span>);</span><br><span class="line">cb.Run(<span class="string">"hello world"</span>);</span><br></pre></td></tr></table></figure>
+<p>&#160; &#160; &#160; &#160;它调用的模板函数Bind的定义如下所示：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> Functor, <span class="keyword">typename</span> P1, <span class="keyword">typename</span> P2&gt;</span><br><span class="line">base::Callback&lt;</span><br><span class="line">    <span class="keyword">typename</span> internal::BindState&lt;</span><br><span class="line">        <span class="keyword">typename</span> internal::FunctorTraits&lt;Functor&gt;::RunnableType,</span><br><span class="line">        <span class="keyword">typename</span> internal::FunctorTraits&lt;Functor&gt;::RunType,</span><br><span class="line">        <span class="keyword">void</span>(<span class="keyword">typename</span> internal::CallbackParamTraits&lt;P1&gt;::StorageType,</span><br><span class="line">            <span class="keyword">typename</span> internal::CallbackParamTraits&lt;P2&gt;::StorageType)&gt;</span><br><span class="line">            ::UnboundRunType&gt;</span><br><span class="line">Bind(Functor functor, <span class="keyword">const</span> P1&amp; p1, <span class="keyword">const</span> P2&amp; p2) &#123;</span><br><span class="line">  <span class="comment">// Typedefs for how to store and run the functor.</span></span><br><span class="line">  <span class="keyword">typedef</span> <span class="keyword">typename</span> internal::FunctorTraits&lt;Functor&gt;::RunnableType RunnableType;</span><br><span class="line">  <span class="keyword">typedef</span> <span class="keyword">typename</span> internal::FunctorTraits&lt;Functor&gt;::RunType RunType;</span><br><span class="line"> </span><br><span class="line">  ......</span><br><span class="line"> </span><br><span class="line">  <span class="keyword">typedef</span> internal::BindState&lt;RunnableType, RunType,</span><br><span class="line">      <span class="keyword">void</span>(<span class="keyword">typename</span> internal::CallbackParamTraits&lt;P1&gt;::StorageType,</span><br><span class="line">      <span class="keyword">typename</span> internal::CallbackParamTraits&lt;P2&gt;::StorageType)&gt; BindState;</span><br><span class="line"> </span><br><span class="line"> </span><br><span class="line">  <span class="keyword">return</span> Callback&lt;<span class="keyword">typename</span> BindState::UnboundRunType&gt;(</span><br><span class="line">      <span class="keyword">new</span> BindState(internal::MakeRunnable(functor), p1, p2));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>&#160; &#160; &#160; &#160;这个函数定义在文件chromium_org/base/bind.h中。</p>
+<p>&#160; &#160; &#160; &#160;第二个代码片段如下所示：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> MyClass &#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">MyFunc</span><span class="params">(<span class="keyword">int</span> i, <span class="keyword">const</span> <span class="built_in">std</span>::<span class="built_in">string</span>&amp; str)</span> </span>&#123;&#125;</span><br><span class="line">&#125;;</span><br><span class="line"> </span><br><span class="line">MyClass* myclass = <span class="keyword">new</span> MyClass;</span><br><span class="line">base::Callback&lt;<span class="keyword">void</span>(<span class="keyword">const</span> <span class="built_in">std</span>::<span class="built_in">string</span>&amp;)&gt; cb = base::Bind(&amp;MyClass::MyFunc, myclass, <span class="number">23</span>);</span><br><span class="line">cb.Run(<span class="string">"hello world"</span>);</span><br></pre></td></tr></table></figure>
+<p>&#160; &#160; &#160; &#160;它调用的模板函数Bind的定义如下所示：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> Functor, <span class="keyword">typename</span> P1, <span class="keyword">typename</span> P2&gt;</span><br><span class="line">base::Callback&lt;</span><br><span class="line">    <span class="keyword">typename</span> internal::BindState&lt;</span><br><span class="line">        <span class="keyword">typename</span> internal::FunctorTraits&lt;Functor&gt;::RunnableType,</span><br><span class="line">        <span class="keyword">typename</span> internal::FunctorTraits&lt;Functor&gt;::RunType,</span><br><span class="line">        <span class="keyword">void</span>(<span class="keyword">typename</span> internal::CallbackParamTraits&lt;P1&gt;::StorageType,</span><br><span class="line">            <span class="keyword">typename</span> internal::CallbackParamTraits&lt;P2&gt;::StorageType)&gt;</span><br><span class="line">            ::UnboundRunType&gt;</span><br><span class="line">Bind(Functor functor, <span class="keyword">const</span> P1&amp; p1, <span class="keyword">const</span> P2&amp; p2) &#123;</span><br><span class="line">  <span class="comment">// Typedefs for how to store and run the functor.</span></span><br><span class="line">  <span class="keyword">typedef</span> <span class="keyword">typename</span> internal::FunctorTraits&lt;Functor&gt;::RunnableType RunnableType;</span><br><span class="line">  <span class="keyword">typedef</span> <span class="keyword">typename</span> internal::FunctorTraits&lt;Functor&gt;::RunType RunType;</span><br><span class="line"> </span><br><span class="line">  ......</span><br><span class="line"> </span><br><span class="line">  <span class="keyword">typedef</span> internal::BindState&lt;RunnableType, RunType,</span><br><span class="line">      <span class="keyword">void</span>(<span class="keyword">typename</span> internal::CallbackParamTraits&lt;P1&gt;::StorageType,</span><br><span class="line">      <span class="keyword">typename</span> internal::CallbackParamTraits&lt;P2&gt;::StorageType)&gt; BindState;</span><br><span class="line"> </span><br><span class="line"> </span><br><span class="line">  <span class="keyword">return</span> Callback&lt;<span class="keyword">typename</span> BindState::UnboundRunType&gt;(</span><br><span class="line">      <span class="keyword">new</span> BindState(internal::MakeRunnable(functor), p1, p2));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>&#160; &#160; &#160; &#160;这个函数定义在文件chromium_org/base/bind.h中。</p>
+<p>上述两个模板函数Bind做了三件事情：</p>
+<ol>
+<li>调用模板函数MakeRunnable创建了一个RunnableAdapter对象；</li>
+<li>使用上述对应的RunnableAdapter对象和参数p1创建了一个BindState对象；</li>
+<li>使用上述BindState对象创建了一个Callback对象。</li>
+</ol>
+<p>&#160; &#160; &#160; &#160;接下来我们就要继续分析上述三对象的创建过程，不过在分析之前，我们需要理解这里涉及到的两个模板类FunctorTraits和CallbackParamTraits的定义和作用。</p>
+<h3 id="函数签名与参数签名"><a href="#函数签名与参数签名" class="headerlink" title="函数签名与参数签名"></a>函数签名与参数签名</h3><p>&#160; &#160; &#160; &#160;1⃣️. <em>模板类FunctorTraits的定义如下所示：</em></p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="keyword">struct</span> FunctorTraits &#123;</span><br><span class="line">  <span class="keyword">typedef</span> RunnableAdapter&lt;T&gt; RunnableType;</span><br><span class="line">  <span class="keyword">typedef</span> <span class="keyword">typename</span> RunnableType::RunType RunType;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>&#160; &#160; &#160; &#160;这个类定义在文件chromium_org/base/bind_internal.h中。</p>
+<p>&#160; &#160; &#160; &#160;这里的模板参数T描述的是一个函数，例如，对于上述的第一个代码片段，T就为void(<em>)(int, const std::string&amp;)，而对于第二个代码片段，T就为void(MyClass::</em>)(int, const std::string&amp;)，这个模板参数T又作为参数用来定义RunnableAdapter。</p>
+<p>&#160; &#160; &#160; &#160;这里的模板参数T描述的是一个函数，例如，对于上述的第一个代码片段，T就为void(<em>)(int, const std::string&amp;)，而对于第二个代码片段，T就为void(MyClass::</em>)(int, const std::string&amp;)，这个模板参数T又作为参数用来定义RunnableAdapter。</p>
+<p>&#160; &#160; &#160; &#160;1）当模板参数T等于void(*)(int, const std::string&amp;)时，RunnableAdapter<t>的定义，也就是FunctorTraits&lt; Functor &gt;::RunnableType的定义，如下所示：</t></p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">template &lt;typename R, typename A1, typename A2&gt;</span><br><span class="line">class RunnableAdapter&lt;R(*)(A1, A2)&gt; &#123;</span><br><span class="line"> public:</span><br><span class="line">  typedef R (RunType)(A1, A2);</span><br><span class="line"> </span><br><span class="line">  explicit RunnableAdapter(R(*function)(A1, A2))</span><br><span class="line">      : function_(function) &#123;</span><br><span class="line">  &#125;</span><br><span class="line"> </span><br><span class="line">  R Run(typename CallbackParamTraits&lt;A1&gt;::ForwardType a1,</span><br><span class="line">      typename CallbackParamTraits&lt;A2&gt;::ForwardType a2) &#123;</span><br><span class="line">    return function_(CallbackForward(a1), CallbackForward(a2));</span><br><span class="line">  &#125;</span><br><span class="line"> </span><br><span class="line"> private:</span><br><span class="line">  R (*function_)(A1, A2);</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>&#160; &#160; &#160; &#160;这个类定义在文件external/chromium_org/base/bind_internal.h中。</p>
+<p>&#160; &#160; &#160; &#160;这时候FunctorTraits&lt; Functor &gt;::RunType就正好描述的是上述的FunctorTraits模板参数T，即void(*)(int, const std::string&amp;)。</p>
+<p>&#160; &#160; &#160; &#160;2）当模板参数T等于为void(MyClass::*)(int, const std::string&amp;)时，RunnableAdapter<t>的定义，也就是FunctorTraits<functor>::RunnableType的定义，如下所示：</functor></t></p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">template &lt;typename R, typename T, typename A1, typename A2&gt;</span><br><span class="line">class RunnableAdapter&lt;R(T::*)(A1, A2)&gt; &#123;</span><br><span class="line"> public:</span><br><span class="line">  typedef R (RunType)(T*, A1, A2);</span><br><span class="line">  typedef true_type IsMethod;</span><br><span class="line"> </span><br><span class="line">  explicit RunnableAdapter(R(T::*method)(A1, A2))</span><br><span class="line">      : method_(method) &#123;</span><br><span class="line">  &#125;</span><br><span class="line"> </span><br><span class="line">  R Run(T* object, typename CallbackParamTraits&lt;A1&gt;::ForwardType a1,</span><br><span class="line">      typename CallbackParamTraits&lt;A2&gt;::ForwardType a2) &#123;</span><br><span class="line">    return (object-&gt;*method_)(CallbackForward(a1), CallbackForward(a2));</span><br><span class="line">  &#125;</span><br><span class="line"> </span><br><span class="line"> private:</span><br><span class="line">  R (T::*method_)(A1, A2);</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>&#160; &#160; &#160; &#160;这个类定义在文件external/chromium_org/base/bind_internal.h中。</p>
+<p>&#160; &#160; &#160; &#160;这时候FunctorTraits<functor>::RunType就正好描述的是上述的FunctorTraits模板参数T，即void(MyClass::*)(int, const std::string&amp;)。</functor></p>
+<p>&#160; &#160; &#160; &#160;<strong>从上面的分析就可以看出，模板类FunctorTraits实际上是用来描述一个函数的签名的。</strong></p>
+<p>&#160; &#160; &#160; &#160;2⃣️. <em>我们再来看模板类CallbackParamTraits的定义，如下所示：</em></p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T, <span class="keyword">bool</span> is_move_only = IsMoveOnlyType&lt;T&gt;::value&gt;</span><br><span class="line"><span class="keyword">struct</span> CallbackParamTraits &#123;</span><br><span class="line">  <span class="keyword">typedef</span> <span class="keyword">const</span> T&amp; ForwardType;</span><br><span class="line">  <span class="keyword">typedef</span> T StorageType;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>这个类定义在文件chromium_org/base/callback_internal.h中。</p>
+<p>&#160; &#160; &#160; &#160;模板类CallbackParamTraits不单止在前面的函数Bind用到，在前面列出的两个模板类RunnableAdapter中也有用到，<strong>它是用来描述一个函数参数的签名的</strong>。例如，对于上述两个代码片段，模板参数T描述的就是一个类型为const std::string的参数。 </p>
+<p>&#160; &#160; &#160; &#160;从模板类CallbackParamTraits的定义还可以看到，CallbackParamTraits::ForwardType描述的是参数的引用类型，而CallbackParamTraits::StorageType描述的是参数的值类型 。例如，对于上述第一个代码片段，CallbackParamTraits&lt; P1 &gt;::ForwardType的是一个类型为int&amp;的参数，而CallbackParamTraits&lt; P1 &gt;::StorageType描述的是一个类型为int的参数。</p>
+<p>&#160; &#160; &#160; &#160;模板类CallbackParamTraits还有一个模板参数is_move_only，它的默认值等于IsMoveOnlyType&lt; T &gt;类的静态成员变量value。</p>
+<p>&#160; &#160; &#160; &#160;IsMoveOnlyType&lt; T &gt;的定义如下所示：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt; <span class="keyword">struct</span> IsMoveOnlyType &#123;</span><br><span class="line">  <span class="keyword">template</span> &lt;<span class="keyword">typename</span> U&gt;</span><br><span class="line">  <span class="function"><span class="keyword">static</span> YesType <span class="title">Test</span><span class="params">(<span class="keyword">const</span> <span class="keyword">typename</span> U::MoveOnlyTypeForCPP03*)</span></span>;</span><br><span class="line"> </span><br><span class="line">  <span class="keyword">template</span> &lt;<span class="keyword">typename</span> U&gt;</span><br><span class="line">  <span class="function"><span class="keyword">static</span> NoType <span class="title">Test</span><span class="params">(...)</span></span>;</span><br><span class="line"> </span><br><span class="line">  <span class="keyword">static</span> <span class="keyword">const</span> <span class="keyword">bool</span> value = <span class="keyword">sizeof</span>(Test&lt;T&gt;(<span class="number">0</span>)) == <span class="keyword">sizeof</span>(YesType) &amp;&amp;</span><br><span class="line">                            !is_const&lt;T&gt;::value;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>&#160; &#160; &#160; &#160;这个类定义在文件external/chromium_org/base/callback_internal.h中。</p>
+<p>&#160; &#160; &#160; &#160;模板类IsMoveOnlyType&lt; T &gt;是用来判断模板参数T描述的类型是否具有move语意的。关于类型的move语意，我们在前面Chromium和WebKit的智能指针实现原理分析一文中有提交到，它所表达的意思就是当我们用一个右值引用作为参数构造一个相同类型的对象时，新构造的对象将直接使用右值引用所描述的临时对象，而不是通过拷贝右值引用描述的临时对象来构造新的对象。</p>
+<p>&#160; &#160; &#160; &#160;因此，我们就可以看出，当调用模板类IsMoveOnlyType&lt; T &gt;的模板参数T描述的类型是有的move语意的，也就是在它内部定义有一内部类型MoveOnlyTypeForCPP03，那么模板类IsMoveOnlyType&lt; T &gt;的静态成员函数的返回值就等于YesType，否则就返回NoType。</p>
+<p>从前面Chromium和WebKit的智能指针实现原理分析一文可以知道，当一个类的定义嵌套了宏MOVE_ONLY_TYPE_FOR_CPP_03时，该类就是有具有move语意的，例如智能指针类scoped_ptr就是具有move语意的。其中，宏MOVE_ONLY_TYPE_FOR_CPP_03就为一个类定义了一个内部类型MoveOnlyTypeForCPP03，如下所示：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">define</span> MOVE_ONLY_TYPE_FOR_CPP_03(type, rvalue_type) \  </span></span><br><span class="line"> <span class="keyword">private</span>: \  </span><br><span class="line">  ...... </span><br><span class="line"> <span class="keyword">public</span>: \  </span><br><span class="line">  ......</span><br><span class="line">  <span class="keyword">typedef</span> <span class="keyword">void</span> MoveOnlyTypeForCPP03; \  </span><br><span class="line"> <span class="keyword">private</span>:</span><br></pre></td></tr></table></figure>
+<p>&#160; &#160; &#160; &#160;这个宏定义在文件external/chromium_org/base/move.h中。</p>
+<p>&#160; &#160; &#160; &#160;回到模板类IsMoveOnlyType&lt; T &gt;中，当模板参数T描述的是一个常量值时，模板类is_const<t>::value的值就会等于true，否则的话，模板类is_const&lt; T &gt;::value的值就等于false。这意味着当模板参数T定义了move语意，并且它又不是作为常量值传递时，它占用的资源就会转移给目标对象使用。这同时也说明，虽然模板参数T定义了move语意，但是当它作为常量值传递时，它占用的资源不能够转移给目标对象，这是因为常量值是不能修改的，也就是不能将它占用的资源转移给目标对象。</t></p>
+<p>&#160; &#160; &#160; &#160;接下来，我们继续看模板类is_const<t>是如何判断模板参数T是作为常量值使用，还是非常量值使用的，它的定义如下所示：</t></p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">class</span> T&gt; <span class="keyword">struct</span> is_const : false_type &#123;&#125;;</span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">class</span> T&gt; <span class="keyword">struct</span> is_const&lt;<span class="keyword">const</span> T&gt; : true_type &#123;&#125;;</span><br></pre></td></tr></table></figure>
+<p>&#160; &#160; &#160; &#160;这两个类定义在文件external/chromium_org/base/template_util.h中。</p>
+<p>&#160; &#160; &#160; &#160;从这里就可以看到，如果模板参数T作为参数传递时，有关键字const修饰，那么模板类is_const&lt; T &gt;就推导为is_const&lt; const T &gt;，这时候它就是从类true_type继承下来的；否则的话， 模板类is_const&lt; T &gt;就推导为is_const，这时候它是从类false_type继承下来的。</p>
+<p>&#160; &#160; &#160; &#160;类true_type和false_type的定义如下所示：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> T, T v&gt;</span><br><span class="line"><span class="keyword">struct</span> integral_constant &#123;</span><br><span class="line">  <span class="keyword">static</span> <span class="keyword">const</span> T value = v;</span><br><span class="line">  ......</span><br><span class="line">&#125;;</span><br><span class="line"> </span><br><span class="line"><span class="keyword">typedef</span> integral_constant&lt;<span class="keyword">bool</span>, <span class="literal">true</span>&gt; true_type;</span><br><span class="line"><span class="keyword">typedef</span> integral_constant&lt;<span class="keyword">bool</span>, <span class="literal">false</span>&gt; false_type;</span><br></pre></td></tr></table></figure>
+<p>&#160; &#160; &#160; &#160;这两个类定义在文件external/chromium_org/base/template_util.h中。</p>
+<p>&#160; &#160; &#160; &#160;从这里就可以看到，类true_type实际上是一个integral_constant<bool, true="">类，它的静态成员变量value的值等于true，而类false_type实际上是一个integral_constant<bool, false="">类，它的静态成员变量value的值等于false。</bool,></bool,></p>
+<p>&#160; &#160; &#160; &#160;以上就是在模板函数Bind中涉及到的两个模板类FunctorTraits和CallbackParamTraits及其相关的类的定义和作用。有了这些基础知识之后，我们就可以继续分析模板函数Bind创建RunnableAdapter对象、BindState对象和Callback对象的过程了。</p>
+<h3 id="创建RunnableAdapter对象、BindState对象"><a href="#创建RunnableAdapter对象、BindState对象" class="headerlink" title="创建RunnableAdapter对象、BindState对象"></a>创建RunnableAdapter对象、BindState对象</h3><p>&#160; &#160; &#160; &#160;我们首先看RunnableAdapter对象的创建过程，它是由以下代码创建的：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">internal::MakeRunnable(functor)</span><br></pre></td></tr></table></figure>
+<p>&#160; &#160; &#160; &#160;也就是调用函数internal::MakeRunnable来创建，其中参数functor描述的是一个被函数Bind绑定的函数。例如，对于上述的第一个代码片段，参数functor描述的函数即为MyFunc，而对于上述的第二个代码片段，参数functor描述的函数即为MyClass::MyFunc。</p>
+<p>&#160; &#160; &#160; &#160;函数internal::MakeRunnable的定义如下所示：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="keyword">typename</span> FunctorTraits&lt;T&gt;::<span class="function">RunnableType <span class="title">MakeRunnable</span><span class="params">(<span class="keyword">const</span> T&amp; t)</span> </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> RunnableAdapter&lt;T&gt;(t);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p> 这个函数定义在文件external/chromium_org/base/bind_internal.h中。</p>
+<p>&#160; &#160; &#160; &#160;对于上述的第一个代码片段，参数t描述的函数为MyFunc，它的原型为void(<em>)(int, const std::string&amp;)，因此函数internal::MakeRunnable创建的RunnableAdapter对象的类型就是前面提到的RunnableAdapter&lt;R(</em>)(A1,A2)&gt;，这时候函数MyFunc的地址就保存在其成员变量function_中。</p>
+<p>&#160; &#160; &#160; &#160;对于上述的第二个代码片段，参数t描述的函数为MyClass::MyFunc，它的原型是类void(<em>)(int, const std::string&amp;)，因此函数internal::MakeRunnable创建的RunnableAdapter对象的类型就是前面提到的RunnableAdapter&lt;R(T::</em>)(A1,A2)&gt;，这时候MyClass类的成员函数MyFunc的地址就保存在其成员变量function_中。</p>
+<p>&#160; &#160; &#160; &#160;RunnableAdpater对象创建完成之后，函数Bind接下来就继续创建一个BindState对象。</p>
+<p>&#160; &#160; &#160; &#160;对于上述的第一个代码片段，BindState对象通过以下的代码来创建：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">new</span> BindState(RunnableAdapter&lt;R(*)(A1,A2)&gt;, p1)</span><br></pre></td></tr></table></figure>
+<p>&#160; &#160; &#160; &#160;这里创建的BindState对象的类型如下所示：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> Runnable, <span class="keyword">typename</span> RunType, <span class="keyword">typename</span> P1&gt;</span><br><span class="line"><span class="keyword">struct</span> BindState&lt;Runnable, RunType, <span class="keyword">void</span>(P1)&gt; : <span class="keyword">public</span> BindStateBase &#123;</span><br><span class="line">  <span class="keyword">typedef</span> Runnable RunnableType;</span><br><span class="line">  <span class="keyword">typedef</span> IsWeakMethod&lt;HasIsMethodTag&lt;Runnable&gt;::value, P1&gt; IsWeakCall;</span><br><span class="line">  <span class="keyword">typedef</span> Invoker&lt;<span class="number">1</span>, BindState, RunType&gt; InvokerType;</span><br><span class="line">  <span class="keyword">typedef</span> <span class="keyword">typename</span> InvokerType::UnboundRunType UnboundRunType;</span><br><span class="line"> </span><br><span class="line">  <span class="comment">// Convenience typedefs for bound argument types.</span></span><br><span class="line">  <span class="keyword">typedef</span> UnwrapTraits&lt;P1&gt; Bound1UnwrapTraits;</span><br><span class="line"> </span><br><span class="line">  BindState(<span class="keyword">const</span> Runnable&amp; runnable, <span class="keyword">const</span> P1&amp; p1)</span><br><span class="line">      : runnable_(runnable),</span><br><span class="line">        p1_(p1) &#123;</span><br><span class="line">    MaybeRefcount&lt;HasIsMethodTag&lt;Runnable&gt;::value, P1&gt;::AddRef(p1_);</span><br><span class="line">  &#125;</span><br><span class="line"> </span><br><span class="line">  <span class="keyword">virtual</span> ~BindState() &#123;    MaybeRefcount&lt;HasIsMethodTag&lt;Runnable&gt;::value,</span><br><span class="line">      P1&gt;::Release(p1_);  &#125;</span><br><span class="line"> </span><br><span class="line">  RunnableType runnable_;</span><br><span class="line">  P1 p1_;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>&#160; &#160; &#160; &#160;这个类定义在文件external/chromium_org/base/bind_internal.h中。</p>
+<p>&#160; &#160; &#160; &#160;从上面的调用过程可以知道，第一个模板参数Runnable的类型为RunnableAdapter<r(*)(a1, a2)="">，这里的R、A1和A2即分别为void、int和const std::string&amp;。第二个参数RunType的类型为R(*)(A1,A2)。第三个模板参数P1的类型为int。</r(*)(a1,></p>
+<p>&#160; &#160; &#160; &#160;对于上述的第二个代码片段，BindState对象通过以下的代码来创建：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">new</span> BindState(RunnableAdapter&lt;R(T::*)(A1,A2)&gt;, p1, p2)</span><br></pre></td></tr></table></figure>
+<p>&#160; &#160; &#160; &#160;也就是说，这里创建的BindState对象的类型如下所示：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> Runnable, <span class="keyword">typename</span> RunType, <span class="keyword">typename</span> P1, <span class="keyword">typename</span> P2&gt;</span><br><span class="line"><span class="keyword">struct</span> BindState&lt;Runnable, RunType, <span class="keyword">void</span>(P1, P2)&gt; : <span class="keyword">public</span> BindStateBase &#123;</span><br><span class="line">  <span class="keyword">typedef</span> Runnable RunnableType;</span><br><span class="line">  <span class="keyword">typedef</span> IsWeakMethod&lt;HasIsMethodTag&lt;Runnable&gt;::value, P1&gt; IsWeakCall;</span><br><span class="line">  <span class="keyword">typedef</span> Invoker&lt;<span class="number">2</span>, BindState, RunType&gt; InvokerType;</span><br><span class="line">  <span class="keyword">typedef</span> <span class="keyword">typename</span> InvokerType::UnboundRunType UnboundRunType;</span><br><span class="line"> </span><br><span class="line">  <span class="comment">// Convenience typedefs for bound argument types.</span></span><br><span class="line">  <span class="keyword">typedef</span> UnwrapTraits&lt;P1&gt; Bound1UnwrapTraits;</span><br><span class="line">  <span class="keyword">typedef</span> UnwrapTraits&lt;P2&gt; Bound2UnwrapTraits;</span><br><span class="line"> </span><br><span class="line">  BindState(<span class="keyword">const</span> Runnable&amp; runnable, <span class="keyword">const</span> P1&amp; p1, <span class="keyword">const</span> P2&amp; p2)</span><br><span class="line">      : runnable_(runnable),</span><br><span class="line">        p1_(p1),</span><br><span class="line">        p2_(p2) &#123;</span><br><span class="line">    MaybeRefcount&lt;HasIsMethodTag&lt;Runnable&gt;::value, P1&gt;::AddRef(p1_);</span><br><span class="line">  &#125;</span><br><span class="line"> </span><br><span class="line">  <span class="keyword">virtual</span> ~BindState() &#123;    MaybeRefcount&lt;HasIsMethodTag&lt;Runnable&gt;::value,</span><br><span class="line">      P1&gt;::Release(p1_);  &#125;</span><br><span class="line"> </span><br><span class="line">  RunnableType runnable_;</span><br><span class="line">  P1 p1_;</span><br><span class="line">  P2 p2_;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>&#160; &#160; &#160; &#160;这个类定义在文件external/chromium_org/base/bind_internal.h中。</p>
+<p>&#160; &#160; &#160; &#160;从上面的调用过程可以知道，第一个模板参数Runnable的类型为RunnableAdapter<r(t::*)(a1, a2)="">，这里的R、A1和A2即分别为void、int和const std::string&amp;。第二个参数RunType的类型为R(T::*)(A1,A2)。第三模板参数P1和第四个模板参数P2的类型分别MyClass和int。</r(t::*)(a1,></p>
+<p>&#160; &#160; &#160; &#160;在分析上述的两个模板类BindState的实现之前，我们需要先理解在它们内部定义的RunnableType、IsWeakCall、InvokerType、UnboundRunType和Bound1UnwrapTraits类型的含义。</p>
+<h3 id="RunnableType、IsWeakCall、InvokerType、UnboundRunType和Bound1UnwrapTraits"><a href="#RunnableType、IsWeakCall、InvokerType、UnboundRunType和Bound1UnwrapTraits" class="headerlink" title="RunnableType、IsWeakCall、InvokerType、UnboundRunType和Bound1UnwrapTraits"></a>RunnableType、IsWeakCall、InvokerType、UnboundRunType和Bound1UnwrapTraits</h3><p>&#160; &#160; &#160; &#160;1⃣️. RunnableType定义为Runnable，对于上述第一个代码段，Runnable即RunnableAdapter<r(*)(a1,a2)>类，而对于上述第二个代码段，Runnable即为RunnableAdapter<r(t::*)(a1,a2)>类。</r(t::*)(a1,a2)></r(*)(a1,a2)></p>
+<p>&#160; &#160; &#160; &#160;2⃣️. IsWeakCall定义为IsWeakMethod<hasismethodtag<runnable>::value, P1&gt;。我们首先看HasIsMethodTag<runnable>的定义，如下所示：</runnable></hasismethodtag<runnable></p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="keyword">class</span> HasIsMethodTag &#123;</span><br><span class="line">  <span class="keyword">typedef</span> <span class="keyword">char</span> Yes[<span class="number">1</span>];</span><br><span class="line">  <span class="keyword">typedef</span> <span class="keyword">char</span> No[<span class="number">2</span>];</span><br><span class="line"> </span><br><span class="line">  <span class="keyword">template</span> &lt;<span class="keyword">typename</span> U&gt;</span><br><span class="line">  <span class="function"><span class="keyword">static</span> Yes&amp; <span class="title">Check</span><span class="params">(<span class="keyword">typename</span> U::IsMethod*)</span></span>;</span><br><span class="line"> </span><br><span class="line">  <span class="keyword">template</span> &lt;<span class="keyword">typename</span> U&gt;</span><br><span class="line">  <span class="function"><span class="keyword">static</span> No&amp; <span class="title">Check</span><span class="params">(...)</span></span>;</span><br><span class="line"> </span><br><span class="line"> <span class="keyword">public</span>:</span><br><span class="line">  <span class="keyword">static</span> <span class="keyword">const</span> <span class="keyword">bool</span> value = <span class="keyword">sizeof</span>(Check&lt;T&gt;(<span class="number">0</span>)) == <span class="keyword">sizeof</span>(Yes);</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>&#160; &#160; &#160; &#160;这个类定义在文件external/chromium_org/base/bind_helpers.h中。</p>
+<p>&#160; &#160; &#160; &#160;模板类HasIsMethodTag&lt; T &gt;用来判断模板参数T描述的类型是否定义了一个内部类型IsMethod。如果定义了，那么调用它的静态成员变量value的值就等于true，因为这时候调用它的静态成员函数Check时，调用的是参数类型为U::IsMethod*版本的静态成员函数Check。这一点与我们前面分析的模板类IsMoveOnlyType&lt; T &gt;判断模板参数T描述的参数是否具有move语意的手法是一样的。</p>
+<p>&#160; &#160; &#160; &#160;回到上面分析的BindState类中。对于上述的第一个代码段，HasIsMethodTag&lt; Runnable &gt;::value中的模板参数Runnable描述的类型为RunnableAdapter<r(*)(a1,a2)>，它没有定义内部类型IsMethod，因此这时候HasIsMethodTag&lt; Runnable &gt;::value的值等于false。这意味着IsWeakCall的定义可以简化为IsWeakMethod<false, p1="">。</false,></r(*)(a1,a2)></p>
+<p>&#160; &#160; &#160; &#160;对于上述的第二个代码段，HasIsMethodTag&lt; Runnable &gt;::value中的模板参数Runnable描述的类型为RunnableAdapter<r(t::*)(a1,a2)>，它定义有内部类型IsMethod，因此这时候HasIsMethodTag&lt; Runnable &gt;::value的值等于true。这意味着IsWeakCall的定义可以简化为IsWeakMethod<true, p1="">。</true,></r(t::*)(a1,a2)></p>
+<p>&#160; &#160; &#160; &#160;3⃣️. 模板类IsWeakMethod有三个定义，如下所示：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">bool</span> IsMethod, <span class="keyword">typename</span> P1&gt;</span><br><span class="line"><span class="keyword">struct</span> IsWeakMethod : <span class="keyword">public</span> false_type &#123;&#125;;</span><br><span class="line"> </span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="keyword">struct</span> IsWeakMethod&lt;<span class="literal">true</span>, WeakPtr&lt;T&gt; &gt; : <span class="keyword">public</span> true_type &#123;&#125;;</span><br><span class="line"> </span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="keyword">struct</span> IsWeakMethod&lt;<span class="literal">true</span>, ConstRefWrapper&lt;WeakPtr&lt;T&gt; &gt; &gt; : <span class="keyword">public</span> true_type &#123;&#125;;</span><br></pre></td></tr></table></figure>
+<p>&#160; &#160; &#160; &#160;这三个类定义在文件external/chromium_org/base/bind_helpers.h中。</p>
+<p>&#160; &#160; &#160; &#160;从这里就可以看出，当模板类IsWeakCall指定的第一个模板参数为true，并且第二个模板参数P1是一个WeakPtr弱智能指针时，它就是从类true_type继承下来的。在其余情况下，模板类IsWeakCall是从类false_type继承下来的。</p>
+<p>&#160; &#160; &#160; &#160;这意味着对于上述的第一个代码段，模板类BindState内部定义的类型IsWeakCall描述的是一个从false_type继承下来的子类，而对于上述的第二个代码段，<br>模板类BindState内部定义的类型IsWeakCall描述的也是一个从false_type继承下来的子类。</p>
+<p>&#160; &#160; &#160; &#160;4⃣️. 回到上述第一个代码对应的模板类BindState中，它内部定义的类型InvokerType描述的是一个Invoker<1, bindstate,="" runtype="">类，定义如下所示：</1,></p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> StorageType, <span class="keyword">typename</span> R,<span class="keyword">typename</span> X1, <span class="keyword">typename</span> X2&gt;</span><br><span class="line"><span class="keyword">struct</span> Invoker&lt;<span class="number">1</span>, StorageType, R(X1, X2)&gt; &#123;</span><br><span class="line">  <span class="function"><span class="keyword">typedef</span> <span class="title">R</span><span class="params">(RunType)</span><span class="params">(BindStateBase*,</span><br><span class="line">      <span class="keyword">typename</span> CallbackParamTraits&lt;X2&gt;::ForwardType)</span></span>;</span><br><span class="line"> </span><br><span class="line">  <span class="function"><span class="keyword">typedef</span> <span class="title">R</span><span class="params">(UnboundRunType)</span><span class="params">(X2)</span></span>;</span><br><span class="line"> </span><br><span class="line">  <span class="function"><span class="keyword">static</span> R <span class="title">Run</span><span class="params">(BindStateBase* base,</span><br><span class="line">      <span class="keyword">typename</span> CallbackParamTraits&lt;X2&gt;::ForwardType x2)</span> </span>&#123;</span><br><span class="line">    StorageType* storage = <span class="keyword">static_cast</span>&lt;StorageType*&gt;(base);</span><br><span class="line"> </span><br><span class="line">    <span class="comment">// Local references to make debugger stepping easier. If in a debugger,</span></span><br><span class="line">    <span class="comment">// you really want to warp ahead and step through the</span></span><br><span class="line">    <span class="comment">// InvokeHelper&lt;&gt;::MakeItSo() call below.</span></span><br><span class="line">    <span class="keyword">typedef</span> <span class="keyword">typename</span> StorageType::Bound1UnwrapTraits Bound1UnwrapTraits;</span><br><span class="line"> </span><br><span class="line">    <span class="keyword">typename</span> Bound1UnwrapTraits::ForwardType x1 =</span><br><span class="line">        Bound1UnwrapTraits::Unwrap(storage-&gt;p1_);</span><br><span class="line">    <span class="keyword">return</span> InvokeHelper&lt;StorageType::IsWeakCall::value, R,</span><br><span class="line">           <span class="keyword">typename</span> StorageType::RunnableType,</span><br><span class="line">           <span class="keyword">void</span>(<span class="keyword">typename</span> Bound1UnwrapTraits::ForwardType,</span><br><span class="line">               <span class="keyword">typename</span> CallbackParamTraits&lt;X2&gt;::ForwardType x2)&gt;</span><br><span class="line">               ::MakeItSo(storage-&gt;runnable_, CallbackForward(x1),</span><br><span class="line">                   CallbackForward(x2));</span><br><span class="line">  &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>&#160; &#160; &#160; &#160;这个类定义在文件external/chromium_org/base/bind_internal.h中。</p>
+<p>&#160; &#160; &#160; &#160;模板参数1表示这里定义的Invoker类绑定了一个参数，该参数的类型由第一个模板参数X1定义。第二个模板参数StorageType描述的是一个BindState类型。从前面的调用过程可以知道，模板参数X1的类型为int。</p>
+<p>&#160; &#160; &#160; &#160;Invoker<1, bindstate,="" runtype="">类的成员函数Run的实现我们后面再分析。</1,></p>
+<p>&#160; &#160; &#160; &#160;现在回到上述第二个代码段对应的模板类BindState中，它内部定义的类型InvokerType描述的是一个Invoker<2, bindstate,="" runtype="">类，定义如下所示：</2,></p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> StorageType, <span class="keyword">typename</span> R,<span class="keyword">typename</span> X1, <span class="keyword">typename</span> X2,</span><br><span class="line">    <span class="keyword">typename</span> X3&gt;</span><br><span class="line"><span class="keyword">struct</span> Invoker&lt;<span class="number">2</span>, StorageType, R(X1, X2, X3)&gt; &#123;</span><br><span class="line">  <span class="function"><span class="keyword">typedef</span> <span class="title">R</span><span class="params">(RunType)</span><span class="params">(BindStateBase*,</span><br><span class="line">      <span class="keyword">typename</span> CallbackParamTraits&lt;X3&gt;::ForwardType)</span></span>;</span><br><span class="line"> </span><br><span class="line">  <span class="function"><span class="keyword">typedef</span> <span class="title">R</span><span class="params">(UnboundRunType)</span><span class="params">(X3)</span></span>;</span><br><span class="line"> </span><br><span class="line">  <span class="function"><span class="keyword">static</span> R <span class="title">Run</span><span class="params">(BindStateBase* base,</span><br><span class="line">      <span class="keyword">typename</span> CallbackParamTraits&lt;X3&gt;::ForwardType x3)</span> </span>&#123;</span><br><span class="line">    StorageType* storage = <span class="keyword">static_cast</span>&lt;StorageType*&gt;(base);</span><br><span class="line"> </span><br><span class="line">    <span class="comment">// Local references to make debugger stepping easier. If in a debugger,</span></span><br><span class="line">    <span class="comment">// you really want to warp ahead and step through the</span></span><br><span class="line">    <span class="comment">// InvokeHelper&lt;&gt;::MakeItSo() call below.</span></span><br><span class="line">    <span class="keyword">typedef</span> <span class="keyword">typename</span> StorageType::Bound1UnwrapTraits Bound1UnwrapTraits;</span><br><span class="line">    <span class="keyword">typedef</span> <span class="keyword">typename</span> StorageType::Bound2UnwrapTraits Bound2UnwrapTraits;</span><br><span class="line"> </span><br><span class="line">    <span class="keyword">typename</span> Bound1UnwrapTraits::ForwardType x1 =</span><br><span class="line">        Bound1UnwrapTraits::Unwrap(storage-&gt;p1_);</span><br><span class="line">    <span class="keyword">typename</span> Bound2UnwrapTraits::ForwardType x2 =</span><br><span class="line">        Bound2UnwrapTraits::Unwrap(storage-&gt;p2_);</span><br><span class="line">    <span class="keyword">return</span> InvokeHelper&lt;StorageType::IsWeakCall::value, R,</span><br><span class="line">           <span class="keyword">typename</span> StorageType::RunnableType,</span><br><span class="line">           <span class="keyword">void</span>(<span class="keyword">typename</span> Bound1UnwrapTraits::ForwardType,</span><br><span class="line">               <span class="keyword">typename</span> Bound2UnwrapTraits::ForwardType,</span><br><span class="line">               <span class="keyword">typename</span> CallbackParamTraits&lt;X3&gt;::ForwardType x3)&gt;</span><br><span class="line">               ::MakeItSo(storage-&gt;runnable_, CallbackForward(x1),</span><br><span class="line">                   CallbackForward(x2), CallbackForward(x3));</span><br><span class="line">  &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>&#160; &#160; &#160; &#160;这个类定义在文件external/chromium_org/base/bind_internal.h中。</p>
+<p>&#160; &#160; &#160; &#160;模板参数2表示这里定义的Invoker类绑定了两个参数，第一个参数的类型由模板参数X1定义，第二个参数的类型由模板参数X2定义。第二个模板参数StorageType描述的是一个BindState类型。从前面的调用过程可以知道，模板参数X1的类型为MyClass，而模板参数X2的类型为int。</p>
+<p>&#160; &#160; &#160; &#160;Invoker<2, bindstate,="" runtype="">类的成员函数Run的实现我们同样后面再分析。</2,></p>
+<p>&#160; &#160; &#160; &#160;5⃣️. 现在回到上述第一个代码段对应的模板类BindState中，它内部定义的类型UnboundRunType定义为Invoker<1, bindstate,="" runtype="">::UnboundRunType，它的定义如下所示：</1,></p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">typedef</span> <span class="title">R</span><span class="params">(UnboundRunType)</span><span class="params">(X2)</span></span>;</span><br></pre></td></tr></table></figure>
+<p>&#160; &#160; &#160; &#160;也就是它描述的是一个参数类型为X2的函数，其中，X2是模板类Invoker<1, bindstate,="" runtype="">的模板参数，定义为const std::string&amp;。</1,></p>
+<p>&#160; &#160; &#160; &#160;6⃣️. 另外，上述第一个代码段对应的模板类BindState内部定义的类型Bound1UnwrapTraits定义为UnwrapTraits&lt; P1 &gt;，这里的模板参数P1的类型为int。</p>
+<p>&#160; &#160; &#160; &#160;模板类UnwrapTraits有若干个定义，如下所示：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="keyword">struct</span> UnwrapTraits &#123;</span><br><span class="line">  <span class="keyword">typedef</span> <span class="keyword">const</span> T&amp; ForwardType;</span><br><span class="line">  <span class="function"><span class="keyword">static</span> ForwardType <span class="title">Unwrap</span><span class="params">(<span class="keyword">const</span> T&amp; o)</span> </span>&#123; <span class="keyword">return</span> o; &#125;</span><br><span class="line">&#125;;</span><br><span class="line"> </span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="keyword">struct</span> UnwrapTraits&lt;UnretainedWrapper&lt;T&gt; &gt; &#123;</span><br><span class="line">  <span class="keyword">typedef</span> T* ForwardType;</span><br><span class="line">  <span class="function"><span class="keyword">static</span> ForwardType <span class="title">Unwrap</span><span class="params">(UnretainedWrapper&lt;T&gt; unretained)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> unretained.get();</span><br><span class="line">  &#125;</span><br><span class="line">&#125;;</span><br><span class="line"> </span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="keyword">struct</span> UnwrapTraits&lt;ConstRefWrapper&lt;T&gt; &gt; &#123;</span><br><span class="line">  <span class="keyword">typedef</span> <span class="keyword">const</span> T&amp; ForwardType;</span><br><span class="line">  <span class="function"><span class="keyword">static</span> ForwardType <span class="title">Unwrap</span><span class="params">(ConstRefWrapper&lt;T&gt; const_ref)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> const_ref.get();</span><br><span class="line">  &#125;</span><br><span class="line">&#125;;</span><br><span class="line"> </span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="keyword">struct</span> UnwrapTraits&lt;scoped_refptr&lt;T&gt; &gt; &#123;</span><br><span class="line">  <span class="keyword">typedef</span> T* ForwardType;</span><br><span class="line">  <span class="function"><span class="keyword">static</span> ForwardType <span class="title">Unwrap</span><span class="params">(<span class="keyword">const</span> scoped_refptr&lt;T&gt;&amp; o)</span> </span>&#123; <span class="keyword">return</span> o.get(); &#125;</span><br><span class="line">&#125;;</span><br><span class="line"> </span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="keyword">struct</span> UnwrapTraits&lt;WeakPtr&lt;T&gt; &gt; &#123;</span><br><span class="line">  <span class="keyword">typedef</span> <span class="keyword">const</span> WeakPtr&lt;T&gt;&amp; ForwardType;</span><br><span class="line">  <span class="function"><span class="keyword">static</span> ForwardType <span class="title">Unwrap</span><span class="params">(<span class="keyword">const</span> WeakPtr&lt;T&gt;&amp; o)</span> </span>&#123; <span class="keyword">return</span> o; &#125;</span><br><span class="line">&#125;;</span><br><span class="line"> </span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="keyword">struct</span> UnwrapTraits&lt;OwnedWrapper&lt;T&gt; &gt; &#123;</span><br><span class="line">  <span class="keyword">typedef</span> T* ForwardType;</span><br><span class="line">  <span class="function"><span class="keyword">static</span> ForwardType <span class="title">Unwrap</span><span class="params">(<span class="keyword">const</span> OwnedWrapper&lt;T&gt;&amp; o)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> o.get();</span><br><span class="line">  &#125;</span><br><span class="line">&#125;;</span><br><span class="line"> </span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="keyword">struct</span> UnwrapTraits&lt;PassedWrapper&lt;T&gt; &gt; &#123;</span><br><span class="line">  <span class="keyword">typedef</span> T ForwardType;</span><br><span class="line">  <span class="function"><span class="keyword">static</span> T <span class="title">Unwrap</span><span class="params">(PassedWrapper&lt;T&gt;&amp; o)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> o.Pass();</span><br><span class="line">  &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>&#160; &#160; &#160; &#160;这些类定义在文件external/chromium_org/base/bind_helpers.h中。</p>
+<p>&#160; &#160; &#160; &#160;它们的作用实际上就是定义一个静态成员函数Unwrap，用来被绑定参数的值。由于被绑定参数的类型不一样，获取它们的值的方式也是不一样的。例如，如果被绑定的是一个scoped_refptr智能指针，那么我们实际上需要的是该智能指针引用的目标对象，这时候就可以通过调用该智能指针的成员函数get来获得，如模板类UnwrapTraits<scoped_refptr< t=""> &gt;的静态成员函数Unwrap所示。</scoped_refptr<></p>
+<p>&#160; &#160; &#160; &#160;现在回到上述第二个代码段对应的模板类BindState中，它内部定义的类型UnboundRunType定义为Invoker<2, bindstate,="" runtype="">::UnboundRunType，它的定义如下所示：</2,></p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">typedef</span> <span class="title">R</span><span class="params">(UnboundRunType)</span><span class="params">(X3)</span></span>;</span><br></pre></td></tr></table></figure>
+<p>&#160; &#160; &#160; &#160;也就是它描述的是一个参数类型为X2的函数，其中，X2是模板类Invoker<1, bindstate,="" runtype="">的模板参数，定义为const std::string&amp;。</1,></p>
+<p>&#160; &#160; &#160; &#160;另外，上述第二个代码段对应的模板类BindState内部定义的类型Bound1UnwrapTraits和Bound2UnwrapTraits分别定义为UnwrapTraits&lt; P1 &gt;和UnwrapTraits&lt; P2 &gt;，这里的模板参数P1和P2的类型分别为MyClass和int。</p>
+<h3 id="BindState对象创建流程"><a href="#BindState对象创建流程" class="headerlink" title="BindState对象创建流程"></a>BindState对象创建流程</h3><p>&#160; &#160; &#160; &#160;1）有了上面的基础知识之后，接下来我们就来看上述第一个代码段对应的BindState对象的创建过程，也就是它的构造函数的实现，如下所示：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">BindState(<span class="keyword">const</span> Runnable&amp; runnable, <span class="keyword">const</span> P1&amp; p1)</span><br><span class="line">      : runnable_(runnable),</span><br><span class="line">        p1_(p1) &#123;</span><br><span class="line">    MaybeRefcount&lt;HasIsMethodTag&lt;Runnable&gt;::value, P1&gt;::AddRef(p1_);</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+<p>&#160; &#160; &#160; &#160;根据我们前面的分析，参数runnable指向的是一个RunnableAdapter<r(*)(a1,a2)>，而参数p1描述的是一个int。BindState类的构造函数分别将这两个参数分别保存在成员变量runnable<em>和p1</em>。</r(*)(a1,a2)></p>
+<p>&#160; &#160; &#160; &#160;此外，BindState类的构造函数还会通过模板类MaybeRefCount判断是否需要增加参数p1描述的对象的引用计数。这主要是针对被绑定函数为类成员函数的情况进行处理的。如果我们在创建一个Callback对象时，绑定的函数是一个类成员函数时，那么这里的参数p1就必须要是一个对应的类对象，因为当被绑定的类成员函数被调用时，这个类对象是作为this指针处理的。当这个类对象是以裸指针的形式传递给模板函数Bind时，需要增加它的引用计数，使得它的生命周期不短于对应的Callback对象。</p>
+<p>&#160; &#160; &#160; &#160;由于这里的参数p1是一个int，从前面的分析可以知道，HasIsMethodTag&lt; Runnable &gt;::value的值等于false，因此，BindState类的构造函数调用的是MaybeRefcount<false, p1="">类的静态成员函数AddRef尝试增加参数p1的引用计数。</false,></p>
+<p>&#160; &#160; &#160; &#160;MaybeRefcount是一个模板类，它有若干个定义，如下所示：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="keyword">struct</span> MaybeRefcount&lt;<span class="literal">false</span>, T&gt; &#123;</span><br><span class="line">  <span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">AddRef</span><span class="params">(<span class="keyword">const</span> T&amp;)</span> </span>&#123;&#125;</span><br><span class="line">  <span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">Release</span><span class="params">(<span class="keyword">const</span> T&amp;)</span> </span>&#123;&#125;</span><br><span class="line">&#125;;</span><br><span class="line"> </span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T, <span class="keyword">size_t</span> n&gt;</span><br><span class="line"><span class="keyword">struct</span> MaybeRefcount&lt;<span class="literal">false</span>, T[n]&gt; &#123;</span><br><span class="line">  <span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">AddRef</span><span class="params">(<span class="keyword">const</span> T*)</span> </span>&#123;&#125;</span><br><span class="line">  <span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">Release</span><span class="params">(<span class="keyword">const</span> T*)</span> </span>&#123;&#125;</span><br><span class="line">&#125;;</span><br><span class="line"> </span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="keyword">struct</span> MaybeRefcount&lt;<span class="literal">true</span>, T&gt; &#123;</span><br><span class="line">  <span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">AddRef</span><span class="params">(<span class="keyword">const</span> T&amp;)</span> </span>&#123;&#125;</span><br><span class="line">  <span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">Release</span><span class="params">(<span class="keyword">const</span> T&amp;)</span> </span>&#123;&#125;</span><br><span class="line">&#125;;</span><br><span class="line"> </span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="keyword">struct</span> MaybeRefcount&lt;<span class="literal">true</span>, T*&gt; &#123;</span><br><span class="line">  <span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">AddRef</span><span class="params">(T* o)</span> </span>&#123; o-&gt;AddRef(); &#125;</span><br><span class="line">  <span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">Release</span><span class="params">(T* o)</span> </span>&#123; o-&gt;Release(); &#125;</span><br><span class="line">&#125;;</span><br><span class="line"> </span><br><span class="line"><span class="comment">// No need to additionally AddRef() and Release() since we are storing a</span></span><br><span class="line"><span class="comment">// scoped_refptr&lt;&gt; inside the storage object already.</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="keyword">struct</span> MaybeRefcount&lt;<span class="literal">true</span>, scoped_refptr&lt;T&gt; &gt; &#123;</span><br><span class="line">  <span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">AddRef</span><span class="params">(<span class="keyword">const</span> scoped_refptr&lt;T&gt;&amp; o)</span> </span>&#123;&#125;</span><br><span class="line">  <span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">Release</span><span class="params">(<span class="keyword">const</span> scoped_refptr&lt;T&gt;&amp; o)</span> </span>&#123;&#125;</span><br><span class="line">&#125;;</span><br><span class="line"> </span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="keyword">struct</span> MaybeRefcount&lt;<span class="literal">true</span>, <span class="keyword">const</span> T*&gt; &#123;</span><br><span class="line">  <span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">AddRef</span><span class="params">(<span class="keyword">const</span> T* o)</span> </span>&#123; o-&gt;AddRef(); &#125;</span><br><span class="line">  <span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">Release</span><span class="params">(<span class="keyword">const</span> T* o)</span> </span>&#123; o-&gt;Release(); &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>&#160; &#160; &#160; &#160;这些类定义在文件external/chromium_org/base/bind_helpers.h中。</p>
+<p>&#160; &#160; &#160; &#160;从这里就可以看到，当第一个模板参数等于false时，MaybeRefcount类的静态成员函数AddRef和Release什么也不做，因为这时候意味着它们的参数描述的不是一个类对象。</p>
+<p>&#160; &#160; &#160; &#160;另一方面，当第一个模板参数等于true，并且第二个模板参数描述的是一个类对象的裸指针时，MaybeRefcount类的静态成员函数AddRef和Release会对该对象的引用计数进行加1和减1的操作。如我们前面所述，这时候MaybeRefcount类的静态成员函数AddRef和Release的参数描述的对象是作为被绑定的类成员函数调用时的this指针处理的，因此要通过操作它的引用计数来正确管理它的生命周期。</p>
+<p>&#160; &#160; &#160; &#160;这里有两点是需要注意的。第一点是如果第二个模板参数描述的是一个scoped_refptr智能指针时，那么对应的MaybeRefcount类是不需要增加或者减少它引用的对象的引用计数的，因为这时候这个被引用的对象也是通过scoped_refptr智能指针绑定在对应的BindState对象里面的，也就是scoped_refptr智能指针会自动处理好被引用对象的引用计数。</p>
+<p>&#160; &#160; &#160; &#160;第二点是如果描述的是一个WeakPtr弱智能指针时，那么对应的MaybeRefcount类也不会增加或者减少它引用的对象的引用计数。这是因为当一个对象通过WeakPtr弱智能指针绑定到一个Callback对象时，它的生命周期可以短于对应的Callback对象。当发生这种情况时，对应的Callback对象的成员函数Run被调用时，之前绑定的类成员函数就不会被调用。</p>
+<p>&#160; &#160; &#160; &#160;由于在BindState类的构造函数中有可能增加了参数p1描述的对象的引用计数，因此在BindState类的析构函数中，需要减少该对象的引用计数，如下所示：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">virtual</span> ~BindState() &#123;    MaybeRefcount&lt;HasIsMethodTag&lt;Runnable&gt;::value,</span><br><span class="line">      P1&gt;::Release(p1_);  &#125;</span><br></pre></td></tr></table></figure>
+<p>&#160; &#160; &#160; &#160;2）以上就是上述第一个代码段对应的BindState对象的创建过程，对于第二个代码段对应的BindState对象的创建过程，也是类似的，如下所示：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">BindState(<span class="keyword">const</span> Runnable&amp; runnable, <span class="keyword">const</span> P1&amp; p1, <span class="keyword">const</span> P2&amp; p2)</span><br><span class="line">      : runnable_(runnable),</span><br><span class="line">        p1_(p1),</span><br><span class="line">        p2_(p2) &#123;</span><br><span class="line">    MaybeRefcount&lt;HasIsMethodTag&lt;Runnable&gt;::value, P1&gt;::AddRef(p1_);</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+<p>&#160; &#160; &#160; &#160;注意，这里只有参数p1有可能是作为this指针处理的，因此在BindState类的构造函数中，只会调用模板类MaybeRefcount的静态成员函数AddRef对它进行处理，另外一个参数p2就没有这样的待遇。</p>
+<p>&#160; &#160; &#160; &#160;同样的，当创建出来的BindState对象析构时，可能减少参数p1描述的对象的引用计数，如下所示：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">virtual</span> ~BindState() &#123;    MaybeRefcount&lt;HasIsMethodTag&lt;Runnable&gt;::value,</span><br><span class="line">      P1&gt;::Release(p1_);  &#125;</span><br></pre></td></tr></table></figure>
+<p>&#160; &#160; &#160; &#160;这样，BindSate对象的创建过程就分析完成了。</p>
+<h3 id="创建Callback对象"><a href="#创建Callback对象" class="headerlink" title="创建Callback对象"></a>创建Callback对象</h3><p>&#160; &#160; &#160; &#160;回到模板函数Bind中，接下来就以创建出来的BindSate对象为参数，创建最终的Callback对象。</p>
+<p>&#160; &#160; &#160; &#160;对于上述的第一个代码段，创建Callback对象的代码如下所示：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">return</span> Callback&lt;<span class="keyword">typename</span> BindState::UnboundRunType&gt;(</span><br><span class="line">      BindState&lt;RunnableAdapter&lt;R(*)(A1,A2)&gt;, R(*)(A1,A2),<span class="keyword">void</span>(P1)&gt;);</span><br></pre></td></tr></table></figure>
+<p>&#160; &#160; &#160; &#160;从前面的分析可以知道，这里的BindState::UnboundRunType的定义如下所示：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> StorageType, <span class="keyword">typename</span> R,<span class="keyword">typename</span> X1, <span class="keyword">typename</span> X2&gt;</span><br><span class="line"><span class="keyword">struct</span> Invoker&lt;<span class="number">1</span>, StorageType, R(X1, X2)&gt; &#123;</span><br><span class="line">  ......</span><br><span class="line"> </span><br><span class="line">  <span class="function"><span class="keyword">typedef</span> <span class="title">R</span><span class="params">(UnboundRunType)</span><span class="params">(X2)</span></span>;</span><br><span class="line"> </span><br><span class="line">  ......</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>&#160; &#160; &#160; &#160;这里的模板参数X2的类型为const std::string&amp;。 </p>
+<p>&#160; &#160; &#160; &#160;对于上述的第二个代码段，创建Callback对象的代码如下所示：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">return</span> Callback&lt;<span class="keyword">typename</span> BindState::UnboundRunType&gt;(</span><br><span class="line">      BindState&lt;RunnableAdapter&lt;R(T::*)(A1,A2), R(T::*)(A1,A2), <span class="keyword">void</span>(P1,P2)&gt;&gt;);</span><br></pre></td></tr></table></figure>
+<p>&#160; &#160; &#160; &#160;从前面的分析可以知道，这里的BindState::UnboundRunType的定义如下所示：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> StorageType, <span class="keyword">typename</span> R,<span class="keyword">typename</span> X1, <span class="keyword">typename</span> X2,</span><br><span class="line">    <span class="keyword">typename</span> X3&gt;</span><br><span class="line"><span class="keyword">struct</span> Invoker&lt;<span class="number">2</span>, StorageType, R(X1, X2, X3)&gt; &#123;</span><br><span class="line">  ......</span><br><span class="line"> </span><br><span class="line">  <span class="function"><span class="keyword">typedef</span> <span class="title">R</span><span class="params">(UnboundRunType)</span><span class="params">(X3)</span></span>;</span><br><span class="line"> </span><br><span class="line">  ......</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>&#160; &#160; &#160; &#160;这里的模板参数X3的类型为const std::string&amp;。</p>
+<p>&#160; &#160; &#160; &#160;因此，上述两个代码段创建的Callback对象对应的Callback模板类的定义如下所示：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> R, <span class="keyword">typename</span> A1&gt;</span><br><span class="line"><span class="keyword">class</span> Callback&lt;R(A1)&gt; : <span class="keyword">public</span> internal::CallbackBase &#123;</span><br><span class="line"> <span class="keyword">public</span>:</span><br><span class="line">  ......</span><br><span class="line"> </span><br><span class="line">  <span class="keyword">template</span> &lt;<span class="keyword">typename</span> Runnable, <span class="keyword">typename</span> BindRunType, <span class="keyword">typename</span> BoundArgsType&gt;</span><br><span class="line">  Callback(internal::BindState&lt;Runnable, BindRunType,</span><br><span class="line">           BoundArgsType&gt;* bind_state)</span><br><span class="line">      : CallbackBase(bind_state) &#123;</span><br><span class="line"> </span><br><span class="line">    ......</span><br><span class="line">    PolymorphicInvoke invoke_func =</span><br><span class="line">        &amp;internal::BindState&lt;Runnable, BindRunType, BoundArgsType&gt;</span><br><span class="line">            ::InvokerType::Run;</span><br><span class="line">    polymorphic_invoke_ = <span class="keyword">reinterpret_cast</span>&lt;InvokeFuncStorage&gt;(invoke_func);</span><br><span class="line">  &#125;</span><br><span class="line"> </span><br><span class="line">  ......</span><br><span class="line"> </span><br><span class="line">  <span class="function">R <span class="title">Run</span><span class="params">(<span class="keyword">typename</span> internal::CallbackParamTraits&lt;A1&gt;::ForwardType a1)</span> <span class="keyword">const</span> </span>&#123;</span><br><span class="line">    PolymorphicInvoke f =</span><br><span class="line">        <span class="keyword">reinterpret_cast</span>&lt;PolymorphicInvoke&gt;(polymorphic_invoke_);</span><br><span class="line"> </span><br><span class="line">    <span class="keyword">return</span> f(bind_state_.get(), internal::CallbackForward(a1));</span><br><span class="line">  &#125;</span><br><span class="line"> </span><br><span class="line"> <span class="keyword">private</span>:</span><br><span class="line">  <span class="function"><span class="keyword">typedef</span> <span class="title">R</span><span class="params">(*PolymorphicInvoke)</span><span class="params">(</span><br><span class="line">      internal::BindStateBase*,</span><br><span class="line">          <span class="keyword">typename</span> internal::CallbackParamTraits&lt;A1&gt;::ForwardType)</span></span>;</span><br><span class="line"> </span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>&#160; &#160; &#160; &#160;这个类定义在文件external/chromium_org/base/callback.h中。</p>
+<p>&#160; &#160; &#160; &#160;我们观察Callback类的构造函数的实现，它的参数bind_state描述的BindState对象被传递给父类CallbackBase的构造函数，最终保存在父类CallbackBase的成员变量bind<em>state</em>中。</p>
+<p>&#160; &#160; &#160; &#160;从前面的分析可以知道，对于上述第一个代码段，internal::BindState<runnable, bindruntype,="" boundargstype="">::InvokerType::Run描述的函数为以下函数：</runnable,></p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> StorageType, <span class="keyword">typename</span> R,<span class="keyword">typename</span> X1, <span class="keyword">typename</span> X2&gt;</span><br><span class="line"><span class="keyword">struct</span> Invoker&lt;<span class="number">1</span>, StorageType, R(X1, X2)&gt; &#123;</span><br><span class="line">  ......</span><br><span class="line"> </span><br><span class="line">  <span class="function"><span class="keyword">static</span> R <span class="title">Run</span><span class="params">(BindStateBase* base,</span><br><span class="line">      <span class="keyword">typename</span> CallbackParamTraits&lt;X2&gt;::ForwardType x2)</span> </span>&#123;</span><br><span class="line">    StorageType* storage = <span class="keyword">static_cast</span>&lt;StorageType*&gt;(base);</span><br><span class="line"> </span><br><span class="line">    ......</span><br><span class="line"> </span><br><span class="line">    <span class="keyword">typename</span> Bound1UnwrapTraits::ForwardType x1 =</span><br><span class="line">        Bound1UnwrapTraits::Unwrap(storage-&gt;p1_);</span><br><span class="line">    <span class="keyword">return</span> InvokeHelper&lt;StorageType::IsWeakCall::value, R,</span><br><span class="line">           <span class="keyword">typename</span> StorageType::RunnableType,</span><br><span class="line">           <span class="keyword">void</span>(<span class="keyword">typename</span> Bound1UnwrapTraits::ForwardType,</span><br><span class="line">               <span class="keyword">typename</span> CallbackParamTraits&lt;X2&gt;::ForwardType x2)&gt;</span><br><span class="line">               ::MakeItSo(storage-&gt;runnable_, CallbackForward(x1),</span><br><span class="line">                   CallbackForward(x2));</span><br><span class="line">  &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>&#160; &#160; &#160; &#160;这个函数定义在文件external/chromium_org/base/bind_internal.h中。</p>
+<p>&#160; &#160; &#160; &#160;对于上述第二个代码段，internal::BindState<runnable, bindruntype,="" boundargstype="">::InvokerType::Run描述的函数则为以下函数：</runnable,></p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> StorageType, <span class="keyword">typename</span> R,<span class="keyword">typename</span> X1, <span class="keyword">typename</span> X2,</span><br><span class="line">    <span class="keyword">typename</span> X3&gt;</span><br><span class="line"><span class="keyword">struct</span> Invoker&lt;<span class="number">2</span>, StorageType, R(X1, X2, X3)&gt; &#123;</span><br><span class="line">  ......</span><br><span class="line"> </span><br><span class="line">  <span class="function"><span class="keyword">static</span> R <span class="title">Run</span><span class="params">(BindStateBase* base,</span><br><span class="line">      <span class="keyword">typename</span> CallbackParamTraits&lt;X3&gt;::ForwardType x3)</span> </span>&#123;</span><br><span class="line">    StorageType* storage = <span class="keyword">static_cast</span>&lt;StorageType*&gt;(base);</span><br><span class="line"> </span><br><span class="line">    ......</span><br><span class="line"> </span><br><span class="line">    <span class="keyword">typename</span> Bound1UnwrapTraits::ForwardType x1 =</span><br><span class="line">        Bound1UnwrapTraits::Unwrap(storage-&gt;p1_);</span><br><span class="line">    <span class="keyword">typename</span> Bound2UnwrapTraits::ForwardType x2 =</span><br><span class="line">        Bound2UnwrapTraits::Unwrap(storage-&gt;p2_);</span><br><span class="line">    <span class="keyword">return</span> InvokeHelper&lt;StorageType::IsWeakCall::value, R,</span><br><span class="line">           <span class="keyword">typename</span> StorageType::RunnableType,</span><br><span class="line">           <span class="keyword">void</span>(<span class="keyword">typename</span> Bound1UnwrapTraits::ForwardType,</span><br><span class="line">               <span class="keyword">typename</span> Bound2UnwrapTraits::ForwardType,</span><br><span class="line">               <span class="keyword">typename</span> CallbackParamTraits&lt;X3&gt;::ForwardType x3)&gt;</span><br><span class="line">               ::MakeItSo(storage-&gt;runnable_, CallbackForward(x1),</span><br><span class="line">                   CallbackForward(x2), CallbackForward(x3));</span><br><span class="line">  &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>&#160; &#160; &#160; &#160;这个函数定义在文件external/chromium_org/base/bind_internal.h中。</p>
+<p>&#160; &#160; &#160; &#160;这意味着，对于上述第一个代码段，创建出来的Callback对象从父类CallbackBase继承下来的成员变量polymorphic<em>invoke</em>描述的是模板类Invoker<1, storagetype,="" r(x1,="" x2)="">的成员函数Run，而对于上述第二个代码段，该成员变量描述的是模板类Invoker<2, storagetype,="" r(x1,="" x2,="" x3)="">的成员函数Run。</2,></1,></p>
+<p>&#160; &#160; &#160; &#160;这样，模板函数Bind创建Callback对象的过程也分析完成了。</p>
+<h3 id="Run函数执行过程"><a href="#Run函数执行过程" class="headerlink" title="Run函数执行过程"></a>Run函数执行过程</h3><p>&#160; &#160; &#160; &#160;接下来，我们就继续分析这些Callback对象的执行过程，也就是模板类Callback<r(a1)>的成员函数Run的调用过程，如下所示：</r(a1)></p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> R, <span class="keyword">typename</span> A1&gt;</span><br><span class="line"><span class="keyword">class</span> Callback&lt;R(A1)&gt; : <span class="keyword">public</span> internal::CallbackBase &#123;</span><br><span class="line"> <span class="keyword">public</span>:</span><br><span class="line">  ......</span><br><span class="line"> </span><br><span class="line">  <span class="function">R <span class="title">Run</span><span class="params">(<span class="keyword">typename</span> internal::CallbackParamTraits&lt;A1&gt;::ForwardType a1)</span> <span class="keyword">const</span> </span>&#123;</span><br><span class="line">    PolymorphicInvoke f =</span><br><span class="line">        <span class="keyword">reinterpret_cast</span>&lt;PolymorphicInvoke&gt;(polymorphic_invoke_);</span><br><span class="line"> </span><br><span class="line">    <span class="keyword">return</span> f(bind_state_.get(), internal::CallbackForward(a1));</span><br><span class="line">  &#125;</span><br><span class="line"> </span><br><span class="line">  ......</span><br><span class="line"> </span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>&#160; &#160; &#160; &#160;这个函数定义在文件external/chromium_org/base/callback.h中。</p>
+<p>&#160; &#160; &#160; &#160;从前面的分析可以知道，模板类Callback<r(a1)>的成员变量polymorphic<em>invoke</em>是从父类CallbackBase继承下来的，对于上述的第一个代码段，它指向的是模板类Invoker<1, storagetype,="" r(x1,="" x2)="">的静态成员函数Run，而对于上述的第二个代码段，它指向的是模板类Invoker<2, storagetype,="" r(x1,="" x2,="" x3)="">的静态成员函数Run。</2,></1,></r(a1)></p>
+<p>&#160; &#160; &#160; &#160;因此，模板类Callback<r(a1)>的成员函数Run所做的事件就是调用模板类Invoker<1, storagetype,="" r(x1,="" x2)="">或者Invoker<2, storagetype,="" r(x1,="" x2,="" x3)="">的静态成员函数Run，并且将成员变量bind<em>state</em>描述的一个BindState对象以及参数a1描述的一个std::string传递给它。</2,></1,></r(a1)></p>
+<p>&#160; &#160; &#160; &#160;接下来我们就先分析模板类Invoker<1, storagetype,="" r(x1,="" x2)="">的静态成员函数Run的执行过程，接着再分析模板类Invoker<2, storagetype,="" r(x1,="" x2,="" x3)="">的静态成员函数Run的执行过程。</2,></1,></p>
+<p>&#160; &#160; &#160; &#160;1⃣️. 模板类Invoker<1, storagetype,="" r(x1,="" x2)="">类的静态成员函数Run首先通过前面分析过的Bound1UnwrapTraits类的静态成员函数Unwrap将绑定在传递给它的BindState的参数p1<em>和runnable</em>取出来，然后连同传递给它的参数x2，一起传递给以下这个模板类的静态成员函数MakeItSo：</1,></p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">InvokeHelper&lt;StorageType::IsWeakCall::value, R,</span><br><span class="line">           <span class="keyword">typename</span> StorageType::RunnableType,</span><br><span class="line">           <span class="keyword">void</span>(<span class="keyword">typename</span> Bound1UnwrapTraits::ForwardType,</span><br><span class="line">               <span class="keyword">typename</span> CallbackParamTraits&lt;X2&gt;::ForwardType x2)&gt;</span><br></pre></td></tr></table></figure>
+<p>&#160; &#160; &#160; &#160;这里的模板参数StorageType描述的是一个BindState<runnable, runtype,="" void(p1)="">模板类，从前面的分析可以知道，它的内部类IsWeakCall的静态成员变量value的值是等于false的，因此上述InvokeHelper类可以展开为：</runnable,></p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">InvokeHelper&lt;<span class="literal">false</span>, R,</span><br><span class="line">           <span class="keyword">typename</span> StorageType::RunnableType,</span><br><span class="line">           <span class="keyword">void</span>(<span class="keyword">typename</span> Bound1UnwrapTraits::ForwardType,</span><br><span class="line">               <span class="keyword">typename</span> CallbackParamTraits&lt;X2&gt;::ForwardType x2)&gt;</span><br></pre></td></tr></table></figure>
+<p>&#160; &#160; &#160; &#160;这里的模板参数R的类型为void，因此上述InvokeHelper类继续展开为：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">InvokeHelper&lt;<span class="literal">false</span>, <span class="keyword">void</span>,</span><br><span class="line">           <span class="keyword">typename</span> StorageType::RunnableType,</span><br><span class="line">           <span class="keyword">void</span>(<span class="keyword">typename</span> Bound1UnwrapTraits::ForwardType,</span><br><span class="line">               <span class="keyword">typename</span> CallbackParamTraits&lt;X2&gt;::ForwardType x2)&gt;</span><br></pre></td></tr></table></figure>
+<p>&#160; &#160; &#160; &#160;从前面的分析可以知道，模板参数StorageType的内部类RunnableType描述的是一个RunnableAdapter<r(*)(a1, a2)="">类，因此上述InvokeHelper类继续展开为：</r(*)(a1,></p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">InvokeHelper&lt;<span class="literal">false</span>, <span class="keyword">void</span>,</span><br><span class="line">           RunnableAdapter&lt;R(*)(A1, A2)&gt;,</span><br><span class="line">           <span class="keyword">void</span>(<span class="keyword">typename</span> Bound1UnwrapTraits::ForwardType,</span><br><span class="line">               <span class="keyword">typename</span> CallbackParamTraits&lt;X2&gt;::ForwardType x2)&gt;</span><br></pre></td></tr></table></figure>
+<p>&#160; &#160; &#160; &#160;从前面的分析还可以知道，Bound1UnwrapTraits::ForwardType描述的是一个int&amp;，并且CallbackParamTraits&lt; X2 &gt;::ForwardType描述的是一个const std::string&amp;，因此上述InvokeHelper类继续展开为：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">InvokeHelper&lt;<span class="literal">false</span>, <span class="keyword">void</span>,</span><br><span class="line">           RunnableAdapter&lt;R(*)(A1, A2)&gt;,</span><br><span class="line">           <span class="keyword">void</span>(<span class="keyword">int</span>&amp;,<span class="keyword">const</span> <span class="built_in">std</span>::<span class="built_in">string</span>&amp;)&gt;</span><br></pre></td></tr></table></figure>
+<p>&#160; &#160; &#160; &#160;它对应的模板类的定义为：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> Runnable,<span class="keyword">typename</span> A1, <span class="keyword">typename</span> A2&gt;</span><br><span class="line"><span class="keyword">struct</span> InvokeHelper&lt;<span class="literal">false</span>, <span class="keyword">void</span>, Runnable,</span><br><span class="line">    <span class="keyword">void</span>(A1, A2)&gt;  &#123;</span><br><span class="line">  <span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">MakeItSo</span><span class="params">(Runnable runnable, A1 a1, A2 a2)</span> </span>&#123;</span><br><span class="line">    runnable.Run(CallbackForward(a1), CallbackForward(a2));</span><br><span class="line">  &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>&#160; &#160; &#160; &#160;这个类定义在文件external/chromium_org/base/bind_internal.h中。</p>
+<p>&#160; &#160; &#160; &#160;这个InvokeHelper类的静态成员函数MakeItSo最终调用的是参数runnable描述的一个RunnableAdapter<r(*)(a1, a2)="">对象的成员函数Run，并且将参数a1和a2传递给它，如下所示：</r(*)(a1,></p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> R, <span class="keyword">typename</span> A1, <span class="keyword">typename</span> A2&gt;</span><br><span class="line"><span class="keyword">class</span> RunnableAdapter&lt;R(*)(A1, A2)&gt; &#123;</span><br><span class="line"> <span class="keyword">public</span>:</span><br><span class="line">  ......</span><br><span class="line"> </span><br><span class="line">  <span class="function">R <span class="title">Run</span><span class="params">(<span class="keyword">typename</span> CallbackParamTraits&lt;A1&gt;::ForwardType a1,</span><br><span class="line">      <span class="keyword">typename</span> CallbackParamTraits&lt;A2&gt;::ForwardType a2)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> function_(CallbackForward(a1), CallbackForward(a2));</span><br><span class="line">  &#125;</span><br><span class="line"> </span><br><span class="line">  ......</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>&#160; &#160; &#160; &#160;这个函数定义在文件external/chromium_org/base/bind_internal.h中。</p>
+<p>&#160; &#160; &#160; &#160;从前面的分析可以知道，这个RunnableAdapter<r(*)(a1, a2)="">类的成员变量function_描述的就是上述第一个代码段的函数MyFunc，因此最终就调用了函数MyFunc，并且将参数a1和a2传递给它。注意，这里的参数a1即为在创建当前正在执行的Callback对象时绑定的一个int值，而参数a2即为调用当前正在执行的Callback对象的成员函数Run指定的一个 std::string。</r(*)(a1,></p>
+<p>&#160; &#160; &#160; &#160;以上就是模板类Invoker<1, storagetype,="" r(x1,="" x2)="">的静态成员函数Run的执行过程，接下来我们继续分析Invoker<2, storagetype,="" r(x1,="" x2,="" x3)="">的静态成员函数Run的执行过程。</2,></1,></p>
+<p>&#160; &#160; &#160; &#160;2⃣️. 模板类Invoker<2, storagetype,="" r(x1,="" x2,="" x3)="">类的静态成员函数Run首先通过前面分析过的Bound1UnwrapTraits类和Bound2UnwrapTraits的静态成员函数Unwrap将绑定在传递给它的BindState的参数p1<em>、p2</em>和runnable_取出来，然后连同传递给它的参数x3，一起传递给以下这个模板类的静态成员函数MakeItSo：</2,></p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">InvokeHelper&lt;StorageType::IsWeakCall::value, R,</span><br><span class="line">           <span class="keyword">typename</span> StorageType::RunnableType,</span><br><span class="line">           <span class="keyword">void</span>(<span class="keyword">typename</span> Bound1UnwrapTraits::ForwardType,</span><br><span class="line">               <span class="keyword">typename</span> Bound2UnwrapTraits::ForwardType,</span><br><span class="line">               <span class="keyword">typename</span> CallbackParamTraits&lt;X3&gt;::ForwardType x3)&gt;</span><br></pre></td></tr></table></figure>
+<p>&#160; &#160; &#160; &#160;这里的模板参数StorageType描述的是一个BindState<runnable, runtype,="" void(p1,p2)="">模板类，从前面的分析可以知道，它的内部类IsWeakCall的静态成员变量value的值是等于false的，因此上述InvokeHelper类可以展开为：</runnable,></p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">InvokeHelper&lt;<span class="literal">false</span>, R,</span><br><span class="line">           <span class="keyword">typename</span> StorageType::RunnableType,</span><br><span class="line">           <span class="keyword">void</span>(<span class="keyword">typename</span> Bound1UnwrapTraits::ForwardType,</span><br><span class="line">               <span class="keyword">typename</span> Bound2UnwrapTraits::ForwardType,</span><br><span class="line">               <span class="keyword">typename</span> CallbackParamTraits&lt;X3&gt;::ForwardType x3)&gt;</span><br></pre></td></tr></table></figure>
+<p>&#160; &#160; &#160; &#160;这里的模板参数R同样也为void，因此上述InvokeHelper类继续展开为：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">InvokeHelper&lt;<span class="literal">false</span>, <span class="keyword">void</span>,</span><br><span class="line">           <span class="keyword">typename</span> StorageType::RunnableType,</span><br><span class="line">           <span class="keyword">void</span>(<span class="keyword">typename</span> Bound1UnwrapTraits::ForwardType,</span><br><span class="line">               <span class="keyword">typename</span> Bound2UnwrapTraits::ForwardType,</span><br><span class="line">               <span class="keyword">typename</span> CallbackParamTraits&lt;X3&gt;::ForwardType x3)&gt;</span><br></pre></td></tr></table></figure>
+<p>&#160; &#160; &#160; &#160;从前面的分析可以知道，模板参数StorageType的内部类RunnableType描述的是一个RunnableAdapter<r(t::*)(a1, a2)="">类，因此上述InvokeHelper类继续展开为：</r(t::*)(a1,></p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">InvokeHelper&lt;<span class="literal">false</span>, <span class="keyword">void</span>,</span><br><span class="line">           RunnableAdapter&lt;R(T::*)(A1, A2)&gt;,</span><br><span class="line">           <span class="keyword">void</span>(<span class="keyword">typename</span> Bound1UnwrapTraits::ForwardType,</span><br><span class="line">               <span class="keyword">typename</span> Bound2UnwrapTraits::ForwardType,</span><br><span class="line">               <span class="keyword">typename</span> CallbackParamTraits&lt;X3&gt;::ForwardType x3)&gt;</span><br></pre></td></tr></table></figure>
+<p>&#160; &#160; &#160; &#160;从前面的分析还可以知道，Bound1UnwrapTraits::ForwardType描述的是一个MyClass*，Bound2UnwrapTraits::ForwardType描述的是一个int&amp;，并且CallbackParamTraits&lt; X3 &gt;::ForwardType描述的是一个const std::string&amp;，因此上述InvokeHelper类继续展开为：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">InvokeHelper&lt;<span class="literal">false</span>, <span class="keyword">void</span>,</span><br><span class="line">           RunnableAdapter&lt;R(T::*)(A1, A2)&gt;,</span><br><span class="line">           <span class="keyword">void</span>(MyClass*,</span><br><span class="line">               <span class="keyword">int</span>&amp;,</span><br><span class="line">               <span class="keyword">const</span> <span class="built_in">std</span>::<span class="built_in">string</span>&amp;)&gt;</span><br></pre></td></tr></table></figure>
+<p>&#160; &#160; &#160; &#160;它对应的模板类的定义为：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> Runnable,<span class="keyword">typename</span> A1, <span class="keyword">typename</span> A2, <span class="keyword">typename</span> A3&gt;</span><br><span class="line"><span class="keyword">struct</span> InvokeHelper&lt;<span class="literal">false</span>, <span class="keyword">void</span>, Runnable,</span><br><span class="line">    <span class="keyword">void</span>(A1, A2, A3)&gt;  &#123;</span><br><span class="line">  <span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">MakeItSo</span><span class="params">(Runnable runnable, A1 a1, A2 a2, A3 a3)</span> </span>&#123;</span><br><span class="line">    runnable.Run(CallbackForward(a1), CallbackForward(a2), CallbackForward(a3));</span><br><span class="line">  &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>&#160; &#160; &#160; &#160;这个类定义在文件external/chromium_org/base/bind_internal.h中。</p>
+<p>&#160; &#160; &#160; &#160;这个InvokeHelper类的静态成员函数MakeItSo最终调用的是参数runnable描述的一个RunnableAdapter<r(t::*)(a1, a2)="">对象的成员函数Run，并且将参数a1、a2和a3传递给它，如下所示：</r(t::*)(a1,></p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> R, <span class="keyword">typename</span> T, <span class="keyword">typename</span> A1, <span class="keyword">typename</span> A2&gt;</span><br><span class="line"><span class="keyword">class</span> RunnableAdapter&lt;R(T::*)(A1, A2)&gt; &#123;</span><br><span class="line"> <span class="keyword">public</span>:</span><br><span class="line">  ......</span><br><span class="line"> </span><br><span class="line">  <span class="function">R <span class="title">Run</span><span class="params">(T* object, <span class="keyword">typename</span> CallbackParamTraits&lt;A1&gt;::ForwardType a1,</span><br><span class="line">      <span class="keyword">typename</span> CallbackParamTraits&lt;A2&gt;::ForwardType a2)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> (object-&gt;*method_)(CallbackForward(a1), CallbackForward(a2));</span><br><span class="line">  &#125;</span><br><span class="line"> </span><br><span class="line">  ......</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>&#160; &#160; &#160; &#160;这个函数定义在文件external/chromium_org/base/bind_internal.h中。</p>
+<p>&#160; &#160; &#160; &#160;从前面的分析可以知道，这个RunnableAdapter<r(t::*)(a1, a2)="">类的成员变量method_描述的就是上述第一个代码段的MyClass类的成员函数MyFunc，因此最终就调用了参数object描述的一个MyClass对象的成员函数MyFunc，并且将参数a1和a2传递给它。注意，这里的参数a1即为在创建当前正在执行的Callback对象时绑定的一个int值，而参数a2即为调用当前正在执行的Callback对象的成员函数Run指定的一个string。</r(t::*)(a1,></p>
+<p>&#160; &#160; &#160; &#160;以上就是模板类Invoker<2, storagetype,="" r(x1,="" x2,="" x3)="">的静态成员函数Run的执行过程，也就是上述第二个代码段创建的Callback对象的执行过程。</2,></p>
+<p>&#160; &#160; &#160; &#160;3⃣️. 如果我们将第二个代码段修改为：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">MyClass* myclass = <span class="keyword">new</span> MyClass;</span><br><span class="line">base::Callback&lt;<span class="keyword">void</span>(<span class="keyword">const</span> <span class="built_in">std</span>::<span class="built_in">string</span>&amp;)&gt; cb = base::Bind(&amp;MyClass::MyFunc, GetWeakPtr(myclass), <span class="number">23</span>);</span><br><span class="line">cb.Run(<span class="string">"hello world"</span>);</span><br></pre></td></tr></table></figure>
+<p>&#160; &#160; &#160; &#160;也就是通过WeakPtr弱智能指针将一个MyClass对象绑定在一个Callback对象中，这时候即会导致中间使用的InvokeHepler类的定义如下所示：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> Runnable, <span class="keyword">typename</span> BoundWeakPtr, <span class="keyword">typename</span> A2, <span class="keyword">typename</span> A3&gt;</span><br><span class="line"><span class="keyword">struct</span> InvokeHelper&lt;<span class="literal">true</span>, <span class="keyword">void</span>, Runnable,</span><br><span class="line">    <span class="keyword">void</span>(BoundWeakPtr, A2, A3)&gt;  &#123;</span><br><span class="line">  <span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">MakeItSo</span><span class="params">(Runnable runnable, BoundWeakPtr weak_ptr, A2 a2, A3 a3)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (!weak_ptr.get()) &#123;</span><br><span class="line">      <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    runnable.Run(weak_ptr.get(), CallbackForward(a2), CallbackForward(a3));</span><br><span class="line">  &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>&#160; &#160; &#160; &#160;这个类定义在文件external/chromium_org/base/bind_internal.h中。</p>
+<p>&#160; &#160; &#160; &#160;从这里可以看到，如果通过弱智能指针引用的对象已经被销毁，也就是调用参数weak_ptr描述的一个WeakPtr弱智能指针的成员函数get的返回值等于0，那么上述InvokeHepler类的静态成员函数MakeItSo就什么也不做就返回了。这意味着，我们在创建一个Callback对象时，如果绑定的是一个类成员函数，并且绑定的类对象是通过WeakPtr弱智能指针引用时，那么当该Callback对象被执行时，之前绑定的类对象已经被销毁，那么被绑定的类成员函数不会被执行。</p>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>&#160; &#160; &#160; &#160;这样，我们就通过两个例子，分析完成了Callback对象的执行过程，也就是它们的成员函数Run的调用过程。从中我们就可以知道，Chromium里面的Callback机制实际上就是预先通过一系列预定义的C++模板类和C++模板函数来实现的，使得我们可以将一些预先指定的参数和函数绑定在一个BindState对象和一个RunnableAdapter对象中，并且封装在一个Callback对象中，最后以Callback类的成员函数Run作为统一的调用接口来间接地调用预先绑定的函数，并且将预先指定的参数以及调用Callback类的成员函数Run指定的参数传递给它。</p>
+<p>&#160; &#160; &#160; &#160;我们回到开头回顾一下，Chromium将这种用于线程间异步通信的Callback对象称为Closure对象，如下所示：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">typedef</span> Callback&lt;<span class="keyword">void</span>(<span class="keyword">void</span>)&gt; Closure;</span><br></pre></td></tr></table></figure>
+<p>&#160; &#160; &#160; &#160;这意味着一个Closure对象是这样的一个Callback对象：</p>
+<ol>
+<li>被调用的函数，以及调用该函数时使用的所有参数，都必须预先指定，也就是不能在调用时指定。</li>
+<li>被调用的函数的返回值为void。</li>
+</ol>
+<p>&#160; &#160; &#160; &#160;满足上述条件的Callback对象就称为Closure对象，也就是Chromium多线程通信的Closure机制，这与Java的Runnable接口有异工同曲之意。</p>
+<p><img src="http://images.windrunnerlihuan.com/img/windrunnerlihuan%E5%8D%9A%E5%AE%A2/Chromium%E5%AD%A6%E4%B9%A0%E4%B9%8B%E8%B7%AF%EF%BC%88%E4%BA%8C%EF%BC%89%E2%80%94%E2%80%94%E5%A4%9A%E7%BA%BF%E7%A8%8B%E9%80%9A%E4%BF%A1Callback%E5%9B%9E%E8%B0%83%E6%9C%BA%E5%88%B6/meizi.jpeg" alt="妹子图"></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>坚持技术分享，您的支持将鼓励我继续创作！</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="/images/wechat.jpg" alt="windrunnerlihuan WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+        <div id="alipay" style="display: inline-block">
+          <img id="alipay_qr" src="/images/alipay.jpg" alt="windrunnerlihuan Alipay"/>
+          <p>支付宝打赏</p>
+        </div>
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Chromium/" rel="tag"># Chromium</a>
+          
+            <a href="/tags/Closure/" rel="tag"># Closure</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/03/25/Chromium学习之路-一-智能指针实现原理分析/" rel="next" title="Chromium学习之路(一)----智能指针实现原理分析">
+                <i class="fa fa-chevron-left"></i> Chromium学习之路(一)----智能指针实现原理分析
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+        <!-- JiaThis Button BEGIN -->
+<div class="jiathis_style">
+  <a class="jiathis_button_tsina"></a>
+  <a class="jiathis_button_tqq"></a>
+  <a class="jiathis_button_weixin"></a>
+  <a class="jiathis_button_cqq"></a>
+  <a class="jiathis_button_douban"></a>
+  <a class="jiathis_button_renren"></a>
+  <a class="jiathis_button_qzone"></a>
+  <a class="jiathis_button_kaixin001"></a>
+  <a class="jiathis_button_copy"></a>
+  <a href="http://www.jiathis.com/share" class="jiathis jiathis_txt jiathis_separator jtico jtico_jiathis" target="_blank"></a>
+  <a class="jiathis_counter_style"></a>
+</div>
+<script type="text/javascript" >
+  var jiathis_config={
+    hideMore:false
+  }
+</script>
+<script type="text/javascript" src="http://v3.jiathis.com/code/jia.js" charset="utf-8"></script>
+<!-- JiaThis Button END -->
+
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div id="lv-container" data-id="city" data-uid="MTAyMC8zMTQwMC83OTYz"></div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.png"
+               alt="windrunnerlihuan" />
+          <p class="site-author-name" itemprop="name">windrunnerlihuan</p>
+           
+              <p class="site-description motion-element" itemprop="description"></p>
+           
+        </div>
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives">
+                <span class="site-state-item-count">42</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-categories">
+              <a href="/categories/index.html">
+                <span class="site-state-item-count">6</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-tags">
+              <a href="/tags/index.html">
+                <span class="site-state-item-count">23</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="mailto:937874128@qq.com" target="_blank" title="Email">
+                  
+                    <i class="fa fa-fw fa-envelope-o"></i>
+                  
+                  Email
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/windrunnerlihuan" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+          <div class="links-of-blogroll motion-element links-of-blogroll-inline">
+            <div class="links-of-blogroll-title">
+              <i class="fa  fa-fw fa-globe"></i>
+              Links
+            </div>
+            <ul class="links-of-blogroll-list">
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://gank.io/" title="干货集中营" target="_blank">干货集中营</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://www.jcodecraeer.com/" title="泡在网上的日子" target="_blank">泡在网上的日子</a>
+                </li>
+              
+                <li class="links-of-blogroll-item">
+                  <a href="http://trinea.cn/" title="Trinea" target="_blank">Trinea</a>
+                </li>
+              
+            </ul>
+          </div>
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#回调机制"><span class="nav-number">1.</span> <span class="nav-text">回调机制</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#使用用例"><span class="nav-number">2.</span> <span class="nav-text">使用用例</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Callback机制实现"><span class="nav-number">3.</span> <span class="nav-text">Callback机制实现</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#实现概述"><span class="nav-number">3.1.</span> <span class="nav-text">实现概述</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#具体实现"><span class="nav-number">3.2.</span> <span class="nav-text">具体实现</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#函数签名与参数签名"><span class="nav-number">3.2.1.</span> <span class="nav-text">函数签名与参数签名</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#创建RunnableAdapter对象、BindState对象"><span class="nav-number">3.2.2.</span> <span class="nav-text">创建RunnableAdapter对象、BindState对象</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#RunnableType、IsWeakCall、InvokerType、UnboundRunType和Bound1UnwrapTraits"><span class="nav-number">3.2.3.</span> <span class="nav-text">RunnableType、IsWeakCall、InvokerType、UnboundRunType和Bound1UnwrapTraits</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#BindState对象创建流程"><span class="nav-number">3.2.4.</span> <span class="nav-text">BindState对象创建流程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#创建Callback对象"><span class="nav-number">3.2.5.</span> <span class="nav-text">创建Callback对象</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Run函数执行过程"><span class="nav-number">3.2.6.</span> <span class="nav-text">Run函数执行过程</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#总结"><span class="nav-number">4.</span> <span class="nav-text">总结</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy;  2016 - 
+  <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">windrunnerlihuan</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+
+        
+<div class="busuanzi-count">
+  <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="site-uv">
+      <i class="fa fa-user"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_uv"></span>
+      
+    </span>
+  
+
+  
+    <span class="site-pv">
+      <i class="fa fa-eye"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_pv"></span>
+      
+    </span>
+  
+</div>
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+  
+  <script type="text/javascript" src="/lib/canvas-nest/canvas-nest.min.js"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.1"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+  
+    <script type="text/javascript">
+      (function(d, s) {
+        var j, e = d.getElementsByTagName(s)[0];
+        if (typeof LivereTower === 'function') { return; }
+        j = d.createElement(s);
+        j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+        j.async = true;
+        e.parentNode.insertBefore(j, e);
+      })(document, 'script');
+    </script>
+  
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (search_path.endsWith("json")) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("bJlEg1N9ed75pssz1m514avl-gzGzoHsz", "Swtq2cOp8A7KYeJ9lpD5nKAy");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
