@@ -142,15 +142,50 @@
     </url>
 
     <url>
-        <loc>http://windrunnerlihuan.com/tags/Chromium/</loc>
+        <loc>http://windrunnerlihuan.com/tags/%E6%99%BA%E8%83%BD%E6%8C%87%E9%92%88/</loc>
         <lastmod>2019-03-27T15:01:19.431Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.2</priority>
     </url>
 
     <url>
-        <loc>http://windrunnerlihuan.com/tags/%E6%99%BA%E8%83%BD%E6%8C%87%E9%92%88/</loc>
-        <lastmod>2019-03-27T15:01:19.431Z</lastmod>
+        <loc>http://windrunnerlihuan.com/tags/Closure/</loc>
+        <lastmod>2019-04-11T19:05:50.546Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.2</priority>
+    </url>
+
+    <url>
+        <loc>http://windrunnerlihuan.com/tags/%E5%A4%9A%E7%BA%BF%E7%A8%8B/</loc>
+        <lastmod>2019-05-22T17:38:43.545Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.2</priority>
+    </url>
+
+    <url>
+        <loc>http://windrunnerlihuan.com/tags/Chromium/</loc>
+        <lastmod>2019-08-04T18:05:26.249Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.2</priority>
+    </url>
+
+    <url>
+        <loc>http://windrunnerlihuan.com/tags/%E5%A4%9A%E8%BF%9B%E7%A8%8B/</loc>
+        <lastmod>2019-08-04T18:05:26.249Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.2</priority>
+    </url>
+
+    <url>
+        <loc>http://windrunnerlihuan.com/tags/%E8%B5%B4%E7%BE%8E/</loc>
+        <lastmod>2019-09-02T19:29:11.391Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.2</priority>
+    </url>
+
+    <url>
+        <loc>http://windrunnerlihuan.com/tags/%E7%94%9F%E5%AD%90/</loc>
+        <lastmod>2019-09-02T19:29:11.391Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.2</priority>
     </url>
